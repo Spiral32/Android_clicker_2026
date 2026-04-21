@@ -326,7 +326,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
-                          constraints: const BoxConstraints(minHeight: 220),
+                          height: 120,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: const Color(0xFF10151C),
@@ -335,13 +335,17 @@ class _SettingsPageState extends State<SettingsPage> {
                               color: const Color(0xFF243244),
                             ),
                           ),
-                          child: SelectableText(
-                            _logPreview.isEmpty
-                                ? 'Логи пока пусты.'
-                                : _logPreview,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFFD9E2F1),
-                              height: 1.45,
+                          child: Scrollbar(
+                            child: SingleChildScrollView(
+                              child: SelectableText(
+                                _logPreview.isEmpty
+                                    ? 'Логи пока пусты.'
+                                    : _logPreview,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: const Color(0xFFD9E2F1),
+                                  height: 1.45,
+                                ),
+                              ),
                             ),
                           ),
                         ),
