@@ -1,0 +1,83 @@
+# =========================
+# FLUTTER / DART
+# =========================
+
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# Logs
+*.log
+
+# =========================
+# ANDROID
+# =========================
+
+android/.gradle/
+android/local.properties
+android/key.properties
+
+# Build outputs
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# Keystore (НЕ пушить!)
+*.jks
+*.keystore
+
+# =========================
+# IOS / MACOS
+# =========================
+
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+ios/Runner.xcworkspace/
+ios/Runner.xcodeproj/xcuserdata/
+ios/DerivedData/
+
+# =========================
+# BUILD FILES
+# =========================
+
+*.apk
+*.aab
+
+# =========================
+# IDE (VSCode / Android Studio)
+# =========================
+
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# SYSTEM FILES
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# ENV / SECRETS
+# =========================
+
+.env
+.env.*
+*.env
+
+# Firebase (если используешь)
+google-services.json
+GoogleService-Info.plist
