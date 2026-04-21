@@ -1,0 +1,219 @@
+import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
+import 'package:prog_set_touch/core/error/app_logger.dart';
+import 'package:prog_set_touch/features/main_screen/domain/overlay_status.dart';
+import 'package:prog_set_touch/features/main_screen/domain/platform_bridge_repository.dart';
+import 'package:prog_set_touch/features/main_screen/domain/platform_info.dart';
+import 'package:prog_set_touch/features/main_screen/domain/permission_status.dart';
+import 'package:prog_set_touch/features/main_screen/domain/permission_type.dart';
+import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
+
+part 'main_screen_event.dart';
+part 'main_screen_state.dart';
+
+class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
+  MainScreenBloc({
+    required PlatformBridgeRepository platformBridgeRepository,
+    required AppLogger logger,
+  })  : _platformBridgeRepository = platformBridgeRepository,
+        _logger = logger,
+        super(const MainScreenState()) {
+    on<MainScreenRequested>(_onRequested);
+    on<MainScreenPermissionActionPressed>(_onPermissionActionPressed);
+    on<MainScreenOverlayToggleRequested>(_onOverlayToggleRequested);
+    on<MainScreenRecorderStartRequested>(_onRecorderStartRequested);
+    on<MainScreenRecorderStopRequested>(_onRecorderStopRequested);
+  }
+
+  final PlatformBridgeRepository _platformBridgeRepository;
+  final AppLogger _logger;
+
+  Future<void> _onRequested(
+    MainScreenRequested event,
+    Emitter<MainScreenState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        status: MainScreenStatus.loading,
+        clearError: true,
+        clearPermissionAction: true,
+      ),
+    );
+
+    try {
+      final platformInfo = await _platformBridgeRepository.getPlatformInfo();
+      final permissionStatus =
+          await _platformBridgeRepository.getPermissionStatus();
+      final recorderSummary =
+          await _platformBridgeRepository.getRecorderStatus();
+      var overlayStatus = await _platformBridgeRepository.getOverlayStatus();
+
+      if (permissionStatus.areAllGranted &&
+          !overlayStatus.visible &&
+          !recorderSummary.isRecording) {
+        overlayStatus = await _platformBridgeRepository.showOverlay();
+      }
+
+      emit(
+        state.copyWith(
+          status: MainScreenStatus.loaded,
+          platformInfo: platformInfo,
+          permissionStatus: permissionStatus,
+          overlayStatus: overlayStatus,
+          recorderSummary: recorderSummary,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('main_screen_bloc', error, stackTrace);
+      emit(
+        state.copyWith(
+          status: MainScreenStatus.failure,
+          errorKey: 'errorPlatformLoad',
+        ),
+      );
+    }
+  }
+
+  Future<void> _onPermissionActionPressed(
+    MainScreenPermissionActionPressed event,
+    Emitter<MainScreenState> emit,
+  ) async {
+    emit(state.copyWith(isPermissionActionInProgress: true, clearError: true));
+
+    try {
+      switch (event.permissionType) {
+        case PermissionType.accessibility:
+          await _platformBridgeRepository.openAccessibilitySettings();
+          break;
+        case PermissionType.overlay:
+          await _platformBridgeRepository.openOverlaySettings();
+          break;
+        case PermissionType.mediaProjection:
+          final permissionStatus =
+              await _platformBridgeRepository.requestMediaProjectionPermission();
+          emit(
+            state.copyWith(
+              permissionStatus: permissionStatus,
+              isPermissionActionInProgress: false,
+              clearError: true,
+            ),
+          );
+          return;
+      }
+
+      final permissionStatus =
+          await _platformBridgeRepository.getPermissionStatus();
+
+      emit(
+        state.copyWith(
+          permissionStatus: permissionStatus,
+          isPermissionActionInProgress: false,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('main_screen_bloc_permission_action', error, stackTrace);
+      emit(
+        state.copyWith(
+          isPermissionActionInProgress: false,
+          errorKey: 'errorPermissionAction',
+        ),
+      );
+    }
+  }
+
+  Future<void> _onOverlayToggleRequested(
+    MainScreenOverlayToggleRequested event,
+    Emitter<MainScreenState> emit,
+  ) async {
+    if (!state.permissionStatus.areAllGranted) {
+      return;
+    }
+
+    emit(state.copyWith(isOverlayActionInProgress: true, clearError: true));
+
+    try {
+      final overlayStatus = state.overlayStatus.visible
+          ? await _platformBridgeRepository.hideOverlay()
+          : await _platformBridgeRepository.showOverlay();
+
+      emit(
+        state.copyWith(
+          overlayStatus: overlayStatus,
+          isOverlayActionInProgress: false,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('main_screen_bloc_overlay_action', error, stackTrace);
+      emit(
+        state.copyWith(
+          isOverlayActionInProgress: false,
+          errorKey: 'errorOverlayAction',
+        ),
+      );
+    }
+  }
+
+  Future<void> _onRecorderStartRequested(
+    MainScreenRecorderStartRequested event,
+    Emitter<MainScreenState> emit,
+  ) async {
+    if (!state.permissionStatus.areAllGranted) {
+      return;
+    }
+
+    if (!state.overlayStatus.visible) {
+      emit(state.copyWith(errorKey: 'errorRecorderNeedsOverlay'));
+      return;
+    }
+
+    emit(state.copyWith(isRecorderActionInProgress: true, clearError: true));
+
+    try {
+      final recorderSummary = await _platformBridgeRepository.startRecorder();
+      emit(
+        state.copyWith(
+          recorderSummary: recorderSummary,
+          isRecorderActionInProgress: false,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('main_screen_bloc_recorder_start', error, stackTrace);
+      emit(
+        state.copyWith(
+          isRecorderActionInProgress: false,
+          errorKey: 'errorRecorderAction',
+        ),
+      );
+    }
+  }
+
+  Future<void> _onRecorderStopRequested(
+    MainScreenRecorderStopRequested event,
+    Emitter<MainScreenState> emit,
+  ) async {
+    emit(state.copyWith(isRecorderActionInProgress: true, clearError: true));
+
+    try {
+      final recorderSummary = await _platformBridgeRepository.stopRecorder();
+      emit(
+        state.copyWith(
+          recorderSummary: recorderSummary,
+          isRecorderActionInProgress: false,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('main_screen_bloc_recorder_stop', error, stackTrace);
+      emit(
+        state.copyWith(
+          isRecorderActionInProgress: false,
+          errorKey: 'errorRecorderAction',
+        ),
+      );
+    }
+  }
+}

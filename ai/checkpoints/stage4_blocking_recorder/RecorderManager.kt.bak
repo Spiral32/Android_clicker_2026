@@ -1,0 +1,438 @@
+package com.progsettouch.app
+
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import kotlin.math.hypot
+
+class RecorderManager(
+    private val context: Context,
+) {
+    private val windowManager =
+        context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+    private val actionClassifier = GestureActionClassifier()
+    private val recordedActions = mutableListOf<RecordedAction>()
+
+    private var recorderView: View? = null
+    private var recorderControlView: View? = null
+    private var sessionStartMs: Long = 0L
+    private var currentGesture: ActiveGesture? = null
+    private var lastTapSnapshot: TapSnapshot? = null
+    private var onStopRequested: ((RecorderSummary) -> Unit)? = null
+
+    fun setOnStopRequested(listener: (RecorderSummary) -> Unit) {
+        onStopRequested = listener
+    }
+
+    fun start(): RecorderSummary {
+        if (recorderView != null || recorderControlView != null) {
+            return buildSummary()
+        }
+
+        recordedActions.clear()
+        currentGesture = null
+        lastTapSnapshot = null
+        sessionStartMs = System.currentTimeMillis()
+
+        val layoutParams =
+            WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT,
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+            }
+
+        val recordingView =
+            FrameLayout(context).apply {
+                setBackgroundColor(Color.TRANSPARENT)
+                isClickable = true
+                isFocusable = false
+                setOnTouchListener(::handleTouchEvent)
+            }
+
+        val controlParams =
+            WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT,
+            ).apply {
+                gravity = Gravity.TOP or Gravity.END
+                x = 24
+                y = 96
+            }
+
+        val controlView = buildRecorderControlView()
+
+        return try {
+            windowManager.addView(recordingView, layoutParams)
+            windowManager.addView(controlView, controlParams)
+            recorderView = recordingView
+            recorderControlView = controlView
+            buildSummary()
+        } catch (_: Throwable) {
+            stop()
+        }
+    }
+
+    fun stop(): RecorderSummary {
+        val view = recorderView
+        val controlView = recorderControlView
+
+        if (view != null) {
+            try {
+                windowManager.removeView(view)
+            } catch (_: Throwable) {
+            }
+        }
+
+        if (controlView != null) {
+            try {
+                windowManager.removeView(controlView)
+            } catch (_: Throwable) {
+            }
+        }
+
+        recorderView = null
+        recorderControlView = null
+        currentGesture = null
+        return buildSummary()
+    }
+
+    fun isRecording(): Boolean = recorderView != null
+
+    fun summary(): RecorderSummary = buildSummary()
+
+    private fun handleTouchEvent(view: View, event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                currentGesture = ActiveGesture.from(event)
+            }
+
+            MotionEvent.ACTION_POINTER_DOWN,
+            MotionEvent.ACTION_MOVE,
+            MotionEvent.ACTION_POINTER_UP,
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL -> {
+                currentGesture?.update(event)
+            }
+        }
+
+        if (event.actionMasked == MotionEvent.ACTION_UP ||
+            event.actionMasked == MotionEvent.ACTION_CANCEL
+        ) {
+            currentGesture?.let { gesture ->
+                classifyAndStore(gesture)
+            }
+            currentGesture = null
+        }
+
+        view.performClick()
+        return true
+    }
+
+    private fun buildRecorderControlView(): View {
+        val container =
+            LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                background =
+                    GradientDrawable().apply {
+                        cornerRadius = 36f
+                        setColor(0xE0222222.toInt())
+                    }
+                setPadding(24, 18, 24, 18)
+                elevation = 12f
+                isClickable = true
+                isFocusable = false
+                setOnClickListener {
+                    val summary = stop()
+                    openApp()
+                    onStopRequested?.invoke(summary)
+                }
+            }
+
+        val icon =
+            ImageView(context).apply {
+                setImageResource(android.R.drawable.ic_media_pause)
+                setColorFilter(0xFFFFFFFF.toInt())
+            }
+
+        val label =
+            TextView(context).apply {
+                text = context.getString(R.string.recorder_stop_label)
+                setTextColor(Color.WHITE)
+                textSize = 16f
+                setPadding(16, 0, 0, 0)
+            }
+
+        container.addView(icon)
+        container.addView(label)
+        return container
+    }
+
+    private fun classifyAndStore(gesture: ActiveGesture) {
+        val candidate = actionClassifier.classify(gesture, lastTapSnapshot)
+        recordedActions += candidate.action
+        lastTapSnapshot = candidate.updatedTapSnapshot
+    }
+
+    private fun buildSummary(): RecorderSummary {
+        val taps = recordedActions.count { it.type == RecordedActionType.tap.value }
+        val doubleTaps =
+            recordedActions.count { it.type == RecordedActionType.doubleTap.value }
+        val longPresses =
+            recordedActions.count { it.type == RecordedActionType.longPress.value }
+        val swipes = recordedActions.count { it.type == RecordedActionType.swipe.value }
+        val maxPointers =
+            recordedActions.maxOfOrNull { it.pointerCount } ?: 0
+
+        return RecorderSummary(
+            isRecording = isRecording(),
+            totalActions = recordedActions.size,
+            tapCount = taps,
+            doubleTapCount = doubleTaps,
+            longPressCount = longPresses,
+            swipeCount = swipes,
+            maxPointerCount = maxPointers,
+            sessionDurationMs = if (sessionStartMs == 0L) 0L else System.currentTimeMillis() - sessionStartMs,
+            actions = recordedActions.toList(),
+        )
+    }
+
+    private fun openApp() {
+        val launchIntent =
+            context.packageManager.getLaunchIntentForPackage(context.packageName)
+                ?.apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                }
+
+        if (launchIntent != null) {
+            context.startActivity(launchIntent)
+        }
+    }
+}
+
+private class GestureActionClassifier {
+    private val tapDistanceThreshold = 32.0
+    private val swipeDistanceThreshold = 72.0
+    private val longPressDurationMs = 450L
+    private val doubleTapWindowMs = 280L
+
+    fun classify(
+        gesture: ActiveGesture,
+        lastTapSnapshot: TapSnapshot?,
+    ): ClassificationResult {
+        val distance = gesture.distance()
+        val durationMs = gesture.durationMs()
+        val centroid = gesture.endCentroid()
+
+        val actionType =
+            when {
+                distance >= swipeDistanceThreshold -> RecordedActionType.swipe
+                durationMs >= longPressDurationMs -> RecordedActionType.longPress
+                isDoubleTap(gesture, centroid, lastTapSnapshot) -> RecordedActionType.doubleTap
+                else -> RecordedActionType.tap
+            }
+
+        val action =
+            RecordedAction(
+                type = actionType.value,
+                pointerCount = gesture.maxPointerCount,
+                startX = gesture.startCentroid().first,
+                startY = gesture.startCentroid().second,
+                endX = centroid.first,
+                endY = centroid.second,
+                durationMs = durationMs,
+            )
+
+        val updatedTapSnapshot =
+            if (actionType == RecordedActionType.tap) {
+                TapSnapshot(
+                    eventTimeMs = gesture.endEventTimeMs,
+                    x = centroid.first,
+                    y = centroid.second,
+                )
+            } else {
+                null
+            }
+
+        return ClassificationResult(
+            action = action,
+            updatedTapSnapshot = updatedTapSnapshot,
+        )
+    }
+
+    private fun isDoubleTap(
+        gesture: ActiveGesture,
+        centroid: Pair<Double, Double>,
+        lastTapSnapshot: TapSnapshot?,
+    ): Boolean {
+        if (gesture.maxPointerCount != 1 || lastTapSnapshot == null) {
+            return false
+        }
+
+        if (gesture.durationMs() >= longPressDurationMs) {
+            return false
+        }
+
+        val timeDelta = gesture.endEventTimeMs - lastTapSnapshot.eventTimeMs
+        if (timeDelta > doubleTapWindowMs) {
+            return false
+        }
+
+        val distance =
+            hypot(
+                centroid.first - lastTapSnapshot.x,
+                centroid.second - lastTapSnapshot.y,
+            )
+
+        return distance <= tapDistanceThreshold
+    }
+}
+
+private data class ClassificationResult(
+    val action: RecordedAction,
+    val updatedTapSnapshot: TapSnapshot?,
+)
+
+private data class TapSnapshot(
+    val eventTimeMs: Long,
+    val x: Double,
+    val y: Double,
+)
+
+private data class ActiveGesture(
+    val startEventTimeMs: Long,
+    var endEventTimeMs: Long,
+    val startPoints: MutableMap<Int, Pair<Double, Double>>,
+    val endPoints: MutableMap<Int, Pair<Double, Double>>,
+    var maxPointerCount: Int,
+) {
+    fun update(event: MotionEvent) {
+        endEventTimeMs = event.eventTime
+        maxPointerCount = maxOf(maxPointerCount, event.pointerCount)
+
+        for (index in 0 until event.pointerCount) {
+            val pointerId = event.getPointerId(index)
+            val point = event.getX(index).toDouble() to event.getY(index).toDouble()
+            startPoints.putIfAbsent(pointerId, point)
+            endPoints[pointerId] = point
+        }
+    }
+
+    fun durationMs(): Long = endEventTimeMs - startEventTimeMs
+
+    fun startCentroid(): Pair<Double, Double> = centroid(startPoints.values.toList())
+
+    fun endCentroid(): Pair<Double, Double> = centroid(endPoints.values.toList())
+
+    fun distance(): Double {
+        val start = startCentroid()
+        val end = endCentroid()
+        return hypot(end.first - start.first, end.second - start.second)
+    }
+
+    private fun centroid(points: List<Pair<Double, Double>>): Pair<Double, Double> {
+        if (points.isEmpty()) {
+            return 0.0 to 0.0
+        }
+
+        val averageX = points.sumOf { it.first } / points.size
+        val averageY = points.sumOf { it.second } / points.size
+        return averageX to averageY
+    }
+
+    companion object {
+        fun from(event: MotionEvent): ActiveGesture {
+            val startPoints = mutableMapOf<Int, Pair<Double, Double>>()
+            val endPoints = mutableMapOf<Int, Pair<Double, Double>>()
+
+            for (index in 0 until event.pointerCount) {
+                val pointerId = event.getPointerId(index)
+                val point = event.getX(index).toDouble() to event.getY(index).toDouble()
+                startPoints[pointerId] = point
+                endPoints[pointerId] = point
+            }
+
+            return ActiveGesture(
+                startEventTimeMs = event.eventTime,
+                endEventTimeMs = event.eventTime,
+                startPoints = startPoints,
+                endPoints = endPoints,
+                maxPointerCount = event.pointerCount,
+            )
+        }
+    }
+}
+
+private enum class RecordedActionType(val value: String) {
+    tap("tap"),
+    doubleTap("double_tap"),
+    longPress("long_press"),
+    swipe("swipe"),
+}
+
+data class RecordedAction(
+    val type: String,
+    val pointerCount: Int,
+    val startX: Double,
+    val startY: Double,
+    val endX: Double,
+    val endY: Double,
+    val durationMs: Long,
+) {
+    fun toMap(): Map<String, Any> {
+        return mapOf(
+            "type" to type,
+            "pointerCount" to pointerCount,
+            "startX" to startX,
+            "startY" to startY,
+            "endX" to endX,
+            "endY" to endY,
+            "durationMs" to durationMs,
+        )
+    }
+}
+
+data class RecorderSummary(
+    val isRecording: Boolean,
+    val totalActions: Int,
+    val tapCount: Int,
+    val doubleTapCount: Int,
+    val longPressCount: Int,
+    val swipeCount: Int,
+    val maxPointerCount: Int,
+    val sessionDurationMs: Long,
+    val actions: List<RecordedAction>,
+) {
+    fun toMap(): Map<String, Any> {
+        return mapOf(
+            "isRecording" to isRecording,
+            "totalActions" to totalActions,
+            "tapCount" to tapCount,
+            "doubleTapCount" to doubleTapCount,
+            "longPressCount" to longPressCount,
+            "swipeCount" to swipeCount,
+            "maxPointerCount" to maxPointerCount,
+            "sessionDurationMs" to sessionDurationMs,
+            "actions" to actions.map { it.toMap() },
+        )
+    }
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Prog Set Touch</string>
+    <string name="accessibility_service_label">Prog Set Touch Accessibility</string>
+    <string name="recorder_stop_label">Stop</string>
+    <string name="recorder_point_capture_title">Record Action</string>
+    <string name="recorder_tap_btn">Tap</string>
+    <string name="recorder_swipe_btn">Swipe</string>
+    <string name="recorder_long_press_btn">Long Press</string>
+    <string name="recorder_double_tap_btn">Double Tap</string>
+    <string name="point_capture_hint">Touch the screen to record coordinates</string>
+</resources>

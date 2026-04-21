@@ -1,0 +1,56 @@
+package com.progsettouch.app
+
+import android.accessibilityservice.AccessibilityService
+import android.view.accessibility.AccessibilityEvent
+
+class ProgSetAccessibilityService : AccessibilityService() {
+    private lateinit var overlayManager: OverlayManager
+    private lateinit var recorderManager: RecorderManager
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        instance = this
+        overlayManager = OverlayManager(this)
+        recorderManager = RecorderManager(this)
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+
+    override fun onInterrupt() = Unit
+
+    override fun onDestroy() {
+        overlayManager.hide()
+        recorderManager.stop()
+        if (instance === this) {
+            instance = null
+        }
+        super.onDestroy()
+    }
+
+    override fun onUnbind(intent: android.content.Intent?): Boolean {
+        overlayManager.hide()
+        recorderManager.stop()
+        if (instance === this) {
+            instance = null
+        }
+        return super.onUnbind(intent)
+    }
+
+    fun showOverlay(): Boolean = overlayManager.show()
+
+    fun hideOverlay() = overlayManager.hide()
+
+    fun isOverlayVisible(): Boolean = overlayManager.isVisible()
+
+    fun startRecorder(): RecorderSummary = recorderManager.start()
+
+    fun stopRecorder(): RecorderSummary = recorderManager.stop()
+
+    fun recorderSummary(): RecorderSummary = recorderManager.summary()
+
+    companion object {
+        @Volatile
+        var instance: ProgSetAccessibilityService? = null
+            private set
+    }
+}

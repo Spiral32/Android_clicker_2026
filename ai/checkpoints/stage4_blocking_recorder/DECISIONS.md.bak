@@ -1,0 +1,107 @@
+[2026-04-12]
+Decision:
+Manual project scaffolding is used instead of CLI generation.
+Reason:
+The execution environment explicitly forbids Flutter, Dart, Gradle, Java, ADB, and batch commands because they may hang indefinitely.
+
+[2026-04-12]
+Decision:
+Localization ARB files are stored in `lib/core/localization` and locale switching is controlled by a dedicated BLoC.
+Reason:
+This satisfies the requirement for zero hardcoded UI strings and runtime language switching without application restart.
+
+[2026-04-12]
+Decision:
+Platform interaction is isolated behind a Flutter repository contract and an Android `MethodChannel` bridge.
+Reason:
+This preserves architectural boundaries and keeps the presentation layer independent from Android implementation details.
+
+[2026-04-12]
+Decision:
+The Android Gradle wrapper is aligned to Gradle 8.7.
+Reason:
+The selected Android Gradle Plugin version requires at least Gradle 8.7, and the build was failing with wrapper version 8.0.
+
+[2026-04-12]
+Decision:
+The manual Android scaffold now includes local Flutter SDK binding and explicit debug signing.
+Reason:
+The Flutter tool expects a standard Android app packaging pipeline and predictable debug APK output for `assembleDebug`.
+
+[2026-04-12]
+Decision:
+Android subproject build directories are redirected to the workspace root `build/` directory.
+Reason:
+Flutter tooling expects APK artifacts under the root build output layout used by the standard Flutter Android template.
+
+[2026-04-12]
+Decision:
+Android build tooling was downgraded from AGP 8.5.2 / Gradle 8.7 to a more Flutter-template-compatible combination.
+Reason:
+The previous tooling version was too aggressive for the manual scaffold and likely prevented Flutter from locating the expected debug APK artifact even when `assembleDebug` completed.
+
+[2026-04-12]
+Decision:
+The Android app module now copies the generated debug APK into `build/app/outputs/flutter-apk/app-debug.apk`.
+Reason:
+`assembleDebug` completes, but Flutter tooling still cannot find the artifact; this aligns the output path with Flutter's expected APK discovery location.
+
+[2026-04-12]
+Decision:
+Android Gradle configuration is switched from Kotlin DSL files to Groovy `*.gradle` files.
+Reason:
+Flutter tooling compatibility is stronger with the standard Groovy Android template, and Flutter issue reports indicate some tool versions still mis-detect or mishandle `build.gradle.kts` during APK discovery.
+
+[2026-04-12]
+Decision:
+Stage 2 permission gating is implemented in strict order: Accessibility -> Overlay -> MediaProjection.
+Reason:
+The product requirement says to show only the next relevant instruction and block action flows until mandatory permissions are complete.
+
+[2026-04-12]
+Decision:
+MediaProjection permission state is treated as session-scoped for now.
+Reason:
+Persisting projection readiness without a valid runtime capture token would create false-positive permission state and increase failure risk in later execution stages.
+
+[2026-04-12]
+Decision:
+`SYSTEM_ALERT_WINDOW` is declared in the Android manifest during Stage 2.
+Reason:
+Without this manifest permission, the app may not appear in the Android "Display over other apps" settings list, making the overlay permission flow unusable for the user.
+
+[2026-04-12]
+Decision:
+Stage 3 overlay is hosted by the accessibility service and rendered with `TYPE_ACCESSIBILITY_OVERLAY`.
+Reason:
+This matches the platform requirement, avoids overlay logic inside Flutter UI, and keeps the floating control available when the app is backgrounded.
+
+[2026-04-12]
+Decision:
+The overlay view handles only drag and tap-to-open behavior.
+Reason:
+Heavy logic inside the overlay is explicitly forbidden; execution control and automation runtime remain in later stages.
+
+[2026-04-12]
+Decision:
+Overlay readiness now requires a live connected accessibility service instance, not only the enabled system setting.
+Reason:
+The overlay is rendered from `AccessibilityService`; a checked toggle in settings is insufficient if the system has not actually bound the service yet.
+
+[2026-04-12]
+Decision:
+Stage 4 recorder is implemented as a fullscreen accessibility overlay owned by the accessibility service.
+Reason:
+This keeps recording in the Android infrastructure layer, allows `MotionEvent` capture with multi-touch metadata, and avoids putting recorder logic into Flutter UI.
+
+[2026-04-12]
+Decision:
+Gesture classification is summary-oriented in Stage 4: tap, double tap, long press, swipe, plus max pointer count.
+Reason:
+This gives a stable foundation for later scenario modeling without prematurely introducing execution or storage complexity in the recorder stage.
+
+[2026-04-12]
+Decision:
+Recorder start now requires an active floating overlay, and the app auto-activates the floating overlay after all permissions are granted.
+Reason:
+This matches the desired operator flow: overlay is the stable foreground control surface, while recorder start should minimize the app and keep a visible stop path for the user.

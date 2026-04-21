@@ -1,0 +1,227 @@
+package com.progsettouch.app
+
+import android.app.Activity
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.media.projection.MediaProjectionManager
+import android.os.Build
+import android.provider.Settings
+import android.text.TextUtils
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import java.util.Locale
+
+class MainActivity : FlutterActivity() {
+    private val channelName = "prog_set_touch/platform"
+    private val mediaProjectionRequestCode = 4242
+    private var mediaProjectionGranted = false
+    private var pendingMediaProjectionResult: MethodChannel.Result? = null
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            channelName,
+        ).setMethodCallHandler(::handleMethodCall)
+    }
+
+    private fun handleMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "getPlatformInfo" -> {
+                result.success(
+                    mapOf(
+                        "platform" to "android",
+                        "manufacturer" to android.os.Build.MANUFACTURER.orEmpty(),
+                        "model" to android.os.Build.MODEL.orEmpty(),
+                        "sdkInt" to android.os.Build.VERSION.SDK_INT,
+                        "locale" to Locale.getDefault().toLanguageTag(),
+                    ),
+                )
+            }
+
+            "getPermissionStatus" -> result.success(permissionStatusMap())
+            "getOverlayStatus" -> {
+                result.success(
+                    mapOf(
+                        "visible" to (ProgSetAccessibilityService.instance?.isOverlayVisible() == true),
+                    ),
+                )
+            }
+
+            "showOverlay" -> {
+                val accessibilityService = ProgSetAccessibilityService.instance
+                if (accessibilityService == null) {
+                    result.error(
+                        "accessibility_service_unavailable",
+                        "Accessibility service is enabled in settings but not connected.",
+                        null,
+                    )
+                    return
+                }
+
+                val isShown = accessibilityService.showOverlay()
+                result.success(
+                    mapOf(
+                        "visible" to isShown,
+                    ),
+                )
+            }
+
+            "hideOverlay" -> {
+                ProgSetAccessibilityService.instance?.hideOverlay()
+                result.success(
+                    mapOf(
+                        "visible" to false,
+                    ),
+                )
+            }
+
+            "getRecorderStatus" -> {
+                result.success(
+                    (ProgSetAccessibilityService.instance?.recorderSummary()
+                        ?: RecorderSummary(
+                            isRecording = false,
+                            totalActions = 0,
+                            tapCount = 0,
+                            doubleTapCount = 0,
+                            longPressCount = 0,
+                            swipeCount = 0,
+                            maxPointerCount = 0,
+                            sessionDurationMs = 0L,
+                            actions = emptyList(),
+                        )).toMap(),
+                )
+            }
+
+            "startRecorder" -> {
+                val accessibilityService = ProgSetAccessibilityService.instance
+                if (accessibilityService == null) {
+                    result.error(
+                        "accessibility_service_unavailable",
+                        "Accessibility service is not connected.",
+                        null,
+                    )
+                    return
+                }
+
+                if (!accessibilityService.isOverlayVisible()) {
+                    result.error(
+                        "overlay_not_active",
+                        "Floating overlay must be active before recorder start.",
+                        null,
+                    )
+                    return
+                }
+
+                val recorderSummary = accessibilityService.startRecorder()
+                result.success(recorderSummary.toMap())
+                moveTaskToBack(true)
+            }
+
+            "stopRecorder" -> {
+                val accessibilityService = ProgSetAccessibilityService.instance
+                result.success(
+                    (accessibilityService?.stopRecorder()
+                        ?: RecorderSummary(
+                            isRecording = false,
+                            totalActions = 0,
+                            tapCount = 0,
+                            doubleTapCount = 0,
+                            longPressCount = 0,
+                            swipeCount = 0,
+                            maxPointerCount = 0,
+                            sessionDurationMs = 0L,
+                            actions = emptyList(),
+                        )).toMap(),
+                )
+            }
+
+            "openAccessibilitySettings" -> {
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                result.success(null)
+            }
+
+            "openOverlaySettings" -> {
+                val intent =
+                    Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:$packageName"),
+                    )
+                startActivity(intent)
+                result.success(null)
+            }
+
+            "requestMediaProjectionPermission" -> requestMediaProjectionPermission(result)
+
+            else -> result.notImplemented()
+        }
+    }
+
+    private fun requestMediaProjectionPermission(result: MethodChannel.Result) {
+        val projectionManager =
+            getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
+
+        if (projectionManager == null) {
+            result.success(permissionStatusMap())
+            return
+        }
+
+        pendingMediaProjectionResult = result
+        startActivityForResult(
+            projectionManager.createScreenCaptureIntent(),
+            mediaProjectionRequestCode,
+        )
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == mediaProjectionRequestCode) {
+            mediaProjectionGranted = resultCode == Activity.RESULT_OK
+            pendingMediaProjectionResult?.success(permissionStatusMap())
+            pendingMediaProjectionResult = null
+        }
+    }
+
+    private fun permissionStatusMap(): Map<String, Any> {
+        return mapOf(
+            "accessibilityGranted" to (isAccessibilityServiceEnabled() && ProgSetAccessibilityService.instance != null),
+            "overlayGranted" to canDrawOverlays(),
+            "mediaProjectionGranted" to mediaProjectionGranted,
+        )
+    }
+
+    private fun canDrawOverlays(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(this)
+        } else {
+            true
+        }
+    }
+
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val expectedComponent = ComponentName(this, ProgSetAccessibilityService::class.java)
+        val enabledServices =
+            Settings.Secure.getString(
+                contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            ) ?: return false
+
+        val splitter = TextUtils.SimpleStringSplitter(':')
+        splitter.setString(enabledServices)
+
+        while (splitter.hasNext()) {
+            val componentName = ComponentName.unflattenFromString(splitter.next())
+            if (componentName == expectedComponent) {
+                return true
+            }
+        }
+
+        return false
+    }
+}

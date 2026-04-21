@@ -1,0 +1,229 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:prog_set_touch/core/error/app_logger.dart';
+import 'package:prog_set_touch/features/main_screen/data/platform_bridge_data_source.dart';
+import 'package:prog_set_touch/features/main_screen/presentation/bloc/main_screen_bloc.dart';
+import 'package:prog_set_touch/features/main_screen/presentation/widgets/main_action_card.dart';
+import 'package:prog_set_touch/features/main_screen/presentation/widgets/overlay_status_card.dart';
+import 'package:prog_set_touch/features/main_screen/presentation/widgets/permission_gate_card.dart';
+import 'package:prog_set_touch/features/main_screen/presentation/widgets/platform_info_card.dart';
+import 'package:prog_set_touch/features/main_screen/presentation/widgets/recorder_summary_card.dart';
+import 'package:prog_set_touch/features/settings/presentation/pages/settings_page.dart';
+import 'package:prog_set_touch/shared/widgets/app_language_switcher.dart';
+
+class MainScreenPage extends StatelessWidget {
+  const MainScreenPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => MainScreenBloc(
+        platformBridgeRepository: context.read<PlatformBridgeDataSource>(),
+        logger: context.read<AppLogger>(),
+      )..add(const MainScreenRequested()),
+      child: const _MainScreenView(),
+    );
+  }
+}
+
+class _MainScreenView extends StatefulWidget {
+  const _MainScreenView();
+
+  @override
+  State<_MainScreenView> createState() => _MainScreenViewState();
+}
+
+class _MainScreenViewState extends State<_MainScreenView>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      context.read<MainScreenBloc>().add(const MainScreenRequested());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocConsumer<MainScreenBloc, MainScreenState>(
+      listener: (context, state) {
+        if (state.errorKey == 'errorPermissionAction') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.errorPermissionAction),
+            ),
+          );
+        }
+
+        if (state.errorKey == 'errorOverlayAction') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.errorOverlayAction),
+            ),
+          );
+        }
+
+        if (state.errorKey == 'errorRecorderAction') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.errorRecorderAction),
+            ),
+          );
+        }
+
+        if (state.errorKey == 'errorRecorderNeedsOverlay') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.errorRecorderNeedsOverlay),
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final actionsEnabled = state.permissionStatus.areAllGranted;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.mainScreenTitle),
+            actions: const [
+              AppLanguageSwitcher(),
+            ],
+          ),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.mainScreenSubtitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  if (state.status == MainScreenStatus.loaded ||
+                      state.status == MainScreenStatus.failure)
+                    PermissionGateCard(
+                      permissionStatus: state.permissionStatus,
+                      isLoading: state.isPermissionActionInProgress,
+                      onActionPressed: (permissionType) {
+                        context.read<MainScreenBloc>().add(
+                              MainScreenPermissionActionPressed(permissionType),
+                            );
+                      },
+                    ),
+                  MainActionCard(
+                    title: state.recorderSummary.isRecording
+                        ? l10n.mainRecordingStop
+                        : l10n.mainRecordingStart,
+                    icon: Icons.touch_app_outlined,
+                    enabled: actionsEnabled &&
+                        state.overlayStatus.visible &&
+                        !state.isRecorderActionInProgress,
+                    onTap: () {
+                      context.read<MainScreenBloc>().add(
+                            state.recorderSummary.isRecording
+                                ? const MainScreenRecorderStopRequested()
+                                : const MainScreenRecorderStartRequested(),
+                          );
+                    },
+                  ),
+                  MainActionCard(
+                    title: l10n.mainTestAction,
+                    icon: Icons.play_circle_outline,
+                    enabled: actionsEnabled,
+                    onTap: () {},
+                  ),
+                  MainActionCard(
+                    title: state.overlayStatus.visible
+                        ? l10n.mainAutostartActionDisable
+                        : l10n.mainAutostartActionEnable,
+                    icon: Icons.power_settings_new_outlined,
+                    enabled: actionsEnabled &&
+                        !state.recorderSummary.isRecording &&
+                        !state.isOverlayActionInProgress,
+                    onTap: () {
+                      context.read<MainScreenBloc>().add(
+                            const MainScreenOverlayToggleRequested(),
+                          );
+                    },
+                  ),
+                  MainActionCard(
+                    title: l10n.mainOpenSettings,
+                    icon: Icons.settings_outlined,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: _BuildMainContent(state: state),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BuildMainContent extends StatelessWidget {
+  const _BuildMainContent({
+    required this.state,
+  });
+
+  final MainScreenState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (state.status == MainScreenStatus.initial ||
+        state.status == MainScreenStatus.loading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (state.status == MainScreenStatus.failure) {
+      return Center(
+        child: Text(l10n.errorPlatformLoad),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<MainScreenBloc>().add(
+              const MainScreenRequested(),
+            );
+      },
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          RecorderSummaryCard(recorderSummary: state.recorderSummary),
+          OverlayStatusCard(overlayStatus: state.overlayStatus),
+          PlatformInfoCard(platformInfo: state.platformInfo),
+        ],
+      ),
+    );
+  }
+}
