@@ -19,7 +19,7 @@ Stage policy:
 - The official project status is defined by documentation, not by the presence of experimental code
 
 Official current stage:
-- Stage 7 — Screenshot Verifier Integration
+- Stage 7 — Scheduler
 
 Completed stages:
 - Stage 1: Application shell
@@ -30,24 +30,28 @@ Completed stages:
 - Stage 6: Execution Engine Hardening
 
 Active stage details:
-- Stage 7: Screenshot Verifier Integration
+- Stage 7: Scheduler
   - Scope:
-    - optimize screenshot verification cost
-    - integrate verification into execution safety flow
-    - harden MediaProjection lifecycle handling
+    - develop task scheduler for automation scenarios
+    - integrate scheduler with system events (e.g., time, device events)
+    - add UI for schedule configuration and auto-launch
+    - ensure safety and control over automatic launches
+    - implement priority and task queue logic
   - Entry criteria:
     - Stage 6 completed
   - Exit criteria:
-    - Verifier runs stably without memory leaks
-    - Verifier integrated with execution engine
-    - UI supports configuring verification parameters
+    - Scheduler allows launching scenarios on schedule without manual intervention
+    - Integration with system events works stably
+    - UI provides full control over scheduling
+    - Stage results documented
 
 
 Next stages:
-- Stage 6: Execution Engine Hardening
-  - Scope:
-    - finalize execution sequencing
-    - add watchdog and stop guarantees
+- Stage 8: Autostart
+- Stage 9: WebSocket Server
+- Stage 10: Scenario Storage
+- Stage 11: Settings Persistence and Advanced Configuration
+- Stage 12: Screenshot Verifier Integration
     - guarantee stable pause/resume/stop behavior
   - Starts only after Stage 5 exit criteria are complete
 
