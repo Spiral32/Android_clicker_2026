@@ -201,7 +201,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   _SectionCard(
                     title: l10n.settingsLanguageTitle,
                     subtitle:
-                        'Выберите язык приложения. Переключение применяется сразу.',
+                        'Выберите язык приложения.',
                     child: const Align(
                       alignment: Alignment.centerLeft,
                       child: AppLanguageSwitcher(),
@@ -326,7 +326,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
-                          height: 120,
+                          height: 130,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: const Color(0xFF10151C),
