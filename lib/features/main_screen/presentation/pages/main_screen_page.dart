@@ -184,55 +184,6 @@ class _MainScreenViewState extends State<_MainScreenView>
                     },
                   ),
 
-                  if (!state.recorderSummary.isRecording &&
-                      state.recorderSummary.totalActions > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFB42318),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          onPressed: state.isRecorderActionInProgress
-                              ? null
-                              : () async {
-                                  final confirmed = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title:
-                                          Text(l10n.recorderClearConfirmTitle),
-                                      content: Text(
-                                          l10n.recorderClearConfirmMessage),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(false),
-                                          child: Text(l10n.commonCancel),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(true),
-                                          child: Text(l10n.commonConfirm),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-
-                                  if (confirmed == true && context.mounted) {
-                                    context.read<MainScreenBloc>().add(
-                                          const MainScreenRecorderClearRequested(),
-                                        );
-                                  }
-                                },
-                          icon: const Icon(Icons.delete_outline),
-                          label: Text(l10n.recorderClear),
-                        ),
-                      ),
-                    ),
-
                   // Кнопка выполнения (оставил как было, можно тоже сделать зелёной при необходимости)
                   MainActionCard(
                     title: state.executionSummary.isExecuting
@@ -297,6 +248,55 @@ class _MainScreenViewState extends State<_MainScreenView>
                           );
                     },
                   ),
+
+                  if (!state.recorderSummary.isRecording &&
+                      state.recorderSummary.totalActions > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey[700],
+                            side: BorderSide(color: Colors.grey[300]!),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: state.isRecorderActionInProgress
+                              ? null
+                              : () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title:
+                                          Text(l10n.recorderClearConfirmTitle),
+                                      content: Text(
+                                          l10n.recorderClearConfirmMessage),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: Text(l10n.commonCancel),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
+                                          child: Text(l10n.commonConfirm),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmed == true && context.mounted) {
+                                    context.read<MainScreenBloc>().add(
+                                          const MainScreenRecorderClearRequested(),
+                                        );
+                                  }
+                                },
+                          icon: const Icon(Icons.delete_outline),
+                          label: Text(l10n.recorderClear),
+                        ),
+                      ),
+                    ),
 
                   const SizedBox(height: 16),
                   if (state.status == MainScreenStatus.initial ||
