@@ -35,55 +35,26 @@
 
 ---
 
-## Текущий официальный этап
-
-### Stage 7 — Screenshot Verifier Integration
-
-Проект перешёл на этот этап после успешного завершения `Stage 6`.
-
----
-
-## Что делаем сейчас
-
-### Цель Stage 7
-
-Интегрировать механизм проверки снимков экрана (Screenshot Verifier) в процесс автоматизации.
-
-### В рамках Stage 7 нужно:
-- оптимизировать процесс создания скриншотов через MediaProjection (уменьшить задержки и потребление памяти)
-- реализовать алгоритм сравнения изображений или поиска паттернов на экране
-- интегрировать Verifier в ExecutionEngine для проверки условий (например, "дождаться появления кнопки перед тапом")
-- безопасно обрабатывать жизненный цикл MediaProjection
-- добавить настройки для верификатора в UI (например, порог схожести)
-
-### Stage 7 считается завершённым, когда:
-- MediaProjection работает стабильно без утечек памяти
-- функция снятия и сравнения скриншотов вызывается без сбоев из ExecutionEngine
-- UI позволяет управлять параметрами верификации
-- результаты этапа зафиксированы в документации
-
----
-
 ## Что будет следующим
 
-### Stage 8 — Scheduler
+### Stage 7 — Scheduler
 
-Начинается только после полного завершения `Stage 7`.
+Начинается только после полного завершения `Stage 6`.
 
 В него входит:
-- оптимизация screenshot verification
-- безопасная MediaProjection lifecycle-интеграция
-- интеграция verifier в execution safety flow
+- планировщик задач для автоматизации
+- управление расписанием выполнения сценариев
+- интеграция с системными событиями для запуска автоматизации
 
 ---
 
 ## Дальнейшие этапы
 
-### Stage 8 — Scheduler
-### Stage 9 — Autostart
-### Stage 10 — WebSocket Server
-### Stage 11 — Scenario Storage
-### Stage 12 — Settings Persistence and Advanced Configuration
+### Stage 8 — Autostart
+### Stage 9 — WebSocket Server
+### Stage 10 — Scenario Storage
+### Stage 11 — Settings Persistence and Advanced Configuration
+### Stage 12 — Screenshot Verifier Integration
 
 ---
 
