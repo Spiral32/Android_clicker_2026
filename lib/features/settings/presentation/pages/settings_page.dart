@@ -346,16 +346,7 @@ class _WebSocketSection extends StatefulWidget {
 
 class _WebSocketSectionState extends State<_WebSocketSection> {
   final TextEditingController _portController = TextEditingController();
-  Map<String, dynamic>? _status;
-  String? _loadError;
-  bool _isLoading = true;
-  bool _isBusy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStatus();
-  }
+  String? _lastSyncedPort;
 
   @override
   void dispose() {
@@ -363,55 +354,8 @@ class _WebSocketSectionState extends State<_WebSocketSection> {
     super.dispose();
   }
 
-  Future<void> _loadStatus() async {
-    setState(() {
-      _isLoading = true;
-      _loadError = null;
-    });
-    try {
-      final dataSource = context.read<PlatformBridgeDataSource>();
-      final status = await dataSource.getWebSocketStatus();
-      if (!mounted) return;
-      _portController.text = '${status['port'] ?? ''}';
-      setState(() {
-        _status = status;
-        _isLoading = false;
-        _loadError = null;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      final message = _formatWebSocketError(error);
-      setState(() {
-        _status ??= const <String, dynamic>{};
-        _isLoading = false;
-        _loadError = message;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    }
-  }
-
   Future<void> _setEnabled(bool enabled) async {
-    final l10n = AppLocalizations.of(context)!;
-    setState(() => _isBusy = true);
-    try {
-      final dataSource = context.read<PlatformBridgeDataSource>();
-      final status = await dataSource.setWebSocketEnabled(enabled);
-      if (!mounted) return;
-      _portController.text = '${status['port'] ?? ''}';
-      setState(() {
-        _status = status;
-        _isBusy = false;
-        _loadError = null;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _isBusy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.settingsGenericErrorPrefix}: $error')),
-      );
-    }
+    context.read<SettingsBloc>().add(SettingsWebSocketEnabledToggled(enabled));
   }
 
   Future<void> _applyPort() async {
@@ -423,229 +367,197 @@ class _WebSocketSectionState extends State<_WebSocketSection> {
       );
       return;
     }
-
-    setState(() => _isBusy = true);
-    try {
-      final dataSource = context.read<PlatformBridgeDataSource>();
-      final status = await dataSource.setWebSocketPort(port);
-      if (!mounted) return;
-      setState(() {
-        _status = status;
-        _isBusy = false;
-        _loadError = null;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _isBusy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.settingsGenericErrorPrefix}: $error')),
-      );
-    }
+    _lastSyncedPort = _portController.text.trim();
+    context.read<SettingsBloc>().add(SettingsWebSocketPortSubmitted(port));
   }
 
   Future<void> _regenerateToken() async {
-    final l10n = AppLocalizations.of(context)!;
-    setState(() => _isBusy = true);
-    try {
-      final dataSource = context.read<PlatformBridgeDataSource>();
-      final result = await dataSource.regenerateWebSocketToken();
-      final rawStatus = result['status'];
-      final status = rawStatus is Map
-          ? rawStatus.map(
-              (key, value) => MapEntry(key.toString(), value),
-            )
-          : _status;
-      if (!mounted) return;
-      setState(() {
-        _status = status;
-        _isBusy = false;
-        _loadError = null;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _isBusy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.settingsGenericErrorPrefix}: $error')),
-      );
-    }
-  }
-
-  String _formatWebSocketError(Object error) {
-    AppLocalizations? l10n;
-    try {
-      l10n = AppLocalizations.of(context);
-    } catch (_) {
-      l10n = null;
-    }
-    if (error is TimeoutException) {
-      return l10n?.settingsWebSocketTimeoutError ??
-          'WebSocket status did not respond in time.';
-    }
-    final prefix =
-        l10n?.settingsWebSocketLoadError ?? 'Failed to load WebSocket status';
-    return '$prefix: $error';
+    context.read<SettingsBloc>().add(const SettingsWebSocketTokenRegenerated());
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final status = _status ?? const <String, dynamic>{};
-    final enabled = status['enabled'] as bool? ?? false;
-    final running = status['running'] as bool? ?? false;
-    final clientConnected = status['clientConnected'] as bool? ?? false;
-    final port = status['port']?.toString() ?? '';
-    final token = status['token']?.toString() ?? '';
-    final clientAddress = status['clientAddress']?.toString();
-    final transport = status['transport']?.toString() ?? 'ws';
-    final authMode = status['authMode']?.toString() ?? 'query_token';
-    final urls = ((status['urls'] as List?) ?? const [])
-        .map((value) => value.toString())
-        .where((value) => value.isNotEmpty)
-        .toList();
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, state) {
+        final status = state.webSocketStatus;
+        final enabled = status.enabled;
+        final running = status.running;
+        final clientConnected = status.clientConnected;
+        final port = status.port?.toString() ?? '';
+        final token = status.token;
+        final clientAddress = status.clientAddress;
+        final transport = status.transport;
+        final authMode = status.authMode;
+        final urls = status.urls;
 
-    return _SectionCard(
-      icon: Icons.wifi_tethering_outlined,
-      title: l10n.settingsWebSocketTitle,
-      subtitle: l10n.settingsWebSocketSubtitle,
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.settingsWebSocketEnableSubtitle),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+        final canSyncPort =
+            _portController.text.isEmpty || _portController.text == _lastSyncedPort;
+        if (canSyncPort && port.isNotEmpty && port != _lastSyncedPort) {
+          _portController.text = port;
+          _lastSyncedPort = port;
+        }
+
+        final loadError = switch (state.webSocketError) {
+          'websocket_timeout' => l10n.settingsWebSocketTimeoutError,
+          final value? when value.startsWith('websocket_error:') =>
+            '${l10n.settingsWebSocketLoadError}: ${value.substring('websocket_error:'.length)}',
+          _ => null,
+        };
+
+        return _SectionCard(
+          icon: Icons.wifi_tethering_outlined,
+          title: l10n.settingsWebSocketTitle,
+          subtitle: l10n.settingsWebSocketSubtitle,
+          child: state.isWebSocketLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    FilledButton.icon(
-                      onPressed: _isBusy ? null : () => _setEnabled(!enabled),
-                      icon: Icon(
-                        enabled
-                            ? Icons.power_settings_new
-                            : Icons.play_arrow_rounded,
-                      ),
-                      label: Text(
-                        enabled
-                            ? l10n.settingsWebSocketDisableAction
-                            : l10n.settingsWebSocketEnableAction,
-                      ),
-                    ),
-                    if (_isBusy)
-                      const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2.4),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (_loadError != null) ...[
-                  _InlineErrorBox(message: _loadError!),
-                  const SizedBox(height: 12),
-                ],
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _InfoChip(
-                      label: l10n.settingsWebSocketRunningLabel,
-                      value: running
-                          ? l10n.settingsWebSocketStatusRunning
-                          : l10n.settingsWebSocketStatusStopped,
-                    ),
-                    _InfoChip(
-                      label: l10n.settingsWebSocketClientLabel,
-                      value: clientConnected
-                          ? (clientAddress ??
-                              l10n.settingsWebSocketStatusClientConnected)
-                          : l10n.settingsWebSocketStatusNoClient,
-                    ),
-                    _InfoChip(
-                      label: l10n.settingsWebSocketTransportLabel,
-                      value: transport,
-                    ),
-                    _InfoChip(
-                      label: l10n.settingsWebSocketAuthLabel,
-                      value: (authMode == 'query_token' ||
-                              authMode == 'bearer_token_preferred')
-                          ? l10n.settingsWebSocketAuthModeQueryToken
-                          : authMode,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _portController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: l10n.settingsWebSocketPortLabel,
-                          hintText: port,
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    FilledButton.tonal(
-                      onPressed: _isBusy ? null : _applyPort,
-                      child: Text(l10n.settingsWebSocketApplyPort),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: _isBusy ? null : _loadStatus,
-                      icon: const Icon(Icons.refresh),
-                      label: Text(l10n.settingsWebSocketRefreshAction),
-                    ),
-                    FilledButton.tonalIcon(
-                      onPressed: _isBusy ? null : _regenerateToken,
-                      icon: const Icon(Icons.key_outlined),
-                      label: Text(l10n.settingsWebSocketRegenerateToken),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.settingsWebSocketTokenLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 6),
-                _CodeBox(text: token),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.settingsWebSocketUrlsLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 6),
-                if (urls.isEmpty)
-                  Text(
-                    l10n.settingsWebSocketUnavailableAddress,
-                    style: const TextStyle(color: Color(0xFF5A6B7D)),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: urls
-                        .map(
-                          (url) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: _CodeBox(text: url),
+                    Text(l10n.settingsWebSocketEnableSubtitle),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: state.isWebSocketBusy
+                              ? null
+                              : () => _setEnabled(!enabled),
+                          icon: Icon(
+                            enabled
+                                ? Icons.power_settings_new
+                                : Icons.play_arrow_rounded,
                           ),
-                        )
-                        .toList(),
-                  ),
-              ],
-            ),
+                          label: Text(
+                            enabled
+                                ? l10n.settingsWebSocketDisableAction
+                                : l10n.settingsWebSocketEnableAction,
+                          ),
+                        ),
+                        if (state.isWebSocketBusy)
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2.4),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (loadError != null) ...[
+                      _InlineErrorBox(message: loadError),
+                      const SizedBox(height: 12),
+                    ],
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _InfoChip(
+                          label: l10n.settingsWebSocketRunningLabel,
+                          value: running
+                              ? l10n.settingsWebSocketStatusRunning
+                              : l10n.settingsWebSocketStatusStopped,
+                        ),
+                        _InfoChip(
+                          label: l10n.settingsWebSocketClientLabel,
+                          value: clientConnected
+                              ? (clientAddress ??
+                                  l10n.settingsWebSocketStatusClientConnected)
+                              : l10n.settingsWebSocketStatusNoClient,
+                        ),
+                        _InfoChip(
+                          label: l10n.settingsWebSocketTransportLabel,
+                          value: transport,
+                        ),
+                        _InfoChip(
+                          label: l10n.settingsWebSocketAuthLabel,
+                          value: (authMode == 'query_token' ||
+                                  authMode == 'bearer_token_preferred')
+                              ? l10n.settingsWebSocketAuthModeQueryToken
+                              : authMode,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _portController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: l10n.settingsWebSocketPortLabel,
+                              hintText: port,
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton.tonal(
+                          onPressed: state.isWebSocketBusy ? null : _applyPort,
+                          child: Text(l10n.settingsWebSocketApplyPort),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: state.isWebSocketBusy
+                              ? null
+                              : () => context
+                                  .read<SettingsBloc>()
+                                  .add(const SettingsWebSocketStatusRequested()),
+                          icon: const Icon(Icons.refresh),
+                          label: Text(l10n.settingsWebSocketRefreshAction),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: state.isWebSocketBusy
+                              ? null
+                              : _regenerateToken,
+                          icon: const Icon(Icons.key_outlined),
+                          label: Text(l10n.settingsWebSocketRegenerateToken),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.settingsWebSocketTokenLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    _CodeBox(text: token),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.settingsWebSocketUrlsLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    if (urls.isEmpty)
+                      Text(
+                        l10n.settingsWebSocketUnavailableAddress,
+                        style: const TextStyle(color: Color(0xFF5A6B7D)),
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: urls
+                            .map(
+                              (url) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _CodeBox(text: url),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                  ],
+                ),
+        );
+      },
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:prog_set_touch/features/main_screen/domain/platform_bridge_repos
 import 'package:prog_set_touch/features/main_screen/domain/platform_info.dart';
 import 'package:prog_set_touch/features/main_screen/domain/permission_status.dart';
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
+import 'package:prog_set_touch/features/settings/domain/web_socket_status.dart';
 
 class PlatformBridgeDataSource implements PlatformBridgeRepository {
   static const Duration _webSocketMethodTimeout = Duration(seconds: 5);
@@ -380,31 +381,43 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
     await _channel.invokeMethod<void>('setAutostartEnabled', {'enabled': enabled});
   }
 
-  Future<Map<String, dynamic>> getWebSocketStatus() async {
-    return _invokeMap('getWebSocketStatus').timeout(_webSocketMethodTimeout);
+  @override
+  Future<WebSocketStatus> getWebSocketStatus() async {
+    final result = await _invokeMap('getWebSocketStatus').timeout(_webSocketMethodTimeout);
+    return WebSocketStatus.fromMap(result);
   }
 
-  Future<Map<String, dynamic>> setWebSocketEnabled(bool enabled) async {
+  @override
+  Future<WebSocketStatus> setWebSocketEnabled(bool enabled) async {
     final result = await _channel.invokeMethod<dynamic>(
       'setWebSocketEnabled',
       {'enabled': enabled},
     ).timeout(_webSocketMethodTimeout);
-    return PlatformResultParser.parseMap(result);
+    return WebSocketStatus.fromMap(PlatformResultParser.parseMap(result));
   }
 
-  Future<Map<String, dynamic>> setWebSocketPort(int port) async {
+  @override
+  Future<WebSocketStatus> setWebSocketPort(int port) async {
     final result = await _channel.invokeMethod<dynamic>(
       'setWebSocketPort',
       {'port': port},
     ).timeout(_webSocketMethodTimeout);
-    return PlatformResultParser.parseMap(result);
+    return WebSocketStatus.fromMap(PlatformResultParser.parseMap(result));
   }
 
-  Future<Map<String, dynamic>> regenerateWebSocketToken() async {
+  @override
+  Future<WebSocketStatus> regenerateWebSocketToken() async {
     final result = await _channel
         .invokeMethod<dynamic>('regenerateWebSocketToken')
         .timeout(_webSocketMethodTimeout);
-    return PlatformResultParser.parseMap(result);
+    final payload = PlatformResultParser.parseMap(result);
+    final rawStatus = payload['status'];
+    if (rawStatus is Map) {
+      return WebSocketStatus.fromMap(
+        rawStatus.map((key, value) => MapEntry(key.toString(), value)),
+      );
+    }
+    return WebSocketStatus.fromMap(payload);
   }
 
   Future<void> _invokeVoid(String method) async {

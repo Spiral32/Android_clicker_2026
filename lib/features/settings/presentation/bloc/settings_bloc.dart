@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:prog_set_touch/core/error/app_logger.dart';
@@ -5,6 +7,7 @@ import 'package:prog_set_touch/core/localization/app_locale.dart';
 import 'package:prog_set_touch/features/main_screen/domain/platform_bridge_repository.dart';
 import 'package:prog_set_touch/features/settings/domain/app_settings.dart';
 import 'package:prog_set_touch/features/settings/domain/settings_repository.dart';
+import 'package:prog_set_touch/features/settings/domain/web_socket_status.dart';
 
 part 'settings_event.dart';
 part 'settings_state.dart';
@@ -23,6 +26,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<SettingsAutostartToggled>(_onAutostartToggled);
     on<SettingsLoggingToggled>(_onLoggingToggled);
     on<SettingsLogToFileToggled>(_onLogToFileToggled);
+    on<SettingsWebSocketStatusRequested>(_onWebSocketStatusRequested);
+    on<SettingsWebSocketEnabledToggled>(_onWebSocketEnabledToggled);
+    on<SettingsWebSocketPortSubmitted>(_onWebSocketPortSubmitted);
+    on<SettingsWebSocketTokenRegenerated>(_onWebSocketTokenRegenerated);
   }
 
   final AppLogger _logger;
@@ -145,5 +152,118 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         ),
       );
     }
+  }
+
+  Future<void> _onWebSocketStatusRequested(
+    SettingsWebSocketStatusRequested event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      emit(
+        state.copyWith(
+          isWebSocketLoading: true,
+          clearWebSocketError: true,
+        ),
+      );
+      final status = await _platformBridgeRepository.getWebSocketStatus();
+      emit(
+        state.copyWith(
+          webSocketStatus: status,
+          isWebSocketLoading: false,
+          clearWebSocketError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('settings_bloc_websocket_status', error, stackTrace);
+      emit(
+        state.copyWith(
+          isWebSocketLoading: false,
+          webSocketError: _formatWebSocketError(error),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onWebSocketEnabledToggled(
+    SettingsWebSocketEnabledToggled event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(isWebSocketBusy: true, clearWebSocketError: true));
+      final status =
+          await _platformBridgeRepository.setWebSocketEnabled(event.enabled);
+      emit(
+        state.copyWith(
+          webSocketStatus: status,
+          isWebSocketBusy: false,
+          clearWebSocketError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('settings_bloc_websocket_toggle', error, stackTrace);
+      emit(
+        state.copyWith(
+          isWebSocketBusy: false,
+          webSocketError: _formatWebSocketError(error),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onWebSocketPortSubmitted(
+    SettingsWebSocketPortSubmitted event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(isWebSocketBusy: true, clearWebSocketError: true));
+      final status = await _platformBridgeRepository.setWebSocketPort(event.port);
+      emit(
+        state.copyWith(
+          webSocketStatus: status,
+          isWebSocketBusy: false,
+          clearWebSocketError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('settings_bloc_websocket_port', error, stackTrace);
+      emit(
+        state.copyWith(
+          isWebSocketBusy: false,
+          webSocketError: _formatWebSocketError(error),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onWebSocketTokenRegenerated(
+    SettingsWebSocketTokenRegenerated event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(isWebSocketBusy: true, clearWebSocketError: true));
+      final status = await _platformBridgeRepository.regenerateWebSocketToken();
+      emit(
+        state.copyWith(
+          webSocketStatus: status,
+          isWebSocketBusy: false,
+          clearWebSocketError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('settings_bloc_websocket_token', error, stackTrace);
+      emit(
+        state.copyWith(
+          isWebSocketBusy: false,
+          webSocketError: _formatWebSocketError(error),
+        ),
+      );
+    }
+  }
+
+  String _formatWebSocketError(Object error) {
+    if (error is TimeoutException) {
+      return 'websocket_timeout';
+    }
+    return 'websocket_error:$error';
   }
 }

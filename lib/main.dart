@@ -67,7 +67,9 @@ class ProgSetTouchApp extends StatelessWidget {
               logger: appScope.logger,
               repository: appScope.settingsRepository,
               platformBridgeRepository: appScope.platformBridge,
-            )..add(const SettingsNativeStatusRequested()),
+            )
+              ..add(const SettingsNativeStatusRequested())
+              ..add(const SettingsWebSocketStatusRequested()),
           ),
           BlocProvider(
             create: (_) => SchedulerBloc(

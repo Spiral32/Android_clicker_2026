@@ -4,6 +4,7 @@ import 'package:prog_set_touch/features/main_screen/domain/platform_info.dart';
 import 'package:prog_set_touch/features/main_screen/domain/overlay_status.dart';
 import 'package:prog_set_touch/features/main_screen/domain/permission_status.dart';
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
+import 'package:prog_set_touch/features/settings/domain/web_socket_status.dart';
 export 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart' show RecorderMode;
 
 abstract class PlatformBridgeRepository {
@@ -80,6 +81,14 @@ abstract class PlatformBridgeRepository {
   Future<bool> getAutostartEnabled();
 
   Future<void> setAutostartEnabled(bool enabled);
+
+  Future<WebSocketStatus> getWebSocketStatus();
+
+  Future<WebSocketStatus> setWebSocketEnabled(bool enabled);
+
+  Future<WebSocketStatus> setWebSocketPort(int port);
+
+  Future<WebSocketStatus> regenerateWebSocketToken();
 
   Stream<ExecutionSummary> get executionUpdates;
 }

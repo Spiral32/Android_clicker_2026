@@ -11,3 +11,4 @@
 - Scenario import/export now includes native recorded actions, so imported scenarios remain executable.
 - Stage 10 is closed; the next official active stage is Stage 11 (`Settings Persistence and Advanced Configuration`).
 - Legacy diagnostics settings page now forwards to the main `SettingsPage`, removing duplicated direct MethodChannel settings flow.
+- WebSocket settings UI now uses the shared `SettingsBloc` and a typed `WebSocketStatus` model instead of widget-local dynamic maps.

@@ -374,3 +374,44 @@ Applied direction:
 - `SettingsBloc` now loads native autostart/logging/log-to-file state on startup
 - autostart and logging toggle actions dispatch bloc events instead of calling platform bridge directly from UI state holders
 - `SettingsPage` listens for settings errors centrally and shows one snackbar path
+
+[2026-04-27]
+Decision:
+`AppSettings` should contain only settings actually owned and persisted by the Flutter settings repository.
+
+Why:
+- unused fields make the Stage 11 storage contract look larger than it really is
+- WebSocket runtime settings are currently owned by the Android side and exposed through dedicated platform APIs
+- shrinking the model reduces confusion before expanding the contract further
+
+Applied direction:
+- removed unused `websocketHost` and `websocketPort` from `AppSettings`
+- retained only the settings currently persisted by the shared Flutter repository (`locale`, `executionDelayMs`)
+
+[2026-04-27]
+Decision:
+WebSocket advanced configuration should follow the shared settings orchestration flow instead of isolated widget-local state management.
+
+Why:
+- WebSocket enable/port/token actions are part of advanced configuration and should obey the same Stage 11 hardening direction
+- widget-local async state makes future persistence and multi-entry consistency harder
+- central orchestration simplifies refresh, error handling, and reuse from other settings surfaces
+
+Applied direction:
+- added typed WebSocket methods to `PlatformBridgeRepository`
+- `SettingsBloc` now owns WebSocket load/busy/error/status state
+- `SettingsPage` WebSocket section dispatches bloc events for refresh, enable/disable, port apply, and token regeneration
+
+[2026-04-27]
+Decision:
+Flutter WebSocket settings state should use a typed status model instead of raw `Map<String, dynamic>` payloads.
+
+Why:
+- raw maps make the Stage 11 settings contract harder to reason about and easier to break during refactors
+- WebSocket status is now part of the main advanced settings flow and deserves the same type-safety as other domain state
+- typed parsing gives one normalization point for port, token, auth mode, and URLs
+
+Applied direction:
+- introduced `WebSocketStatus` as the Flutter-side advanced settings model
+- `PlatformBridgeRepository` WebSocket methods now return typed status values
+- `SettingsBloc` and `SettingsPage` consume typed WebSocket state instead of indexing into dynamic maps
