@@ -50,6 +50,7 @@ Stage 11 implementation progress:
 - [x] Native logging toggles now persist across restart
 - [x] Legacy diagnostics settings flow collapsed into the main Settings page
 - [x] Recorder clear action now uses typed platform bridge contract instead of dynamic access
+- [x] Autostart and logging toggles are now driven through the shared SettingsBloc
 - [ ] Settings storage contract finalized
 - [ ] Persistent settings backend audited and hardened
 - [ ] Advanced configuration flows prioritized

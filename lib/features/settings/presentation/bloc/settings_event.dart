@@ -15,3 +15,34 @@ final class SettingsLocaleChanged extends SettingsEvent {
   @override
   List<Object?> get props => [locale];
 }
+
+final class SettingsNativeStatusRequested extends SettingsEvent {
+  const SettingsNativeStatusRequested();
+}
+
+final class SettingsAutostartToggled extends SettingsEvent {
+  const SettingsAutostartToggled(this.enabled);
+
+  final bool enabled;
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+final class SettingsLoggingToggled extends SettingsEvent {
+  const SettingsLoggingToggled(this.enabled);
+
+  final bool enabled;
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+final class SettingsLogToFileToggled extends SettingsEvent {
+  const SettingsLogToFileToggled(this.enabled);
+
+  final bool enabled;
+
+  @override
+  List<Object?> get props => [enabled];
+}

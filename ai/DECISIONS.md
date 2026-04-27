@@ -360,3 +360,17 @@ Why:
 Applied direction:
 - `clearRecorder()` is now part of the typed `PlatformBridgeRepository` contract
 - `MainScreenBloc` no longer uses `as dynamic` for recorder maintenance actions
+
+[2026-04-27]
+Decision:
+Autostart and logging toggles should be coordinated through `SettingsBloc` instead of isolated widget-local async state.
+
+Why:
+- Stage 11 aims to make settings behavior consistent and easier to persist across refactors
+- widget-local loading/toggle state duplicates responsibility and hides settings ownership
+- centralizing these toggles reduces divergence between sections and future settings screens
+
+Applied direction:
+- `SettingsBloc` now loads native autostart/logging/log-to-file state on startup
+- autostart and logging toggle actions dispatch bloc events instead of calling platform bridge directly from UI state holders
+- `SettingsPage` listens for settings errors centrally and shows one snackbar path

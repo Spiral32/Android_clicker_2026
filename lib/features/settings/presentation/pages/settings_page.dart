@@ -11,6 +11,7 @@ import 'package:prog_set_touch/core/error/app_logger.dart';
 import 'package:prog_set_touch/features/main_screen/data/platform_bridge_data_source.dart';
 import 'package:prog_set_touch/features/main_screen/presentation/bloc/main_screen_bloc.dart';
 import 'package:prog_set_touch/features/scenario/presentation/bloc/scenario_bloc.dart';
+import 'package:prog_set_touch/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -20,98 +21,79 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.settingsTitle)),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const _PermissionsSection(),
-            const SizedBox(height: 16),
-            const _ExecutionSection(),
-            const SizedBox(height: 16),
-            const _AutostartSection(),
-            const SizedBox(height: 16),
-            const _WebSocketSection(),
-            const SizedBox(height: 16),
-            const _LoggingSection(),
-            const SizedBox(height: 16),
-            const _ScenarioTransferSection(),
-          ],
+    return BlocListener<SettingsBloc, SettingsState>(
+      listenWhen: (previous, current) =>
+          previous.errorKey != current.errorKey && current.errorKey != null,
+      listener: (context, state) {
+        final message = _formatSettingsError(context, state.errorKey);
+        if (message == null) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message)));
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(l10n.settingsTitle)),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const _PermissionsSection(),
+              const SizedBox(height: 16),
+              const _ExecutionSection(),
+              const SizedBox(height: 16),
+              const _AutostartSection(),
+              const SizedBox(height: 16),
+              const _WebSocketSection(),
+              const SizedBox(height: 16),
+              const _LoggingSection(),
+              const SizedBox(height: 16),
+              const _ScenarioTransferSection(),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _AutostartSection extends StatefulWidget {
-  const _AutostartSection();
-
-  @override
-  State<_AutostartSection> createState() => _AutostartSectionState();
-}
-
-class _AutostartSectionState extends State<_AutostartSection> {
-  bool _enabled = true;
-  bool _loading = true;
-  bool _busy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAutostart();
-  }
-
-  Future<void> _loadAutostart() async {
-    try {
-      final dataSource = context.read<PlatformBridgeDataSource>();
-      final enabled = await dataSource.getAutostartEnabled();
-      if (!mounted) return;
-      setState(() {
-        _enabled = enabled;
-        _loading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _setAutostartEnabled(bool enabled) async {
+  String? _formatSettingsError(BuildContext context, String? errorKey) {
+    if (errorKey == null) return null;
     final l10n = AppLocalizations.of(context)!;
-    setState(() => _busy = true);
-    try {
-      final dataSource = context.read<PlatformBridgeDataSource>();
-      await dataSource.setAutostartEnabled(enabled);
-      if (!mounted) return;
-      setState(() {
-        _enabled = enabled;
-        _busy = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.settingsAutostartChangeError)),
-      );
-    }
+    return switch (errorKey) {
+      'settingsNativeStatusLoadError' => l10n.settingsGenericErrorPrefix,
+      'settingsAutostartChangeError' => l10n.settingsAutostartChangeError,
+      'settingsLoggingChangeError' => l10n.settingsGenericErrorPrefix,
+      'settingsLogToFileChangeError' => l10n.settingsGenericErrorPrefix,
+      _ => null,
+    };
   }
+}
+
+class _AutostartSection extends StatelessWidget {
+  const _AutostartSection();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return _SectionCard(
-      icon: Icons.autorenew_outlined,
-      title: l10n.settingsAutostartTitle,
-      subtitle: l10n.settingsAutostartSubtitle,
-      child: SwitchListTile.adaptive(
-        contentPadding: EdgeInsets.zero,
-        title: Text(l10n.settingsAutostartToggleTitle),
-        subtitle: Text(l10n.settingsAutostartToggleSubtitle),
-        value: _enabled,
-        onChanged: (_loading || _busy) ? null : _setAutostartEnabled,
-      ),
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, state) {
+        return _SectionCard(
+          icon: Icons.autorenew_outlined,
+          title: l10n.settingsAutostartTitle,
+          subtitle: l10n.settingsAutostartSubtitle,
+          child: SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.settingsAutostartToggleTitle),
+            subtitle: Text(l10n.settingsAutostartToggleSubtitle),
+            value: state.autostartEnabled,
+            onChanged: (state.isNativeSettingsLoading || state.isAutostartBusy)
+                ? null
+                : (enabled) => context
+                    .read<SettingsBloc>()
+                    .add(SettingsAutostartToggled(enabled)),
+          ),
+        );
+      },
     );
   }
 }
@@ -128,9 +110,6 @@ class _LoggingSectionState extends State<_LoggingSection> {
   String? _logFilePath;
   String _logSource = 'buffer';
   bool _isLoading = false;
-  bool _isToggling = false;
-  bool _loggingEnabled = true;
-  bool _logToFileEnabled = true;
   String? _lastExportedPath;
   final ScrollController _verticalLogScrollController = ScrollController();
   final ScrollController _horizontalLogScrollController = ScrollController();
@@ -156,16 +135,12 @@ class _LoggingSectionState extends State<_LoggingSection> {
       final results = await Future.wait<dynamic>([
         dataSource.getLogsSnapshot(),
         dataSource.getLogFilePath(),
-        dataSource.getLoggingEnabled(),
-        dataSource.getLogToFileEnabled(),
       ]);
       final snapshot = results[0] as Map<String, String>;
       setState(() {
         _logs = snapshot['logs'] ?? '';
         _logSource = snapshot['source'] ?? 'buffer';
         _logFilePath = results[1] as String?;
-        _loggingEnabled = results[2] as bool;
-        _logToFileEnabled = results[3] as bool;
       });
     } catch (e) {
       setState(() => _logs = '${l10n.settingsErrorLoadingLogsPrefix}: $e');
@@ -244,145 +219,120 @@ class _LoggingSectionState extends State<_LoggingSection> {
   }
 
   Future<void> _setLoggingEnabled(bool enabled) async {
-    final l10n = AppLocalizations.of(context)!;
-    setState(() => _isToggling = true);
-    try {
-      final dataSource = context.read<PlatformBridgeDataSource>();
-      await dataSource.setLoggingEnabled(enabled);
-      setState(() => _loggingEnabled = enabled);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${l10n.settingsGenericErrorPrefix}: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isToggling = false);
-      }
-    }
+    context.read<SettingsBloc>().add(SettingsLoggingToggled(enabled));
   }
 
   Future<void> _setLogToFileEnabled(bool enabled) async {
-    final l10n = AppLocalizations.of(context)!;
-    setState(() => _isToggling = true);
-    try {
-      final dataSource = context.read<PlatformBridgeDataSource>();
-      await dataSource.setLogToFileEnabled(enabled);
-      setState(() => _logToFileEnabled = enabled);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${l10n.settingsGenericErrorPrefix}: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isToggling = false);
-      }
-    }
+    context.read<SettingsBloc>().add(SettingsLogToFileToggled(enabled));
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return _SectionCard(
-      icon: Icons.monitor_heart_outlined,
-      title: l10n.settingsDiagnosticsTitle,
-      subtitle: l10n.settingsDiagnosticsSubtitle,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.settingsEnableLoggingTitle),
-            subtitle: Text(l10n.settingsEnableLoggingSubtitle),
-            value: _loggingEnabled,
-            onChanged: _isToggling ? null : _setLoggingEnabled,
-          ),
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.settingsLogToFileTitle),
-            subtitle: Text(_logFilePath ?? l10n.settingsNoLogFilePath),
-            value: _logToFileEnabled,
-            onChanged: _isToggling ? null : _setLogToFileEnabled,
-          ),
-          const SizedBox(height: 8),
-          _LogSourceChip(source: _logSource),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, state) {
+        final togglesBusy = state.isNativeSettingsLoading || state.isLoggingBusy;
+        return _SectionCard(
+          icon: Icons.monitor_heart_outlined,
+          title: l10n.settingsDiagnosticsTitle,
+          subtitle: l10n.settingsDiagnosticsSubtitle,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              OutlinedButton.icon(
-                onPressed: _isLoading ? null : _loadLogs,
-                icon: const Icon(Icons.refresh),
-                label: Text(l10n.settingsRefreshAction),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.settingsEnableLoggingTitle),
+                subtitle: Text(l10n.settingsEnableLoggingSubtitle),
+                value: state.loggingEnabled,
+                onChanged: togglesBusy ? null : _setLoggingEnabled,
               ),
-              OutlinedButton.icon(
-                onPressed: _clearLogs,
-                icon: const Icon(Icons.clear),
-                label: Text(l10n.settingsClearAction),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.settingsLogToFileTitle),
+                subtitle: Text(_logFilePath ?? l10n.settingsNoLogFilePath),
+                value: state.logToFileEnabled,
+                onChanged: togglesBusy ? null : _setLogToFileEnabled,
               ),
-              FilledButton.icon(
-                onPressed: _exportLogs,
-                icon: const Icon(Icons.download),
-                label: Text(l10n.settingsExportAction),
+              const SizedBox(height: 8),
+              _LogSourceChip(source: _logSource),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _loadLogs,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(l10n.settingsRefreshAction),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _clearLogs,
+                    icon: const Icon(Icons.clear),
+                    label: Text(l10n.settingsClearAction),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _exportLogs,
+                    icon: const Icon(Icons.download),
+                    label: Text(l10n.settingsExportAction),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: _shareExportedLogs,
+                    icon: const Icon(Icons.share),
+                    label: Text(l10n.settingsShareAction),
+                  ),
+                ],
               ),
-              FilledButton.tonalIcon(
-                onPressed: _shareExportedLogs,
-                icon: const Icon(Icons.share),
-                label: Text(l10n.settingsShareAction),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator())
-          else
-            Container(
-              height: 240,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F1724),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF263445)),
-              ),
-              child: Scrollbar(
-                controller: _verticalLogScrollController,
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  controller: _verticalLogScrollController,
-                  padding: const EdgeInsets.all(10),
+              const SizedBox(height: 14),
+              if (_isLoading)
+                const Center(child: CircularProgressIndicator())
+              else
+                Container(
+                  height: 240,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F1724),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF263445)),
+                  ),
                   child: Scrollbar(
-                    controller: _horizontalLogScrollController,
+                    controller: _verticalLogScrollController,
                     thumbVisibility: true,
-                    notificationPredicate: (notification) =>
-                        notification.metrics.axis == Axis.horizontal,
                     child: SingleChildScrollView(
-                      controller: _horizontalLogScrollController,
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width - 80,
-                        child: SelectableText(
-                          _logs.isEmpty ? l10n.settingsNoLogsAvailable : _logs,
-                          textAlign: TextAlign.left,
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            height: 1.35,
-                            color: Color(0xFFC7F9CC),
+                      controller: _verticalLogScrollController,
+                      padding: const EdgeInsets.all(10),
+                      child: Scrollbar(
+                        controller: _horizontalLogScrollController,
+                        thumbVisibility: true,
+                        notificationPredicate: (notification) =>
+                            notification.metrics.axis == Axis.horizontal,
+                        child: SingleChildScrollView(
+                          controller: _horizontalLogScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width - 80,
+                            child: SelectableText(
+                              _logs.isEmpty
+                                  ? l10n.settingsNoLogsAvailable
+                                  : _logs,
+                              textAlign: TextAlign.left,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11,
+                                height: 1.35,
+                                color: Color(0xFFC7F9CC),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
