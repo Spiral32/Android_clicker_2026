@@ -2,6 +2,11 @@
 
 ## 2026-04-27
 
+- Finalized the Stage 11 settings storage contract in `docs/SETTINGS_STORAGE_CONTRACT.md`.
+- Hardened settings persistence by normalizing restored/saved execution delay values to the supported range.
+- Synced `MainScreenBloc` execution-delay state with the normalized repository result instead of trusting raw input.
+- Restored the exact-alarm settings section in the main Settings page and grouped it with runtime/scheduler controls.
+- Confirmed Stage 11 settings flow works on device, including restart persistence validation.
 - Fixed scenario queue reordering persistence by correcting order normalization logic.
 - Fixed potential app crash during settings/log export by removing hardcoded export path usage and making platform export arguments safe.
 - Fixed Android crash during scenario JSON export by switching export to temporary-file generation plus system share flow.

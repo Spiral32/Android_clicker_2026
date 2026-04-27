@@ -13,12 +13,14 @@ class SharedPrefsSettingsRepository implements SettingsRepository {
   @override
   AppSettings load() {
     final localeCode = _prefs.getString(_localeKey);
-    final executionDelayMs =
-        _prefs.getInt(_executionDelayMsKey) ?? AppSettings.initial().executionDelayMs;
-    return AppSettings.initial().copyWith(
-      locale: localeCode == null
-          ? AppLocale.ru
-          : AppLocale.fromLanguageCode(localeCode),
+    final locale = localeCode == null
+        ? AppSettings.defaultLocale
+        : AppLocale.fromLanguageCode(localeCode);
+    final executionDelayMs = _prefs.getInt(_executionDelayMsKey) ??
+        AppSettings.initial().executionDelayMs;
+
+    return AppSettings.normalized(
+      locale: locale,
       executionDelayMs: executionDelayMs,
     );
   }
@@ -31,7 +33,13 @@ class SharedPrefsSettingsRepository implements SettingsRepository {
 
   @override
   Future<AppSettings> saveExecutionDelayMs(int delayMs) async {
-    await _prefs.setInt(_executionDelayMsKey, delayMs);
+    final normalizedDelayMs = delayMs
+        .clamp(
+          AppSettings.minExecutionDelayMs,
+          AppSettings.maxExecutionDelayMs,
+        )
+        .toInt();
+    await _prefs.setInt(_executionDelayMsKey, normalizedDelayMs);
     return load();
   }
 }

@@ -415,3 +415,46 @@ Applied direction:
 - introduced `WebSocketStatus` as the Flutter-side advanced settings model
 - `PlatformBridgeRepository` WebSocket methods now return typed status values
 - `SettingsBloc` and `SettingsPage` consume typed WebSocket state instead of indexing into dynamic maps
+
+[2026-04-27]
+Decision:
+Stage 11 settings persistence must have an explicit storage contract and normalized repository boundary.
+
+Why:
+- persisted settings are now split across Flutter-owned and Android-owned keys
+- restart stability depends on knowing which layer owns each key and which values are safe to restore
+- corrupted or legacy persisted values should not leak directly into UI/runtime state
+
+Applied direction:
+- documented the current Stage 11 settings storage contract in `docs/SETTINGS_STORAGE_CONTRACT.md`
+- kept Flutter `AppSettings` limited to Flutter-owned persisted values only
+- normalized persisted `execution_delay_ms` at repository/domain boundary to the supported range `1000..120000`
+- `MainScreenBloc` now rehydrates execution delay from the normalized repository result instead of trusting raw event input
+
+[2026-04-27]
+Decision:
+Advanced configuration flows must remain visible and prioritized in the main Settings page, including exact-alarm controls.
+
+Why:
+- scheduler-related Android constraints are part of production settings behavior, not a hidden diagnostics concern
+- exact-alarm capability directly affects runtime predictability for scheduled execution
+- Stage 11 aims to consolidate advanced configuration into one stable settings surface
+
+Applied direction:
+- restored the exact-alarm section in `SettingsPage`
+- grouped exact-alarm controls near autostart/runtime settings instead of leaving them implicit in native code only
+- treated WebSocket, exact alarms, logging, and scenario transfer as explicit advanced settings sections in the main flow
+
+[2026-04-27]
+Decision:
+Stage 11 is officially closed after user-confirmed real-device restart persistence validation.
+
+Why:
+- Stage 11 exit criteria require persisted settings restore after restart and validated integration with the native/runtime settings path
+- the user confirmed the implemented settings flow works on device
+- the remaining work items were documentation and confirmation rather than missing runtime behavior
+
+Applied direction:
+- marked Stage 11 completion in `ai/TASKS.md`
+- recorded device confirmation in project memory and changelog
+- next implementation stage can proceed without reopening settings persistence work by default

@@ -54,10 +54,19 @@ Stage 11 implementation progress:
 - [x] Removed unused WebSocket host/port fields from Flutter settings model to simplify the Stage 11 contract
 - [x] WebSocket advanced settings flow is now driven through SettingsBloc instead of local widget state
 - [x] WebSocket advanced settings contract is now type-safe in Flutter (`WebSocketStatus` model instead of raw maps)
-- [ ] Settings storage contract finalized
-- [ ] Persistent settings backend audited and hardened
-- [ ] Advanced configuration flows prioritized
-- [ ] Real-device restart persistence verification recorded in AI memory
+- [x] Settings storage contract finalized
+- [x] Persistent settings backend audited and hardened
+- [x] Shared Flutter settings repository now normalizes corrupted/out-of-range persisted execution delay values
+- [x] Advanced configuration flows prioritized
+- [x] Exact alarm settings flow restored in the main Settings page and grouped with scheduler/runtime controls
+- [x] Real-device restart persistence verification recorded in AI memory
+
+Stage 11 completion note (2026-04-27):
+- [x] User confirmed settings flow works after implementation pass
+- [x] User confirmed restart persistence validation on device
+- [x] Settings storage contract documented in `docs/SETTINGS_STORAGE_CONTRACT.md`
+- [x] Main Settings page now contains the prioritized advanced configuration flow
+- [x] Stage 11 officially closed in AI memory
 
 Stage 10 completion note (2026-04-27):
 - [x] WebSocket Stage 10 commands implemented (`start_single`, `start_batch`, `get_scenarios`)

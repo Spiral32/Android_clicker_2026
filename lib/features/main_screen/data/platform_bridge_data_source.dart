@@ -382,6 +382,17 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   }
 
   @override
+  Future<bool> getExactAlarmAllowed() async {
+    final result = await _invokeMap('getExactAlarmStatus');
+    return result['exactAlarmsAllowed'] as bool? ?? true;
+  }
+
+  @override
+  Future<void> openExactAlarmSettings() async {
+    await _invokeVoid('openExactAlarmSettings');
+  }
+
+  @override
   Future<WebSocketStatus> getWebSocketStatus() async {
     final result = await _invokeMap('getWebSocketStatus').timeout(_webSocketMethodTimeout);
     return WebSocketStatus.fromMap(result);

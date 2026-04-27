@@ -82,6 +82,10 @@ abstract class PlatformBridgeRepository {
 
   Future<void> setAutostartEnabled(bool enabled);
 
+  Future<bool> getExactAlarmAllowed();
+
+  Future<void> openExactAlarmSettings();
+
   Future<WebSocketStatus> getWebSocketStatus();
 
   Future<WebSocketStatus> setWebSocketEnabled(bool enabled);

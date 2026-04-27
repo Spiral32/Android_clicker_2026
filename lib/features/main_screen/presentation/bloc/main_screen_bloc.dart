@@ -11,6 +11,7 @@ import 'package:prog_set_touch/features/main_screen/domain/platform_info.dart';
 import 'package:prog_set_touch/features/main_screen/domain/permission_status.dart';
 import 'package:prog_set_touch/features/main_screen/domain/permission_type.dart';
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
+import 'package:prog_set_touch/features/settings/domain/app_settings.dart';
 import 'package:prog_set_touch/features/settings/domain/settings_repository.dart';
 
 part 'main_screen_event.dart';
@@ -613,11 +614,19 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     MainScreenExecutionDelayChanged event,
     Emitter<MainScreenState> emit,
   ) async {
-    emit(state.copyWith(executionDelayMs: event.delayMs));
     try {
-      await _settingsRepository.saveExecutionDelayMs(event.delayMs);
+      final settings = await _settingsRepository.saveExecutionDelayMs(event.delayMs);
+      emit(state.copyWith(executionDelayMs: settings.executionDelayMs));
     } catch (error, stackTrace) {
       _logger.logError('main_screen_bloc_execution_delay', error, stackTrace);
+      emit(
+        state.copyWith(
+          executionDelayMs: AppSettings.normalized(
+            locale: AppSettings.defaultLocale,
+            executionDelayMs: event.delayMs,
+          ).executionDelayMs,
+        ),
+      );
     }
   }
 

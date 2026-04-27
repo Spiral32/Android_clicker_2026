@@ -43,6 +43,8 @@ class SettingsPage extends StatelessWidget {
               const SizedBox(height: 16),
               const _AutostartSection(),
               const SizedBox(height: 16),
+              const _ExactAlarmSection(),
+              const SizedBox(height: 16),
               const _WebSocketSection(),
               const SizedBox(height: 16),
               const _LoggingSection(),
@@ -94,6 +96,144 @@ class _AutostartSection extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ExactAlarmSection extends StatefulWidget {
+  const _ExactAlarmSection();
+
+  @override
+  State<_ExactAlarmSection> createState() => _ExactAlarmSectionState();
+}
+
+class _ExactAlarmSectionState extends State<_ExactAlarmSection> {
+  bool _isLoading = true;
+  bool _isBusy = false;
+  bool _exactAlarmAllowed = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    final dataSource = context.read<PlatformBridgeDataSource>();
+    try {
+      final allowed = await dataSource.getExactAlarmAllowed();
+      if (!mounted) return;
+      setState(() {
+        _exactAlarmAllowed = allowed;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _openSettings() async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final dataSource = context.read<PlatformBridgeDataSource>();
+    try {
+      await dataSource.openExactAlarmSettings();
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.settingsExactAlarmOpenError)),
+      );
+    }
+  }
+
+  Future<void> _runAction(Future<void> Function() action) async {
+    if (_isBusy) return;
+    setState(() => _isBusy = true);
+    try {
+      await action();
+      await _loadStatus();
+    } finally {
+      if (mounted) {
+        setState(() => _isBusy = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return _SectionCard(
+      icon: Icons.alarm_on_outlined,
+      title: l10n.settingsExactAlarmTitle,
+      subtitle: l10n.settingsExactAlarmSubtitle,
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: _exactAlarmAllowed
+                        ? const Color(0xFFEAF9EE)
+                        : const Color(0xFFFFF5E8),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _exactAlarmAllowed
+                          ? const Color(0xFFB6E0C2)
+                          : const Color(0xFFF1D3A5),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          _exactAlarmAllowed
+                              ? Icons.check_circle_outline
+                              : Icons.warning_amber_rounded,
+                          color: _exactAlarmAllowed
+                              ? const Color(0xFF2E7D32)
+                              : const Color(0xFFC77800),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _exactAlarmAllowed
+                                ? l10n.settingsExactAlarmStatusAllowed
+                                : l10n.settingsExactAlarmStatusLimited,
+                            style: TextStyle(
+                              color: _exactAlarmAllowed
+                                  ? const Color(0xFF2E7D32)
+                                  : const Color(0xFF8A5A00),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    FilledButton.tonalIcon(
+                      onPressed: _isBusy ? null : () => _runAction(_openSettings),
+                      icon: const Icon(Icons.open_in_new),
+                      label: Text(l10n.settingsExactAlarmOpenAction),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _isBusy ? null : _loadStatus,
+                      icon: const Icon(Icons.refresh),
+                      label: Text(l10n.settingsRefreshAction),
+                    ),
+                  ],
+                ),
+              ],
+            ),
     );
   }
 }
