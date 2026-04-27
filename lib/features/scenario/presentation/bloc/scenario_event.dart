@@ -110,3 +110,16 @@ final class ScenarioImportRequested extends ScenarioEvent {
   @override
   List<Object?> get props => [jsonContent];
 }
+
+final class ScenarioStepsSaveRequested extends ScenarioEvent {
+  const ScenarioStepsSaveRequested({
+    required this.scenarioId,
+    required this.steps,
+  });
+
+  final String scenarioId;
+  final List<ScenarioStep> steps;
+
+  @override
+  List<Object?> get props => [scenarioId, steps];
+}

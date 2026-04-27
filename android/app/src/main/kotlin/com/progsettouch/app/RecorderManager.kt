@@ -1139,6 +1139,7 @@ data class RecordedAction(
         val endX: Double,
         val endY: Double,
         val durationMs: Long,
+        val stepDelayMs: Long = 1000L,
 ) {
     fun toMap(): Map<String, Any> {
         return mapOf(
@@ -1149,6 +1150,7 @@ data class RecordedAction(
                 "endX" to endX,
                 "endY" to endY,
                 "durationMs" to durationMs,
+                "stepDelayMs" to stepDelayMs,
         )
     }
 }

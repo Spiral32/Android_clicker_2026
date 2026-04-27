@@ -8,6 +8,7 @@ import 'package:prog_set_touch/features/main_screen/domain/platform_bridge_repos
 import 'package:prog_set_touch/features/scenario/domain/scenario_item.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_repository.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_service.dart';
+import 'package:prog_set_touch/features/scenario/domain/scenario_step.dart';
 
 part 'scenario_event.dart';
 part 'scenario_state.dart';
@@ -36,6 +37,7 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     on<ScenarioDeleteRequested>(_onDeleteRequested);
     on<ScenarioStopRequested>(_onStopRequested);
     on<ScenarioImportRequested>(_onImportRequested);
+    on<ScenarioStepsSaveRequested>(_onStepsSaveRequested);
   }
 
   final ScenarioRepository _repository;
@@ -227,6 +229,14 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     ScenarioReordered event,
     Emitter<ScenarioState> emit,
   ) async {
+    if (await _rejectIfExecutionBusy(
+      emit,
+      messageKey: 'scenarioReorderBlockedWhileExecuting',
+      logAction: 'reorder_rejected_busy',
+      context: 'Scenario reorder blocked during execution',
+    )) {
+      return;
+    }
     final mutable = [...state.scenarios]
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
     if (event.oldIndex < 0 ||
@@ -398,6 +408,14 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     ScenarioDeleteRequested event,
     Emitter<ScenarioState> emit,
   ) async {
+    if (await _rejectIfExecutionBusy(
+      emit,
+      messageKey: 'scenarioDeleteBlockedWhileExecuting',
+      logAction: 'delete_rejected_busy',
+      context: 'Scenario delete blocked during execution',
+    )) {
+      return;
+    }
     final updated =
         state.scenarios.where((s) => s.id != event.scenarioId).toList();
     final normalized = _service.normalizeOrder(updated);
@@ -442,6 +460,14 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     ScenarioImportRequested event,
     Emitter<ScenarioState> emit,
   ) async {
+    if (await _rejectIfExecutionBusy(
+      emit,
+      messageKey: 'scenarioImportBlockedWhileExecuting',
+      logAction: 'import_rejected_busy',
+      context: 'Scenario import blocked during execution',
+    )) {
+      return;
+    }
     final decoded = _decodeScenarioImport(event.jsonContent);
     if (decoded == null) {
       _logScenarioError(
@@ -531,6 +557,78 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
         stackTrace,
         context: 'Scenario import failed',
       );
+    }
+  }
+
+  Future<void> _onStepsSaveRequested(
+    ScenarioStepsSaveRequested event,
+    Emitter<ScenarioState> emit,
+  ) async {
+    if (event.steps.isEmpty) {
+      _logScenarioError(
+        'steps_save_rejected_empty',
+        StateError('Scenario steps cannot be empty'),
+        null,
+        context: 'Scenario step save rejected due to empty steps',
+      );
+      emit(state.copyWith(messageKey: 'scenarioEmptyNotAllowed'));
+      return;
+    }
+
+    if (await _rejectIfExecutionBusy(
+      emit,
+      messageKey: 'scenarioEditBlockedWhileExecuting',
+      logAction: 'steps_save_rejected_busy',
+      context: 'Scenario step edit blocked during execution',
+    )) {
+      return;
+    }
+
+    final updatedAtMs = DateTime.now().millisecondsSinceEpoch;
+    final updated = [
+      for (final item in state.scenarios)
+        if (item.id == event.scenarioId)
+          item.copyWith(
+            stepCount: event.steps.length,
+            updatedAtMs: updatedAtMs,
+          )
+        else
+          item,
+    ];
+
+    try {
+      final replaced = await _platformBridgeRepository.replaceScenarioSteps(
+        scenarioId: event.scenarioId,
+        steps: event.steps,
+      );
+      if (!replaced) {
+        throw StateError(
+          'Scenario step replacement failed for scenarioId=${event.scenarioId}',
+        );
+      }
+      await _repository.saveAll(updated);
+      _logScenarioAction(
+        'steps_save',
+        'Scenario steps updated',
+        payload: {
+          'scenarioId': event.scenarioId,
+          'stepCount': event.steps.length,
+        },
+      );
+      emit(
+        state.copyWith(
+          scenarios: updated,
+          messageKey: 'scenarioStepEditorSaved',
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logScenarioError(
+        'steps_save_failed',
+        error,
+        stackTrace,
+        context: 'Scenario step save failed',
+      );
+      emit(state.copyWith(messageKey: 'scenarioStepEditorSaveFailed'));
     }
   }
 
@@ -724,6 +822,38 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
       emit(state.copyWith(executionSummary: status));
       await Future<void>.delayed(const Duration(milliseconds: 500));
     }
+  }
+
+  Future<bool> _rejectIfExecutionBusy(
+    Emitter<ScenarioState> emit, {
+    required String messageKey,
+    required String logAction,
+    required String context,
+  }) async {
+    if (state.isExecuting) {
+      _logScenarioError(
+        logAction,
+        StateError('Local scenario state is executing'),
+        null,
+        context: context,
+      );
+      emit(state.copyWith(messageKey: messageKey));
+      return true;
+    }
+
+    final appState = await _platformBridgeRepository.getCurrentState();
+    if (appState.isExecuting) {
+      _logScenarioError(
+        logAction,
+        StateError('Platform state is executing'),
+        null,
+        context: context,
+      );
+      emit(state.copyWith(messageKey: messageKey));
+      return true;
+    }
+
+    return false;
   }
 
   void _logScenarioAction(

@@ -45,6 +45,7 @@ class ScenarioActionStore(context: Context) {
                     put("endX", action.endX)
                     put("endY", action.endY)
                     put("durationMs", action.durationMs)
+                    put("stepDelayMs", action.stepDelayMs)
                 },
             )
         }
@@ -67,6 +68,7 @@ class ScenarioActionStore(context: Context) {
                             endX = obj.optDouble("endX", 0.0),
                             endY = obj.optDouble("endY", 0.0),
                             durationMs = obj.optLong("durationMs", 50L),
+                            stepDelayMs = obj.optLong("stepDelayMs", 1000L),
                         ),
                     )
                 }
@@ -100,6 +102,7 @@ class ScenarioActionStore(context: Context) {
             endX = raw["endX"].toDoubleValue(),
             endY = raw["endY"].toDoubleValue(),
             durationMs = raw["durationMs"].toLongValue(default = 50L),
+            stepDelayMs = raw["stepDelayMs"].toLongValue(default = 1000L),
         )
     }
 

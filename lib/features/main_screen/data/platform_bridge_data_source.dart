@@ -11,6 +11,7 @@ import 'package:prog_set_touch/features/main_screen/domain/platform_bridge_repos
 import 'package:prog_set_touch/features/main_screen/domain/platform_info.dart';
 import 'package:prog_set_touch/features/main_screen/domain/permission_status.dart';
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
+import 'package:prog_set_touch/features/scenario/domain/scenario_step.dart';
 import 'package:prog_set_touch/features/settings/domain/web_socket_status.dart';
 
 class PlatformBridgeDataSource implements PlatformBridgeRepository {
@@ -237,6 +238,12 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   }
 
   @override
+  Future<List<ScenarioStep>> getScenarioSteps(String scenarioId) async {
+    final rawActions = await exportScenarioActions(scenarioId);
+    return rawActions.map(ScenarioStep.fromMap).toList();
+  }
+
+  @override
   Future<bool> importScenarioActions({
     required String scenarioId,
     required List<Map<String, dynamic>> actions,
@@ -250,6 +257,17 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
     );
     final map = PlatformResultParser.parseMap(result);
     return map['success'] as bool? ?? false;
+  }
+
+  @override
+  Future<bool> replaceScenarioSteps({
+    required String scenarioId,
+    required List<ScenarioStep> steps,
+  }) {
+    return importScenarioActions(
+      scenarioId: scenarioId,
+      actions: steps.map((step) => step.toMap()).toList(),
+    );
   }
 
   @override

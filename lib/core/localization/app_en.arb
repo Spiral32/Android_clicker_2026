@@ -196,6 +196,79 @@
   ,"scenarioExecutionBusy": "Execution is already in progress."
   ,"scenarioBatchDone": "Scenario batch execution finished."
   ,"scenarioRename": "Rename"
+  ,"scenarioStepEditorOpen": "Edit Steps"
+  ,"scenarioStepEditorSaved": "Scenario steps saved."
+  ,"scenarioStepEditorSaveFailed": "Failed to save scenario steps."
+  ,"scenarioStepEditorLoadFailed": "Failed to load scenario steps"
+  ,"scenarioStepEditorTitle": "Edit Steps: {name}"
+  ,"@scenarioStepEditorTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  }
+  ,"scenarioStepEditorSubtitle": "Adjust step order, gesture parameters, and per-step delay."
+  ,"scenarioStepEditorCount": "{count} steps"
+  ,"@scenarioStepEditorCount": {
+    "placeholders": {
+      "count": {}
+    }
+  }
+  ,"scenarioStepEditorStepLabel": "Step {index}"
+  ,"@scenarioStepEditorStepLabel": {
+    "placeholders": {
+      "index": {}
+    }
+  }
+  ,"scenarioStepEditorEditTitle": "Edit Step"
+  ,"scenarioStepEditorTypeLabel": "Action Type"
+  ,"scenarioStepEditorPointerCountLabel": "Pointer Count"
+  ,"scenarioStepEditorDurationLabel": "Gesture Duration (ms)"
+  ,"scenarioStepEditorDelayLabel": "Delay After Step (ms)"
+  ,"scenarioStepEditorStartXLabel": "Start X"
+  ,"scenarioStepEditorStartYLabel": "Start Y"
+  ,"scenarioStepEditorEndXLabel": "End X"
+  ,"scenarioStepEditorEndYLabel": "End Y"
+  ,"scenarioStepEditorInvalidValues": "Please enter valid numeric values for the step."
+  ,"scenarioStepEditorPointerCount": "Pointers: {count}"
+  ,"@scenarioStepEditorPointerCount": {
+    "placeholders": {
+      "count": {}
+    }
+  }
+  ,"scenarioStepEditorDuration": "Duration: {durationMs} ms"
+  ,"@scenarioStepEditorDuration": {
+    "placeholders": {
+      "durationMs": {}
+    }
+  }
+  ,"scenarioStepEditorDelay": "Delay: {delayMs} ms"
+  ,"@scenarioStepEditorDelay": {
+    "placeholders": {
+      "delayMs": {}
+    }
+  }
+  ,"scenarioStepEditorStart": "Start: {x}, {y}"
+  ,"@scenarioStepEditorStart": {
+    "placeholders": {
+      "x": {},
+      "y": {}
+    }
+  }
+  ,"scenarioStepEditorEnd": "End: {x}, {y}"
+  ,"@scenarioStepEditorEnd": {
+    "placeholders": {
+      "x": {},
+      "y": {}
+    }
+  }
+  ,"scenarioStepTypeTap": "Tap"
+  ,"scenarioStepTypeDoubleTap": "Double Tap"
+  ,"scenarioStepTypeLongPress": "Long Press"
+  ,"scenarioStepTypeSwipe": "Swipe"
+  ,"scenarioEditBlockedWhileExecuting": "Cannot edit scenario steps while execution is in progress."
+  ,"scenarioDeleteBlockedWhileExecuting": "Cannot delete a scenario while execution is in progress."
+  ,"scenarioImportBlockedWhileExecuting": "Cannot import scenarios while execution is in progress."
+  ,"scenarioReorderBlockedWhileExecuting": "Cannot reorder scenarios while execution is in progress."
   ,"scenarioDelete": "Delete"
   ,"scenarioDeleteConfirmTitle": "Delete Scenario"
   ,"scenarioDeleteConfirmMessage": "Are you sure you want to delete scenario '{name}'?"

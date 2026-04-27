@@ -4,6 +4,7 @@ import 'package:prog_set_touch/features/main_screen/domain/platform_info.dart';
 import 'package:prog_set_touch/features/main_screen/domain/overlay_status.dart';
 import 'package:prog_set_touch/features/main_screen/domain/permission_status.dart';
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
+import 'package:prog_set_touch/features/scenario/domain/scenario_step.dart';
 import 'package:prog_set_touch/features/settings/domain/web_socket_status.dart';
 export 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart' show RecorderMode;
 
@@ -47,9 +48,16 @@ abstract class PlatformBridgeRepository {
 
   Future<List<Map<String, dynamic>>> exportScenarioActions(String scenarioId);
 
+  Future<List<ScenarioStep>> getScenarioSteps(String scenarioId);
+
   Future<bool> importScenarioActions({
     required String scenarioId,
     required List<Map<String, dynamic>> actions,
+  });
+
+  Future<bool> replaceScenarioSteps({
+    required String scenarioId,
+    required List<ScenarioStep> steps,
   });
 
   Future<bool> deleteScenarioActions(String scenarioId);

@@ -221,4 +221,77 @@
   ,"notesExportCrashFix": "Исправлен вылет при экспорте настроек/логов."
   ,"notesMainScreenRedesign": "Главный экран переработан: улучшена читаемость статусов и блоков действий."
   ,"notesSchedulerScenarioVisible": "В карточке планировщика теперь видно выбранный сценарий."
+  ,"scenarioStepEditorOpen": "Редактировать шаги"
+  ,"scenarioStepEditorSaved": "Шаги сценария сохранены."
+  ,"scenarioStepEditorSaveFailed": "Не удалось сохранить шаги сценария."
+  ,"scenarioStepEditorLoadFailed": "Не удалось загрузить шаги сценария"
+  ,"scenarioStepEditorTitle": "Редактировать шаги: {name}"
+  ,"@scenarioStepEditorTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  }
+  ,"scenarioStepEditorSubtitle": "Изменяйте порядок шагов, параметры жестов и задержку после каждого шага."
+  ,"scenarioStepEditorCount": "Шагов: {count}"
+  ,"@scenarioStepEditorCount": {
+    "placeholders": {
+      "count": {}
+    }
+  }
+  ,"scenarioStepEditorStepLabel": "Шаг {index}"
+  ,"@scenarioStepEditorStepLabel": {
+    "placeholders": {
+      "index": {}
+    }
+  }
+  ,"scenarioStepEditorEditTitle": "Редактировать шаг"
+  ,"scenarioStepEditorTypeLabel": "Тип действия"
+  ,"scenarioStepEditorPointerCountLabel": "Число касаний"
+  ,"scenarioStepEditorDurationLabel": "Длительность жеста (мс)"
+  ,"scenarioStepEditorDelayLabel": "Задержка после шага (мс)"
+  ,"scenarioStepEditorStartXLabel": "Start X"
+  ,"scenarioStepEditorStartYLabel": "Start Y"
+  ,"scenarioStepEditorEndXLabel": "End X"
+  ,"scenarioStepEditorEndYLabel": "End Y"
+  ,"scenarioStepEditorInvalidValues": "Введите корректные числовые значения для шага."
+  ,"scenarioStepEditorPointerCount": "Касаний: {count}"
+  ,"@scenarioStepEditorPointerCount": {
+    "placeholders": {
+      "count": {}
+    }
+  }
+  ,"scenarioStepEditorDuration": "Длительность: {durationMs} мс"
+  ,"@scenarioStepEditorDuration": {
+    "placeholders": {
+      "durationMs": {}
+    }
+  }
+  ,"scenarioStepEditorDelay": "Задержка: {delayMs} мс"
+  ,"@scenarioStepEditorDelay": {
+    "placeholders": {
+      "delayMs": {}
+    }
+  }
+  ,"scenarioStepEditorStart": "Начало: {x}, {y}"
+  ,"@scenarioStepEditorStart": {
+    "placeholders": {
+      "x": {},
+      "y": {}
+    }
+  }
+  ,"scenarioStepEditorEnd": "Конец: {x}, {y}"
+  ,"@scenarioStepEditorEnd": {
+    "placeholders": {
+      "x": {},
+      "y": {}
+    }
+  }
+  ,"scenarioStepTypeTap": "Тап"
+  ,"scenarioStepTypeDoubleTap": "Двойной тап"
+  ,"scenarioStepTypeLongPress": "Долгое нажатие"
+  ,"scenarioStepTypeSwipe": "Свайп"
+  ,"scenarioEditBlockedWhileExecuting": "Нельзя редактировать шаги сценария во время выполнения."
+  ,"scenarioDeleteBlockedWhileExecuting": "Нельзя удалить сценарий во время выполнения."
+  ,"scenarioImportBlockedWhileExecuting": "Нельзя импортировать сценарии во время выполнения."
+  ,"scenarioReorderBlockedWhileExecuting": "Нельзя менять порядок сценариев во время выполнения."
 }

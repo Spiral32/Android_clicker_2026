@@ -18,6 +18,7 @@ import 'package:prog_set_touch/features/scenario/domain/scenario_item.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_repository.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_service.dart';
 import 'package:prog_set_touch/features/scenario/presentation/bloc/scenario_bloc.dart';
+import 'package:prog_set_touch/features/scenario/presentation/widgets/scenario_step_editor_dialog.dart';
 import 'package:prog_set_touch/features/settings/domain/settings_repository.dart';
 import 'package:prog_set_touch/features/scheduler/presentation/pages/scheduler_screen.dart';
 import 'package:prog_set_touch/features/settings/presentation/pages/settings_page.dart';
@@ -510,6 +511,16 @@ class _MainScreenViewState extends State<_MainScreenView>
       'scenarioImportDone' => l10n.scenarioImportDone,
       'scenarioImportInvalidJson' => l10n.scenarioImportInvalidJson,
       'scenarioImportNoItems' => l10n.scenarioImportNoItems,
+      'scenarioStepEditorSaved' => l10n.scenarioStepEditorSaved,
+      'scenarioStepEditorSaveFailed' => l10n.scenarioStepEditorSaveFailed,
+      'scenarioEditBlockedWhileExecuting' =>
+        l10n.scenarioEditBlockedWhileExecuting,
+      'scenarioDeleteBlockedWhileExecuting' =>
+        l10n.scenarioDeleteBlockedWhileExecuting,
+      'scenarioImportBlockedWhileExecuting' =>
+        l10n.scenarioImportBlockedWhileExecuting,
+      'scenarioReorderBlockedWhileExecuting' =>
+        l10n.scenarioReorderBlockedWhileExecuting,
       _ => null,
     };
   }
@@ -726,6 +737,14 @@ class _MainScreenViewState extends State<_MainScreenView>
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
+                leading: const Icon(Icons.edit_note_outlined),
+                title: Text(l10n.scenarioStepEditorOpen),
+                onTap: () {
+                  Navigator.of(bottomSheetContext).pop();
+                  _showStepEditor(context, scenario);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.edit_outlined),
                 title: Text(l10n.scenarioRename),
                 onTap: () {
@@ -789,6 +808,19 @@ class _MainScreenViewState extends State<_MainScreenView>
             );
       }
     }
+  }
+
+  Future<void> _showStepEditor(
+    BuildContext context,
+    ScenarioItem scenario,
+  ) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => BlocProvider.value(
+        value: context.read<ScenarioBloc>(),
+        child: ScenarioStepEditorDialog(scenario: scenario),
+      ),
+    );
   }
 
   Future<void> _showDeleteConfirmation(
