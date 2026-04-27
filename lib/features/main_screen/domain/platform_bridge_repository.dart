@@ -29,6 +29,8 @@ abstract class PlatformBridgeRepository {
 
   Future<RecorderSummary> stopRecorder();
 
+  Future<RecorderSummary> clearRecorder();
+
   Future<AppState> getCurrentState();
 
   Future<bool> resetState();

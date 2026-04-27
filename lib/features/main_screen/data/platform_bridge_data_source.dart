@@ -164,6 +164,13 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   }
 
   @override
+  Future<RecorderSummary> clearRecorder() async {
+    final result =
+        await _channel.invokeMapMethod<String, dynamic>('clearRecorder');
+    return _mapRecorderSummary(result ?? const <String, dynamic>{});
+  }
+
+  @override
   Future<AppState> getCurrentState() async {
     final map = await _invokeMap('getCurrentState');
     return AppState.fromMap(map);
@@ -459,12 +466,6 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
     return OverlayStatus(
       visible: map['visible'] as bool? ?? false,
     );
-  }
-
-  Future<RecorderSummary> clearRecorder() async {
-    final result =
-        await _channel.invokeMapMethod<String, dynamic>('clearRecorder');
-    return _mapRecorderSummary(result ?? const <String, dynamic>{});
   }
 
   RecorderSummary _mapRecorderSummary(Map<String, dynamic> map) {

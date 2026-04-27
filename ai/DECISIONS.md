@@ -333,3 +333,30 @@ Applied direction:
 - Flutter locale is stored in `SharedPreferences` through a dedicated settings repository
 - execution delay is loaded into `MainScreenBloc` from the same repository and saved on change
 - Android `LogManager` persists `logging_enabled` and `log_to_file_enabled` in native shared preferences
+
+[2026-04-27]
+Decision:
+Legacy diagnostics settings UI should forward to the main `SettingsPage` instead of maintaining a parallel direct-bridge implementation.
+
+Why:
+- duplicate settings screens increase divergence risk and make persistence hardening inconsistent
+- the old diagnostics page still contained direct `MethodChannel` calls and broken localized strings
+- Stage 11 should reduce configuration ownership to one primary settings flow
+
+Applied direction:
+- `DiagnosticsSettingsPage` remains as a compatibility wrapper only
+- actual settings management stays inside `SettingsPage`
+- future settings persistence changes should be implemented only once in the main settings flow
+
+[2026-04-27]
+Decision:
+Flutter/native settings hardening should remove dynamic bridge access in favor of typed repository methods.
+
+Why:
+- `dynamic` bridge calls hide contract drift until runtime
+- Stage 11 is about making advanced configuration and runtime control flows safer across refactors
+- recorder maintenance actions belong to the same platform boundary that settings already rely on
+
+Applied direction:
+- `clearRecorder()` is now part of the typed `PlatformBridgeRepository` contract
+- `MainScreenBloc` no longer uses `as dynamic` for recorder maintenance actions

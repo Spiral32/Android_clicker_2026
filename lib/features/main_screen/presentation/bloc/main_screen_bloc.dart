@@ -309,8 +309,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     emit(state.copyWith(isRecorderActionInProgress: true, clearError: true));
 
     try {
-      final recorderSummary = await (_platformBridgeRepository as dynamic)
-          .clearRecorder() as RecorderSummary;
+      final recorderSummary = await _platformBridgeRepository.clearRecorder();
       final results = await Future.wait<Object>([
         _platformBridgeRepository.getExecutionStatus(),
         _platformBridgeRepository.getCurrentState(),

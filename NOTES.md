@@ -10,3 +10,4 @@
 - Fixed Android crash during scenario JSON export by using temporary file generation plus system share flow.
 - Scenario import/export now includes native recorded actions, so imported scenarios remain executable.
 - Stage 10 is closed; the next official active stage is Stage 11 (`Settings Persistence and Advanced Configuration`).
+- Legacy diagnostics settings page now forwards to the main `SettingsPage`, removing duplicated direct MethodChannel settings flow.
