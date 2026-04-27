@@ -28,33 +28,33 @@
 
 ## Задачи реализации
 
-### Задача 1: Domain Model
+### Задача 1: Domain Model ✅
 - Создать `Schedule` класс в domain layer
 - Определить типы расписаний (одноразовые, повторяющиеся)
 - Интегрировать с существующими сценариями
 
-### Задача 2: Platform Storage
+### Задача 2: Platform Storage ✅
 - Реализовать `ScheduleStorage` для сохранения расписаний
 - Обеспечить миграцию данных при обновлениях
 
-### Задача 3: AlarmManager Integration
+### Задача 3: AlarmManager Integration ✅
 - Создать `SchedulerManager` для установки/отмены alarm
 - Обработать точность и battery optimization
 
-### Задача 4: System Events
+### Задача 4: System Events ✅
 - Реализовать `SystemEventReceiver` для восстановления расписаний после перезагрузки
 - Обработать изменения времени/часового пояса
 
-### Задача 5: UI Implementation
+### Задача 5: UI Implementation ✅
 - Создать `SchedulerScreen` с Material Design
 - Реализовать формы для создания расписаний
 - Добавить валидацию и пользовательские уведомления
 
-### Задача 6: Integration with Execution Engine
+### Задача 6: Integration with Execution Engine ✅
 - Интегрировать автоматический запуск сценариев через планировщик
 - Обеспечить безопасность (проверка разрешений перед запуском)
 
-### Задача 7: Testing and Documentation
+### Задача 7: Testing and Documentation ✅
 - Написать unit tests для всех компонентов
 - Обновить документацию (API_WEBSOCKET.md, ARCHITECTURE.md)
 - Зафиксировать результаты в CHANGELOG_AI.md

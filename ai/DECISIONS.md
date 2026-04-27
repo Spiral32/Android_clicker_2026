@@ -122,12 +122,13 @@ Rule:
 - change summaries affecting project history go to `CHANGELOG_AI.md`
 
 Reading order for future AI sessions:
-1. `ROADMAP.md`
-2. `ai/TASKS.md`
-3. `ai/DECISIONS.md`
-4. `ai/BUGS.md`
-5. `CHANGELOG_AI.md`
-6. relevant code files for the current bug/feature
+1. `AI_START.md`
+2. `ROADMAP.md`
+3. `ai/TASKS.md`
+4. `ai/DECISIONS.md`
+5. `ai/BUGS.md`
+6. `CHANGELOG_AI.md`
+7. relevant code files for the current bug/feature
 
 Operator command for future sessions:
 - "Прочитай AI-память проекта и продолжай работу"
@@ -232,3 +233,89 @@ Applied direction:
 - "Clear recording" button shows a localized `AlertDialog`
 - action is performed only on explicit "Yes/Confirm" result
 
+[2026-04-21]
+Decision:
+`MediaProjection` is no longer treated as a mandatory startup permission gate.
+
+Why:
+- repeated permission prompts on app start degrade UX and are unnecessary for non-screenshot flows
+- scheduler, overlay control, recorder panel, and basic execution do not require immediate screen-capture token
+- MediaProjection token is session-scoped and should be requested only when screen-capture features are used
+
+Applied direction:
+- main permission gate now requires only Accessibility + Overlay
+- MediaProjection is requested explicitly by user action (manual button in Settings) or on-demand by screenshot-dependent features
+
+[2026-04-23]
+Decision:
+Stage 9 WebSocket foundation is implemented as a native Kotlin server without external networking libraries.
+
+Why:
+- the repository currently has no Ktor or other server dependency configured
+- adding new network libraries would enlarge the integration surface during the first Stage 9 pass
+- the project already has a stable Android service/runtime core that can be exposed through a lightweight transport layer
+
+Applied direction:
+- initial Stage 9 transport is a built-in WebSocket server over `ws://`
+- access is protected by a generated token in the query string
+- only one active client connection is allowed in the current foundation build
+- `WSS`/TLS remains a later hardening step, not a blocker for the first Stage 9 implementation slice
+
+[2026-04-23]
+Decision:
+Production transport direction for Stage 9 remote control is `WSS` with TLS termination outside the app process, while in-app transport remains `ws://` for current foundation and local-network testing.
+
+Why:
+- native Android TLS/WebSocket termination inside a custom lightweight server would significantly increase complexity and certificate management risk in the current stage
+- existing Stage 9 implementation already isolates command protocol and access token logic, so transport hardening can be layered without protocol rewrite
+- production remote access must not expose plain `ws://` beyond trusted LAN/dev context
+
+Applied direction:
+- foundation server keeps `ws://` + token for local and development usage
+- production deployment path requires TLS termination (reverse proxy / secure tunnel / gateway) and only exposes `wss://` to clients
+- Stage 9 hardening additionally enforces strict handshake checks (`GET`, `Upgrade`, `Connection`, `Sec-WebSocket-Version: 13`)
+- incoming client frames must be masked and oversized frames are rejected
+
+[2026-04-23]
+Decision:
+WebSocket token authentication now follows a bearer-first model and avoids token leakage in advertised connection URLs.
+
+Why:
+- query-string tokens are frequently leaked via logs, analytics, and copy/paste history
+- most production WebSocket integrations use `Authorization: Bearer` as the primary credential channel
+- the app should remain compatible with existing local tooling while moving to safer defaults
+
+Applied direction:
+- primary auth path: `Authorization: Bearer <token>`
+- query `?token=` remains as backward-compatible fallback for legacy clients
+- server status URLs no longer include token values
+
+[2026-04-27]
+Decision:
+Stage 10 scenario transfer must include native recorded actions in addition to Flutter scenario metadata.
+
+Why:
+- scenario list items are stored in Flutter preferences, but executable step payload is stored separately in Android `ScenarioActionStore`
+- metadata-only export/import creates visible scenarios that cannot actually execute after transfer
+- delete flows must also clean up native action storage to avoid orphaned executable payload
+
+Applied direction:
+- scenario export writes `actions` for each scenario into the JSON payload
+- scenario import restores those actions into native storage through `MethodChannel`
+- scenario creation is rejected if the current recording cannot be bound into native action storage
+- scenario deletion removes the associated native action entry
+
+[2026-04-27]
+Decision:
+Android scenario JSON export uses temporary-file generation plus system share flow instead of direct `FilePicker.saveFile`.
+
+Why:
+- the previous Android export path caused an application crash during real-device scenario JSON export
+- Android share sheet is a more stable operator flow for generated JSON files than direct picker-save in this app
+- non-Android targets can keep the direct save dialog flow
+
+Applied direction:
+- Android export writes scenario JSON into temporary app storage
+- Android export opens `Share.shareXFiles(...)` with the generated JSON file
+- non-Android platforms continue using `FilePicker.saveFile`
+- the fix was confirmed working by the user on 2026-04-27

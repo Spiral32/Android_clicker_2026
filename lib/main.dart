@@ -8,14 +8,17 @@ import 'package:prog_set_touch/core/error/app_logger.dart';
 import 'package:prog_set_touch/core/localization/app_locale.dart';
 import 'package:prog_set_touch/core/localization/localization_extensions.dart';
 import 'package:prog_set_touch/features/main_screen/presentation/pages/main_screen_page.dart';
+import 'package:prog_set_touch/features/scheduler/presentation/bloc/scheduler_bloc.dart';
 import 'package:prog_set_touch/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:prog_set_touch/shared/theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final prefs = await SharedPreferences.getInstance();
   final logger = AppLogger();
-  final appScope = AppScope(logger: logger);
+  final appScope = AppScope(logger: logger, prefs: prefs);
 
   FlutterError.onError = (details) {
     logger.logError(
@@ -51,9 +54,24 @@ class ProgSetTouchApp extends StatelessWidget {
         RepositoryProvider.value(value: appScope),
         RepositoryProvider.value(value: appScope.logger),
         RepositoryProvider.value(value: appScope.platformBridge),
+        RepositoryProvider.value(value: appScope.scenarioRepository),
+        RepositoryProvider.value(value: appScope.scenarioService),
+        RepositoryProvider.value(value: appScope.schedulerRepository),
+        RepositoryProvider.value(value: appScope.schedulerService),
       ],
-      child: BlocProvider(
-        create: (_) => SettingsBloc(logger: appScope.logger),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => SettingsBloc(logger: appScope.logger),
+          ),
+          BlocProvider(
+            create: (_) => SchedulerBloc(
+              logger: appScope.logger,
+              repository: appScope.schedulerRepository,
+              service: appScope.schedulerService,
+            ),
+          ),
+        ],
         child: BlocBuilder<SettingsBloc, SettingsState>(
           builder: (context, state) {
             return MaterialApp(

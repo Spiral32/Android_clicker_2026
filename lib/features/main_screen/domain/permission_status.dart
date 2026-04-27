@@ -17,8 +17,7 @@ class PermissionStatus extends Equatable {
         overlayGranted = false,
         mediaProjectionGranted = false;
 
-  bool get areAllGranted =>
-      accessibilityGranted && overlayGranted && mediaProjectionGranted;
+  bool get areAllGranted => accessibilityGranted && overlayGranted;
 
   PermissionType? get nextRequiredPermission {
     if (!accessibilityGranted) {
@@ -27,10 +26,6 @@ class PermissionStatus extends Equatable {
 
     if (!overlayGranted) {
       return PermissionType.overlay;
-    }
-
-    if (!mediaProjectionGranted) {
-      return PermissionType.mediaProjection;
     }
 
     return null;

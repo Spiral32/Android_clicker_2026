@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import android.util.Log
 import java.io.File
 import java.io.FileWriter
+import java.io.RandomAccessFile
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -119,6 +120,8 @@ class LogManager private constructor(private val context: Context) {
         d(TAG, "Logging ${if (enabled) "enabled" else "disabled"}")
     }
 
+    fun isLoggingEnabled(): Boolean = isEnabled
+
     fun setLogToFile(enabled: Boolean) {
         logToFile = enabled
         if (enabled && fileWriter == null) {
@@ -127,10 +130,35 @@ class LogManager private constructor(private val context: Context) {
         d(TAG, "File logging ${if (enabled) "enabled" else "disabled"}")
     }
 
+    fun isLogToFileEnabled(): Boolean = logToFile
+
     fun getLogBuffer(): String {
         return synchronized(logBuffer) {
             logBuffer.toString()
         }
+    }
+
+    fun getLogsForDisplay(maxChars: Int = 20000): String {
+        val bufferSnapshot = getLogBuffer().trim()
+        if (bufferSnapshot.isNotEmpty()) {
+            return bufferSnapshot
+        }
+
+        val file = currentLogFile
+        if (file == null || !file.exists()) {
+            return ""
+        }
+
+        return try {
+            readFileTail(file, maxChars)
+        } catch (e: Exception) {
+            e(TAG, "Failed to read log file tail", e)
+            ""
+        }
+    }
+
+    fun getLogSourceForDisplay(): String {
+        return if (getLogBuffer().trim().isNotEmpty()) "buffer" else "file_fallback"
     }
 
     fun clearLogBuffer() {
@@ -151,6 +179,22 @@ class LogManager private constructor(private val context: Context) {
 
     fun getCurrentLogFilePath(): String? {
         return currentLogFile?.absolutePath
+    }
+
+    private fun readFileTail(file: File, maxChars: Int): String {
+        if (maxChars <= 0) return ""
+
+        RandomAccessFile(file, "r").use { raf ->
+            val fileLength = raf.length()
+            if (fileLength <= 0) return ""
+
+            val byteLimit = maxChars * 2L
+            val start = (fileLength - byteLimit).coerceAtLeast(0L)
+            raf.seek(start)
+            val bytes = ByteArray((fileLength - start).toInt())
+            raf.readFully(bytes)
+            return String(bytes, Charsets.UTF_8).trim()
+        }
     }
 
     fun exportLogsToFile(customPath: String? = null): String? {

@@ -11,6 +11,9 @@
   "mainAutostartActionEnable": "Включить плавающую кнопку",
   "mainAutostartActionDisable": "Выключить плавающую кнопку",
   "mainOpenSettings": "Настройки",
+  "mainRecorderTip": "Запись работает в пошаговом неблокирующем режиме. После старта используйте панель записи поверх экрана, чтобы добавлять тапы, двойные тапы, долгие нажатия и свайпы.",
+  "mainRecorderOpenPanel": "Открыть панель записи",
+  "mainRecorderStopPanel": "Завершить запись",
   "mainPlatformSectionTitle": "Состояние платформы",
   "mainPlatformUnavailable": "Данные платформы недоступны",
   "mainPlatformLabel": "Платформа",
@@ -20,10 +23,91 @@
   "mainLocaleLabel": "Системный язык",
   "settingsTitle": "Настройки",
   "settingsLanguageTitle": "Язык",
+  "settingsLanguageSubtitle": "Выберите язык приложения.",
   "settingsLanguageRussian": "Русский",
   "settingsLanguageEnglish": "English",
+  "settingsAutostartTitle": "Автозапуск",
+  "settingsAutostartSubtitle": "Управляйте восстановлением расписаний после перезагрузки устройства.",
+  "settingsAutostartToggleTitle": "Включить автозапуск после перезагрузки",
+  "settingsAutostartToggleSubtitle": "Если выключено, BOOT_COMPLETED не восстанавливает расписания автоматически.",
+  "settingsAutostartEnabledMessage": "Автозапуск после перезагрузки включен.",
+  "settingsAutostartDisabledMessage": "Автозапуск после перезагрузки отключен.",
+  "settingsAutostartChangeError": "Не удалось изменить автозапуск.",
+  "settingsMediaProjectionTitle": "MediaProjection",
+  "settingsMediaProjectionSubtitle": "Разрешение нужно только для функций захвата экрана и проверки скриншотов.",
+  "settingsMediaProjectionStatusGranted": "Статус: разрешение выдано",
+  "settingsMediaProjectionStatusMissing": "Статус: разрешение не выдано",
+  "settingsMediaProjectionRequestAction": "Запросить MediaProjection вручную",
+  "settingsMediaProjectionGrantedMessage": "MediaProjection разрешение получено.",
+  "settingsMediaProjectionDeniedMessage": "MediaProjection разрешение не получено.",
+  "settingsMediaProjectionRequestError": "Не удалось запросить MediaProjection.",
+  "settingsExactAlarmTitle": "Точные будильники",
+  "settingsExactAlarmSubtitle": "Для максимально точного срабатывания расписания разрешите точные будильники в системных настройках Android.",
+  "settingsExactAlarmStatusAllowed": "Статус: точные будильники разрешены",
+  "settingsExactAlarmStatusLimited": "Статус: точные будильники ограничены, возможна задержка запуска",
+  "settingsExactAlarmOpenAction": "Открыть настройки точных будильников",
+  "settingsExactAlarmOpenError": "Не удалось открыть настройки точных будильников.",
+  "settingsDiagnosticsLoadError": "Не удалось загрузить диагностику.",
+  "settingsLogExportedMessage": "Лог экспортирован в папку Download.",
+  "settingsLogExportError": "Не удалось экспортировать лог.",
+  "settingsLogOpenLocationError": "Не удалось открыть расположение лог-файла.",
+  "settingsLogClearedMessage": "Буфер логов очищен.",
+  "settingsLogClearError": "Не удалось очистить лог.",
   "settingsWebSocketTitle": "WebSocket",
-  "settingsWebSocketPlaceholder": "Настройки WSS будут доступны на этапе 10",
+  "settingsWebSocketSubtitle": "Управляйте встроенным сервером для удалённых команд и диагностики.",
+  "settingsWebSocketEnableTitle": "Включить сервер",
+  "settingsWebSocketEnableSubtitle": "Запускает WebSocket-сервер с одним клиентом и токен-авторизацией (предпочтительно через Authorization: Bearer).",
+  "settingsWebSocketEnableAction": "Включить сервер",
+  "settingsWebSocketDisableAction": "Выключить сервер",
+  "settingsWebSocketRunningLabel": "Сервер",
+  "settingsWebSocketStatusRunning": "запущен",
+  "settingsWebSocketStatusStopped": "остановлен",
+  "settingsWebSocketClientLabel": "Клиент",
+  "settingsWebSocketStatusClientConnected": "подключен",
+  "settingsWebSocketStatusNoClient": "нет клиента",
+  "settingsWebSocketTransportLabel": "Транспорт",
+  "settingsWebSocketAuthLabel": "Защита",
+  "settingsWebSocketAuthModeQueryToken": "bearer token",
+  "settingsWebSocketPortLabel": "Порт",
+  "settingsWebSocketApplyPort": "Применить",
+  "settingsWebSocketTokenLabel": "Токен доступа",
+  "settingsWebSocketRegenerateToken": "Пересоздать токен",
+  "settingsWebSocketUrlsLabel": "URL подключения",
+  "settingsWebSocketRefreshAction": "Обновить",
+  "settingsWebSocketUnavailableAddress": "Сейчас нет доступного локального IPv4-адреса.",
+  "settingsWebSocketLoadError": "Не удалось загрузить статус WebSocket",
+  "settingsWebSocketTimeoutError": "Статус WebSocket не ответил вовремя. Попробуйте обновить ещё раз.",
+  "settingsWebSocketPortError": "Порт должен быть в диапазоне 1024-65535.",
+  "settingsDiagnosticsTitle": "Диагностика и логи",
+  "settingsDiagnosticsSubtitle": "Управляйте режимом логирования и быстро экспортируйте лог-файл.",
+  "settingsEnableLoggingTitle": "Включить логирование",
+  "settingsEnableLoggingSubtitle": "Собирать технические логи для диагностики",
+  "settingsLogToFileTitle": "Запись лога в файл",
+  "settingsNoLogFilePath": "Путь к файлу недоступен",
+  "settingsRefreshAction": "Обновить",
+  "settingsClearAction": "Очистить",
+  "settingsExportAction": "Экспорт",
+  "settingsShareAction": "Поделиться",
+  "settingsNoLogsAvailable": "Логи отсутствуют",
+  "settingsErrorLoadingLogsPrefix": "Ошибка загрузки логов",
+  "settingsLogsCleared": "Логи очищены",
+  "settingsErrorClearingLogsPrefix": "Ошибка очистки логов",
+  "settingsLogsExportedPrefix": "Логи экспортированы в",
+  "settingsFailedToExportLogs": "Не удалось экспортировать логи",
+  "settingsErrorExportingLogsPrefix": "Ошибка экспорта логов",
+  "settingsNoExportedLogsToShare": "Нет экспортированных логов для отправки. Сначала выполните экспорт.",
+  "settingsGenericErrorPrefix": "Ошибка",
+  "settingsPermissionsAllGranted": "Все ключевые разрешения выданы.",
+  "settingsPermissionsMissingSummary": "Не все необходимые права выданы.",
+  "settingsPermissionAccessibilityLabel": "Служба специальных возможностей",
+  "settingsPermissionOverlayLabel": "Отображение поверх окон",
+  "settingsPermissionMediaProjectionLabel": "MediaProjection",
+  "settingsPermissionGranted": "выдано",
+  "settingsPermissionMissing": "не выдано",
+  "settingsExecutionPermissionsRequired": "Для выполнения сценариев сначала выдайте обязательные разрешения. ",
+  "settingsLogSourceLabel": "Источник",
+  "settingsLogSourceBuffer": "Buffer",
+  "settingsLogSourceFileFallback": "File fallback",
   "languageSwitcherTooltip": "Сменить язык",
   "permissionsTitle": "Разрешения",
   "permissionsAllGranted": "Все обязательные разрешения выданы. Основные действия разблокированы.",
@@ -31,7 +115,7 @@
   "permissionsAccessibilityAction": "Открыть настройки специальных возможностей",
   "permissionsOverlayDescription": "Затем разрешите отображение поверх других окон. Это нужно для фонового интерфейса и последующей overlay-кнопки.",
   "permissionsOverlayAction": "Открыть настройки overlay",
-  "permissionsMediaProjectionDescription": "Последний шаг — подтвердить доступ к захвату экрана. Это разрешение будет проверяться перед каждым запуском сценария.",
+  "permissionsMediaProjectionDescription": "Разрешение на захват экрана запрашивается отдельно, только для функций скриншотов и экранной верификации.",
   "permissionsMediaProjectionAction": "Запросить MediaProjection",
   "overlayStatusTitle": "Плавающая overlay-кнопка",
   "overlayStatusVisible": "Отображается и перетаскивается",
@@ -69,5 +153,72 @@
   "errorExecutionAction": "Не удалось выполнить сценарий",
   "errorExecutionNotAllowed": "Выполнение недоступно в текущем состоянии",
   "errorExecutionPauseFailed": "Не удалось приостановить выполнение",
-  "errorExecutionResumeFailed": "Не удалось возобновить выполнение"
+  "errorExecutionResumeFailed": "Не удалось возобновить выполнение",
+  "schedulerTitle": "Планировщик",
+  "noSchedulesMessage": "Расписаний пока нет",
+  "noSchedulesDescription": "Создайте первое расписание для автоматизации выполнения сценариев",
+  "deleteScheduleTitle": "Удалить расписание",
+  "deleteScheduleMessage": "Вы уверены, что хотите удалить '{name}'?",
+  "cancel": "Отмена",
+  "delete": "Удалить",
+  "addScheduleTitle": "Добавить расписание",
+  "editScheduleTitle": "Редактировать расписание",
+  "scheduleNameLabel": "Название",
+  "scheduleNameRequired": "Название обязательно",
+  "scheduleTypeLabel": "Тип",
+  "scheduleTypeOneTime": "Одноразовое",
+  "scheduleTypeDaily": "Ежедневно",
+  "scheduleTypeWeekly": "Еженедельно",
+  "hourLabel": "Часы",
+  "minuteLabel": "Минуты",
+  "invalidHour": "Часы должны быть 0-23",
+  "invalidMinute": "Минуты должны быть 0-59",
+  "daysOfWeekLabel": "Дни недели",
+  "scheduleScenarioLabel": "Сценарий",
+  "scheduleScenarioRequired": "Выберите сценарий",
+  "scheduleScenarioRequiredToCreate": "Сначала создайте хотя бы один сценарий",
+  "scheduleScenarioMissing": "Сценарий не найден",
+  "save": "Сохранить"
+  ,"scenarioScreenTitle": "Сценарии"
+  ,"scenarioCreate": "Создать сценарий"
+  ,"scenarioCreateCompact": "Создать"
+  ,"scenarioRunAll": "Запустить все сценарии"
+  ,"scenarioRunAllCompact": "Запустить все"
+  ,"scenarioQuickLaunch": "Быстрый запуск"
+  ,"scenarioNameHint": "Название сценария"
+  ,"scenarioColumnName": "Название"
+  ,"scenarioColumnSteps": "Шаги"
+  ,"scenarioEmptyNotAllowed": "Нельзя сохранить пустой сценарий. Сначала запишите хотя бы одно действие."
+  ,"scenarioLimitReached": "Допустимо максимум 50 сценариев."
+  ,"scenarioNameMustBeUnique": "Название сценария должно быть уникальным."
+  ,"scenarioQuickLaunchEmpty": "Не выбраны сценарии для быстрого запуска."
+  ,"scenarioRunAllEmpty": "Нет включенных сценариев для запуска."
+  ,"scenarioExecutionBusy": "Выполнение уже идет."
+  ,"scenarioBatchDone": "Пакетное выполнение сценариев завершено."
+  ,"scenarioRename": "Переименовать"
+  ,"scenarioDelete": "Удалить"
+  ,"scenarioDeleteConfirmTitle": "Удалить сценарий"
+  ,"scenarioDeleteConfirmMessage": "Вы уверены, что хотите удалить сценарий «{name}»?"
+  ,"scenarioRenameTitle": "Переименовать сценарий"
+  ,"scenarioExport": "Экспорт сценариев"
+  ,"scenarioImport": "Импорт сценариев"
+  ,"scenarioExportEmpty": "Нет сценариев для экспорта."
+  ,"scenarioExportDone": "Сценарии успешно экспортированы."
+  ,"scenarioExportFailed": "Не удалось экспортировать сценарии."
+  ,"scenarioImportDone": "Сценарии успешно импортированы."
+  ,"scenarioImportInvalidJson": "Некорректный JSON файла импорта."
+  ,"scenarioImportNoItems": "В файле импорта нет валидных сценариев."
+  ,"mainScenarioSectionTitle": "Сценарии"
+  ,"mainOverviewTabTitle": "Обзор"
+  ,"mainStatusPermissions": "Разрешения"
+  ,"mainStatusOverlay": "Overlay"
+  ,"mainStatusRecorder": "Рекордер"
+  ,"mainStatusActions": "Действия"
+  ,"mainStatusOk": "OK"
+  ,"mainStatusOff": "OFF"
+  ,"schedulerScenarioPrefix": "Сценарий"
+  ,"notesLatestChangesTitle": "Последние изменения"
+  ,"notesExportCrashFix": "Исправлен вылет при экспорте настроек/логов."
+  ,"notesMainScreenRedesign": "Главный экран переработан: улучшена читаемость статусов и блоков действий."
+  ,"notesSchedulerScenarioVisible": "В карточке планировщика теперь видно выбранный сценарий."
 }

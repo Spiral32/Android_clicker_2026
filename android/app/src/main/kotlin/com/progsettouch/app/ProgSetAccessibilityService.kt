@@ -11,6 +11,7 @@ class ProgSetAccessibilityService : AccessibilityService() {
     lateinit var stateMachine: StateMachine
         private set
     private lateinit var logger: LogManager
+    private lateinit var scenarioActionStore: ScenarioActionStore
 
     // Listeners for execution updates
     private var onExecutionUpdateListener: ((ExecutionSummary) -> Unit)? = null
@@ -24,6 +25,7 @@ class ProgSetAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         instance = this
         logger = LogManager.getInstance(this)
+        scenarioActionStore = ScenarioActionStore(this)
         stateMachine = StateMachine(this)
         overlayManager = OverlayManager(this)
         recorderManager = RecorderManager(this)
@@ -291,6 +293,68 @@ class ProgSetAccessibilityService : AccessibilityService() {
                 }
 
         return executionEngine.start(actions, config)
+    }
+
+    fun startScenarioExecution(scenarioId: String, delayMs: Int? = null): ExecutionSummary {
+        if (!stateMachine.canStartExecution()) {
+            val currentState = stateMachine.getCurrentState()
+            return ExecutionSummary(
+                isExecuting = false,
+                totalActions = 0,
+                completedActions = 0,
+                failedActions = 0,
+                error = "Cannot start execution from state: $currentState",
+            )
+        }
+
+        var actions = scenarioActionStore.getScenarioActions(scenarioId)
+        if (actions.isEmpty()) {
+            // Backward compatibility: bind current recording to scenario on first run.
+            actions = recorderManager.summary().actions
+            if (actions.isNotEmpty()) {
+                scenarioActionStore.saveScenarioActions(scenarioId, actions)
+            }
+        }
+
+        if (actions.isEmpty()) {
+            return ExecutionSummary(
+                isExecuting = false,
+                totalActions = 0,
+                completedActions = 0,
+                failedActions = 0,
+                error = "No actions stored for scenarioId=$scenarioId",
+            )
+        }
+        lastRecordedActions = actions
+
+        val result = stateMachine.transition(AppState.EXECUTING)
+        if (result is StateTransitionResult.Failure) {
+            return ExecutionSummary(
+                isExecuting = false,
+                totalActions = actions.size,
+                completedActions = 0,
+                failedActions = 0,
+                error = result.reason,
+            )
+        }
+
+        minimizeApp()
+        val config =
+            if (delayMs != null) {
+                ExecutionConfig(delayBetweenActionsMs = delayMs.toLong().coerceAtLeast(1000L))
+            } else {
+                ExecutionConfig()
+            }
+        return executionEngine.start(actions, config)
+    }
+
+    fun bindCurrentRecordingToScenario(scenarioId: String): Boolean {
+        val actions = recorderManager.summary().actions
+        if (actions.isEmpty()) {
+            return false
+        }
+        scenarioActionStore.saveScenarioActions(scenarioId, actions)
+        return true
     }
 
     fun stopExecution(): ExecutionSummary {

@@ -3,7 +3,7 @@
 ## Official Project Stage
 
 Current official stage:
-- `Stage 5 — State Machine Hardening`
+- `Stage 10 — Scenario Storage`
 
 Stage rule:
 - only one stage is active at a time
@@ -18,18 +18,16 @@ Stage sequence:
 - Stage 4: Recorder
 - Stage 5: State Machine Hardening
 - Stage 6: Execution Engine Hardening
-- Stage 7: Screenshot Verifier Integration
-- Stage 8: Scheduler
-- Stage 9: Autostart
-- Stage 10: WebSocket Server
-- Stage 11: Scenario Storage
-- Stage 12: Settings
+- Stage 7: Scheduler ✅
+- Stage 8: Autostart ✅
+- Stage 9: WebSocket Server ✅
+- Stage 10: Scenario Storage
+- Stage 11: Settings Persistence and Advanced Configuration
+- Stage 12: Screenshot Verifier Integration
 
-Stage 5 exit criteria:
-- every recorder and execution entry point validates current state
-- invalid transitions are blocked consistently
-- reset from ERROR is deterministic
-- Flutter receives synchronized state after critical native operations
+Stage 10 status:
+- active implementation stage after Stage 9 closure
+- storage architecture is the current delivery focus
 
 ## Layer Structure (Strict)
 
@@ -45,6 +43,7 @@ Stage 5 exit criteria:
 - **StateMachine** — Central state management (IDLE, RECORDING, EXECUTING, PAUSED, ERROR)
 - **ExecutionEngine** — Gesture playback orchestration
 - **ScenarioModel** — Scenario data structures and validation
+- **Scheduler** — Schedule management and execution (oneTime, daily, weekly schedules)
 
 ### Infrastructure (Android/Kotlin)
 
@@ -53,7 +52,7 @@ Stage 5 exit criteria:
 - **GestureActionClassifier** — Tap/Double-tap/Long-press/Swipe detection
 - **ScreenshotVerifier** — Visual verification of executed actions
 - **Scheduler** — Cyclic and one-shot timers
-- **WebSocketServer** — Remote control interface (Ktor CIO)
+- **WebSocketServer** — Remote control interface (native Kotlin foundation, single client, bearer-first token auth, strict handshake)
 - **Logger** — Ring buffer logging with export
 - **OverlayManager** — Control overlay (floating button)
 
@@ -183,27 +182,23 @@ Scenario → ExecutionEngine → AccessibilityController → dispatchGesture()
 - FPS limiting (2-5 fps)
 - FLAG_SECURE handling
 
-### Stage 8: Scheduler
-- Cyclic timer support
-- One-shot timer support
-
-### Stage 9: Autostart
+### Stage 8: Autostart
 - AlarmManager integration
 - BOOT_COMPLETED receiver
-- ForegroundService
+- Settings control and boot restoration
 
-### Stage 10: WebSocket Server
-- Ktor CIO implementation
-- WSS with TLS
-- Token authentication
+### Stage 9: WebSocket Server
+- Native Kotlin WebSocket server foundation
+- Bearer-first token authentication with legacy query-token fallback
 - Single connection limit
+- Settings diagnostics and server control
+- Transport/parsing hardening (strict handshake, masked frames, frame size cap)
 
-### Stage 11: Scenario Storage
+### Stage 10: Scenario Storage
 - SQLite/Room database
 - Scenario CRUD operations
 - Import/export
-
-### Stage 12: Settings
+### Stage 11: Settings
 - Anti-detect (random delays, jitter)
 - Screenshot parameters
 - Retry configuration
@@ -213,7 +208,7 @@ Scenario → ExecutionEngine → AccessibilityController → dispatchGesture()
 ## Stage Governance (Supersedes Ambiguity)
 
 Official current stage:
-- `Stage 5 — State Machine Hardening`
+- `Stage 10 — Scenario Storage`
 
 Mandatory rule:
 - only one stage is active at a time
@@ -227,18 +222,9 @@ Execution order:
 4. Stage 4 — Recorder
 5. Stage 5 — State Machine Hardening
 6. Stage 6 — Execution Engine Hardening
-7. Stage 7 — Screenshot Verifier Integration
-8. Stage 8 — Scheduler
-9. Stage 9 — Autostart
-10. Stage 10 — WebSocket Server
-11. Stage 11 — Scenario Storage
-12. Stage 12 — Settings
-
-Stage 5 exit criteria:
-- every recorder and execution entry point validates current state
-- invalid transitions are blocked consistently
-- reset from ERROR is deterministic
-- Flutter receives synchronized state after critical native operations
-
-Stage 6 may begin only after Stage 5 exit criteria are complete.
-Stage 7 may begin only after Stage 6 exit criteria are complete.
+7. Stage 7 — Scheduler
+8. Stage 8 — Autostart
+9. Stage 9 — WebSocket Server
+10. Stage 10 — Scenario Storage
+11. Stage 11 — Settings Persistence and Advanced Configuration
+12. Stage 12 — Screenshot Verifier Integration

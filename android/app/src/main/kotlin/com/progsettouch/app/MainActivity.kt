@@ -14,16 +14,21 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import org.json.JSONObject
 import java.util.Locale
 
 class MainActivity : FlutterActivity() {
     private val channelName = "prog_set_touch/platform"
+    private val flutterPrefsName = "FlutterSharedPreferences"
+    private val autostartPrefsKey = "flutter.autostart_enabled"
     private var methodChannel: MethodChannel? = null
     private val mediaProjectionRequestCode = 4242
     private var mediaProjectionGranted = false
     private var pendingMediaProjectionResult: MethodChannel.Result? = null
     @Volatile
     private var isMediaProjectionRequestInFlight = false
+    private lateinit var schedulerManager: SchedulerManager
+    private lateinit var webSocketServerManager: WebSocketServerManager
 
     companion object {
         @Volatile
@@ -48,6 +53,10 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        schedulerManager = SchedulerManager(this)
+        webSocketServerManager = WebSocketServerManager.getInstance(this)
+        webSocketServerManager.startIfEnabled()
 
         val channel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -218,7 +227,17 @@ class MainActivity : FlutterActivity() {
 
             "getLogs" -> {
                 val logManager = LogManager.getInstance(this)
-                result.success(logManager.getLogBuffer())
+                result.success(logManager.getLogsForDisplay())
+            }
+
+            "getLogsSnapshot" -> {
+                val logManager = LogManager.getInstance(this)
+                result.success(
+                    mapOf(
+                        "logs" to logManager.getLogsForDisplay(),
+                        "source" to logManager.getLogSourceForDisplay(),
+                    ),
+                )
             }
 
             "clearLogs" -> {
@@ -239,6 +258,49 @@ class MainActivity : FlutterActivity() {
                 result.success(exportPath)
             }
 
+            "exportScenarioActions" -> {
+                val scenarioId = call.argument<String>("scenarioId")
+                if (scenarioId.isNullOrBlank()) {
+                    result.error("invalid_argument", "scenarioId parameter is required", null)
+                    return
+                }
+                val actionStore = ScenarioActionStore(this)
+                result.success(actionStore.exportScenarioActions(scenarioId))
+            }
+
+            "importScenarioActions" -> {
+                val scenarioId = call.argument<String>("scenarioId")
+                if (scenarioId.isNullOrBlank()) {
+                    result.error("invalid_argument", "scenarioId parameter is required", null)
+                    return
+                }
+                val rawActions = call.argument<List<*>>("actions")
+                if (rawActions == null) {
+                    result.error("invalid_argument", "actions parameter is required", null)
+                    return
+                }
+                val normalizedActions =
+                    rawActions.mapNotNull { entry ->
+                        (entry as? Map<*, *>)?.mapNotNull { (key, value) ->
+                            val stringKey = key?.toString() ?: return@mapNotNull null
+                            stringKey to value
+                        }?.toMap()
+                    }
+                val actionStore = ScenarioActionStore(this)
+                val success = actionStore.importScenarioActions(scenarioId, normalizedActions)
+                result.success(mapOf("success" to success))
+            }
+
+            "deleteScenarioActions" -> {
+                val scenarioId = call.argument<String>("scenarioId")
+                if (scenarioId.isNullOrBlank()) {
+                    result.error("invalid_argument", "scenarioId parameter is required", null)
+                    return
+                }
+                val actionStore = ScenarioActionStore(this)
+                result.success(mapOf("success" to actionStore.deleteScenarioActions(scenarioId)))
+            }
+
             "openLogLocation" -> {
                 openLogLocation()
                 result.success(null)
@@ -255,6 +317,68 @@ class MainActivity : FlutterActivity() {
                 val enabled = call.argument<Boolean>("enabled") ?: true
                 val logManager = LogManager.getInstance(this)
                 logManager.setLogToFile(enabled)
+                result.success(null)
+            }
+
+            "getLoggingEnabled" -> {
+                val logManager = LogManager.getInstance(this)
+                result.success(logManager.isLoggingEnabled())
+            }
+
+            "getLogToFileEnabled" -> {
+                val logManager = LogManager.getInstance(this)
+                result.success(logManager.isLogToFileEnabled())
+            }
+
+            "getAutostartEnabled" -> {
+                result.success(isAutostartEnabled())
+            }
+
+            "setAutostartEnabled" -> {
+                val enabled = call.argument<Boolean>("enabled") ?: true
+                setAutostartEnabled(enabled)
+                result.success(null)
+            }
+
+            "getExactAlarmStatus" -> {
+                result.success(mapOf("exactAlarmsAllowed" to areExactAlarmsAllowed()))
+            }
+
+            "getWebSocketStatus" -> {
+                result.success(webSocketServerManager.getStatusMap())
+            }
+
+            "setWebSocketEnabled" -> {
+                val enabled = call.argument<Boolean>("enabled") ?: false
+                webSocketServerManager.setEnabled(enabled)
+                result.success(webSocketServerManager.getStatusMap())
+            }
+
+            "setWebSocketPort" -> {
+                val port = call.argument<Int>("port")
+                if (port == null) {
+                    result.error("invalid_argument", "port parameter is required", null)
+                    return
+                }
+                if (!webSocketServerManager.setPort(port)) {
+                    result.error("invalid_argument", "port must be between 1024 and 65535", null)
+                    return
+                }
+                result.success(webSocketServerManager.getStatusMap())
+            }
+
+            "regenerateWebSocketToken" -> {
+                val token = webSocketServerManager.regenerateToken()
+                result.success(
+                    mapOf(
+                        "token" to token,
+                        "status" to webSocketServerManager.getStatusMap(),
+                    ),
+                )
+            }
+
+            "openExactAlarmSettings" -> {
+                openExactAlarmSettings()
                 result.success(null)
             }
 
@@ -291,6 +415,49 @@ class MainActivity : FlutterActivity() {
                 val delayMs = call.argument<Int>("delayMs")
                 val executionSummary = accessibilityService.startExecution(delayMs)
                 result.success(executionSummary.toMap())
+            }
+
+            "startScenarioExecution" -> {
+                val accessibilityService = ProgSetAccessibilityService.instance
+                if (accessibilityService == null) {
+                    result.error(
+                        "accessibility_service_unavailable",
+                        "Accessibility service is not connected.",
+                        null,
+                    )
+                    return
+                }
+
+                val scenarioId = call.argument<String>("scenarioId")
+                if (scenarioId.isNullOrBlank()) {
+                    result.error("invalid_argument", "scenarioId parameter is required", null)
+                    return
+                }
+
+                val delayMs = call.argument<Int>("delayMs")
+                val executionSummary = accessibilityService.startScenarioExecution(scenarioId, delayMs)
+                result.success(executionSummary.toMap())
+            }
+
+            "bindCurrentRecordingToScenario" -> {
+                val accessibilityService = ProgSetAccessibilityService.instance
+                if (accessibilityService == null) {
+                    result.error(
+                        "accessibility_service_unavailable",
+                        "Accessibility service is not connected.",
+                        null,
+                    )
+                    return
+                }
+
+                val scenarioId = call.argument<String>("scenarioId")
+                if (scenarioId.isNullOrBlank()) {
+                    result.error("invalid_argument", "scenarioId parameter is required", null)
+                    return
+                }
+
+                val success = accessibilityService.bindCurrentRecordingToScenario(scenarioId)
+                result.success(mapOf("success" to success))
             }
 
             "stopExecution" -> {
@@ -360,6 +527,36 @@ class MainActivity : FlutterActivity() {
                         "error" to verificationResult.error,
                     ),
                 )
+            }
+
+            "scheduleExecution" -> {
+                val rawSchedule = call.argument<Any>("schedule")
+                val scheduleJson = when (rawSchedule) {
+                    is String -> rawSchedule
+                    is Map<*, *> -> JSONObject(rawSchedule).toString()
+                    else -> null
+                }
+                if (scheduleJson.isNullOrBlank()) {
+                    result.error("invalid_argument", "schedule parameter is required", null)
+                    return
+                }
+                val success = schedulerManager.scheduleExecution(scheduleJson)
+                result.success(mapOf("success" to success))
+            }
+
+            "cancelSchedule" -> {
+                val scheduleId = call.argument<String>("scheduleId")
+                if (scheduleId == null) {
+                    result.error("invalid_argument", "scheduleId parameter is required", null)
+                    return
+                }
+                val success = schedulerManager.cancelSchedule(scheduleId)
+                result.success(mapOf("success" to success))
+            }
+
+            "cancelAllSchedules" -> {
+                val success = schedulerManager.cancelAllSchedules()
+                result.success(mapOf("success" to success))
             }
 
             else -> result.notImplemented()
@@ -520,5 +717,33 @@ class MainActivity : FlutterActivity() {
         }
 
         return false
+    }
+
+    private fun isAutostartEnabled(): Boolean {
+        val prefs = getSharedPreferences(flutterPrefsName, Context.MODE_PRIVATE)
+        return prefs.getBoolean(autostartPrefsKey, true)
+    }
+
+    private fun setAutostartEnabled(enabled: Boolean) {
+        val prefs = getSharedPreferences(flutterPrefsName, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(autostartPrefsKey, enabled).apply()
+    }
+
+    private fun areExactAlarmsAllowed(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? android.app.AlarmManager
+            alarmManager?.canScheduleExactAlarms() == true
+        } else {
+            true
+        }
+    }
+
+    private fun openExactAlarmSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                data = android.net.Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        }
     }
 }

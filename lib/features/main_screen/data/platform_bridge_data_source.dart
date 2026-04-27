@@ -13,6 +13,8 @@ import 'package:prog_set_touch/features/main_screen/domain/permission_status.dar
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
 
 class PlatformBridgeDataSource implements PlatformBridgeRepository {
+  static const Duration _webSocketMethodTimeout = Duration(seconds: 5);
+
   PlatformBridgeDataSource({
     required AppLogger logger,
   })  : _logger = logger,
@@ -183,6 +185,76 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   }
 
   @override
+  Future<ExecutionSummary> startScenarioExecution({
+    required String scenarioId,
+    int? delayMs,
+  }) async {
+    final result = await _channel.invokeMethod<dynamic>(
+      'startScenarioExecution',
+      {
+        'scenarioId': scenarioId,
+        'delayMs': delayMs,
+      },
+    );
+    return ExecutionSummary.fromMap(PlatformResultParser.parseMap(result));
+  }
+
+  @override
+  Future<bool> bindCurrentRecordingToScenario(String scenarioId) async {
+    final result = await _channel.invokeMethod<dynamic>(
+      'bindCurrentRecordingToScenario',
+      {'scenarioId': scenarioId},
+    );
+    final map = PlatformResultParser.parseMap(result);
+    return map['success'] as bool? ?? false;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> exportScenarioActions(
+    String scenarioId,
+  ) async {
+    final result = await _channel.invokeMethod<dynamic>(
+      'exportScenarioActions',
+      {'scenarioId': scenarioId},
+    );
+    final rawList = result is List ? result : const <dynamic>[];
+    return rawList
+        .whereType<Map>()
+        .map(
+          (entry) => entry.map(
+            (key, value) => MapEntry(key.toString(), value),
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<bool> importScenarioActions({
+    required String scenarioId,
+    required List<Map<String, dynamic>> actions,
+  }) async {
+    final result = await _channel.invokeMethod<dynamic>(
+      'importScenarioActions',
+      {
+        'scenarioId': scenarioId,
+        'actions': actions,
+      },
+    );
+    final map = PlatformResultParser.parseMap(result);
+    return map['success'] as bool? ?? false;
+  }
+
+  @override
+  Future<bool> deleteScenarioActions(String scenarioId) async {
+    final result = await _channel.invokeMethod<dynamic>(
+      'deleteScenarioActions',
+      {'scenarioId': scenarioId},
+    );
+    final map = PlatformResultParser.parseMap(result);
+    return map['success'] as bool? ?? false;
+  }
+
+  @override
   Future<ExecutionSummary> stopExecution() async {
     final result = await _channel.invokeMethod<dynamic>('stopExecution');
     return ExecutionSummary.fromMap(PlatformResultParser.parseMap(result));
@@ -214,6 +286,15 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
     return result ?? '';
   }
 
+  Future<Map<String, String>> getLogsSnapshot() async {
+    final result = await _channel.invokeMethod<dynamic>('getLogsSnapshot');
+    final map = PlatformResultParser.parseMap(result);
+    return {
+      'logs': map['logs'] as String? ?? '',
+      'source': map['source'] as String? ?? 'buffer',
+    };
+  }
+
   @override
   Future<void> clearLogs() async {
     await _channel.invokeMethod<void>('clearLogs');
@@ -226,8 +307,37 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
 
   @override
   Future<String?> exportLogs({String? path}) async {
-    final result = await _channel.invokeMethod<String>('exportLogs', {'path': path});
-    return result;
+    final args = (path == null || path.trim().isEmpty)
+        ? null
+        : <String, dynamic>{'path': path};
+    try {
+      final result = await _channel.invokeMethod<String>('exportLogs', args);
+      _logger.logInfo(
+        'platform_bridge_data_source',
+        'Log export completed',
+        payload: {
+          'requestedPath': path,
+          'exportedPath': result,
+        },
+      );
+      return result;
+    } on PlatformException catch (error, stackTrace) {
+      _logger.logError(
+        'platform_bridge_data_source',
+        error,
+        stackTrace,
+        context: 'PlatformException while exporting logs',
+      );
+      rethrow;
+    } catch (error, stackTrace) {
+      _logger.logError(
+        'platform_bridge_data_source',
+        error,
+        stackTrace,
+        context: 'Unexpected error while exporting logs',
+      );
+      rethrow;
+    }
   }
 
   @override
@@ -238,6 +348,56 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   @override
   Future<void> setLogToFileEnabled(bool enabled) async {
     await _channel.invokeMethod<void>('setLogToFileEnabled', {'enabled': enabled});
+  }
+
+  @override
+  Future<bool> getLoggingEnabled() async {
+    final result = await _channel.invokeMethod<bool>('getLoggingEnabled');
+    return result ?? true;
+  }
+
+  @override
+  Future<bool> getLogToFileEnabled() async {
+    final result = await _channel.invokeMethod<bool>('getLogToFileEnabled');
+    return result ?? true;
+  }
+
+  @override
+  Future<bool> getAutostartEnabled() async {
+    final result = await _channel.invokeMethod<bool>('getAutostartEnabled');
+    return result ?? true;
+  }
+
+  @override
+  Future<void> setAutostartEnabled(bool enabled) async {
+    await _channel.invokeMethod<void>('setAutostartEnabled', {'enabled': enabled});
+  }
+
+  Future<Map<String, dynamic>> getWebSocketStatus() async {
+    return _invokeMap('getWebSocketStatus').timeout(_webSocketMethodTimeout);
+  }
+
+  Future<Map<String, dynamic>> setWebSocketEnabled(bool enabled) async {
+    final result = await _channel.invokeMethod<dynamic>(
+      'setWebSocketEnabled',
+      {'enabled': enabled},
+    ).timeout(_webSocketMethodTimeout);
+    return PlatformResultParser.parseMap(result);
+  }
+
+  Future<Map<String, dynamic>> setWebSocketPort(int port) async {
+    final result = await _channel.invokeMethod<dynamic>(
+      'setWebSocketPort',
+      {'port': port},
+    ).timeout(_webSocketMethodTimeout);
+    return PlatformResultParser.parseMap(result);
+  }
+
+  Future<Map<String, dynamic>> regenerateWebSocketToken() async {
+    final result = await _channel
+        .invokeMethod<dynamic>('regenerateWebSocketToken')
+        .timeout(_webSocketMethodTimeout);
+    return PlatformResultParser.parseMap(result);
   }
 
   Future<void> _invokeVoid(String method) async {

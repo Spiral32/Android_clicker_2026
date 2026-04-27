@@ -112,6 +112,45 @@ class Schedule extends Equatable {
         createdAt,
         updatedAt,
       ];
+
+  /// Преобразование в Map для JSON сериализации
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'type': type.name,
+      'hour': hour,
+      'minute': minute,
+      'daysOfWeek': daysOfWeek,
+      'dateTimestamp': dateTimestamp,
+      'scenarioId': scenarioId,
+      'isActive': isActive,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+    };
+  }
+
+  /// Создание из Map (десериализация)
+  factory Schedule.fromMap(Map<String, dynamic> map) {
+    return Schedule(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      description: map['description'] as String?,
+      type: ScheduleType.values.firstWhere(
+        (e) => e.name == map['type'],
+        orElse: () => ScheduleType.daily,
+      ),
+      hour: map['hour'] as int,
+      minute: map['minute'] as int,
+      daysOfWeek: (map['daysOfWeek'] as List<dynamic>?)?.cast<int>(),
+      dateTimestamp: map['dateTimestamp'] as int?,
+      scenarioId: map['scenarioId'] as String,
+      isActive: map['isActive'] as bool? ?? true,
+      createdAt: map['createdAt'] as int,
+      updatedAt: map['updatedAt'] as int,
+    );
+  }
 }
 
 /// Состояние планировщика

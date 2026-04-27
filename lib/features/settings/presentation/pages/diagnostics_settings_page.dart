@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:prog_set_touch/features/main_screen/data/platform_bridge_data_source.dart';
 import 'package:prog_set_touch/features/main_screen/presentation/bloc/main_screen_bloc.dart';
-import 'package:prog_set_touch/shared/widgets/app_language_switcher.dart';
 
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+class DiagnosticsSettingsPage extends StatefulWidget {
+  const DiagnosticsSettingsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  State<DiagnosticsSettingsPage> createState() => _DiagnosticsSettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _DiagnosticsSettingsPageState extends State<DiagnosticsSettingsPage> {
   static const MethodChannel _channel =
       MethodChannel('prog_set_touch/platform');
 
@@ -22,6 +22,9 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isBusy = false;
   bool _loggingEnabled = true;
   bool _fileLoggingEnabled = true;
+  bool _autostartEnabled = true;
+  bool _mediaProjectionGranted = false;
+  bool _exactAlarmsAllowed = true;
   String? _logFilePath;
   String _logPreview = '';
   String? _message;
@@ -33,6 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadDiagnostics() async {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isLoading = true;
       _message = null;
@@ -42,7 +46,11 @@ class _SettingsPageState extends State<SettingsPage> {
       final results = await Future.wait<dynamic>([
         _channel.invokeMethod<String>('getLogFilePath'),
         _channel.invokeMethod<String>('getLogs'),
+        _channel.invokeMethod<bool>('getAutostartEnabled'),
+        _channel.invokeMethod<Map<dynamic, dynamic>>('getPermissionStatus'),
       ]);
+      final exactAlarmStatus = await _channel
+          .invokeMethod<Map<dynamic, dynamic>>('getExactAlarmStatus');
 
       if (!mounted) {
         return;
@@ -51,6 +59,12 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _logFilePath = results[0] as String?;
         _logPreview = (results[1] as String?)?.trim() ?? '';
+        _autostartEnabled = results[2] as bool? ?? true;
+        final permissionMap = results[3] as Map<dynamic, dynamic>?;
+        _mediaProjectionGranted =
+            permissionMap?['mediaProjectionGranted'] as bool? ?? false;
+        _exactAlarmsAllowed =
+            exactAlarmStatus?['exactAlarmsAllowed'] as bool? ?? true;
         _isLoading = false;
       });
     } on PlatformException catch (error) {
@@ -59,7 +73,9 @@ class _SettingsPageState extends State<SettingsPage> {
       }
       setState(() {
         _isLoading = false;
-        _message = error.message ?? 'Не удалось загрузить диагностику.';
+        _message = error.message ??
+            (l10n?.settingsDiagnosticsLoadError ??
+                'Failed to load diagnostics.');
       });
     }
   }
@@ -103,19 +119,17 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _exportLog() async {
+  Future<void> _setAutostartEnabled(bool enabled) async {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isBusy = true;
       _message = null;
     });
 
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final targetPath =
-          '/storage/emulated/0/Download/prog_set_touch_log_$timestamp.txt';
-      final exportedPath = await _channel.invokeMethod<String>(
-        'exportLogs',
-        {'path': targetPath},
+      await _channel.invokeMethod<void>(
+        'setAutostartEnabled',
+        {'enabled': enabled},
       );
 
       if (!mounted) {
@@ -123,9 +137,98 @@ class _SettingsPageState extends State<SettingsPage> {
       }
 
       setState(() {
-        _logFilePath = exportedPath ?? targetPath;
+        _autostartEnabled = enabled;
         _isBusy = false;
-        _message = 'Лог экспортирован в папку Download.';
+        _message = enabled
+            ? (l10n?.settingsAutostartEnabledMessage ??
+                'Autostart after reboot is enabled.')
+            : (l10n?.settingsAutostartDisabledMessage ??
+                'Autostart after reboot is disabled.');
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_message!)),
+      );
+    } on PlatformException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isBusy = false;
+        _message = error.message ??
+            (l10n?.settingsAutostartChangeError ??
+                'Failed to change autostart setting.');
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_message!)),
+      );
+    }
+  }
+
+  Future<void> _requestMediaProjectionPermission() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _isBusy = true;
+      _message = null;
+    });
+
+    try {
+      final result = await _channel.invokeMethod<Map<dynamic, dynamic>>(
+        'requestMediaProjectionPermission',
+      );
+      final granted = result?['mediaProjectionGranted'] as bool? ?? false;
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _mediaProjectionGranted = granted;
+        _isBusy = false;
+        _message = granted
+            ? (l10n?.settingsMediaProjectionGrantedMessage ??
+                'MediaProjection permission granted.')
+            : (l10n?.settingsMediaProjectionDeniedMessage ??
+                'MediaProjection permission not granted.');
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_message!)),
+      );
+    } on PlatformException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isBusy = false;
+        _message = error.message ??
+            (l10n?.settingsMediaProjectionRequestError ??
+                'Failed to request MediaProjection.');
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_message!)),
+      );
+    }
+  }
+
+  Future<void> _exportLog() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _isBusy = true;
+      _message = null;
+    });
+
+    try {
+      final dataSource = context.read<PlatformBridgeDataSource>();
+      final exportedPath = await dataSource.exportLogs();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _logFilePath = exportedPath;
+        _isBusy = false;
+        _message = l10n?.settingsLogExportedMessage ??
+            'Log exported to Download folder.';
       });
     } on PlatformException catch (error) {
       if (!mounted) {
@@ -133,12 +236,14 @@ class _SettingsPageState extends State<SettingsPage> {
       }
       setState(() {
         _isBusy = false;
-        _message = error.message ?? 'Не удалось экспортировать лог.';
+        _message = error.message ??
+            (l10n?.settingsLogExportError ?? 'Failed to export log.');
       });
     }
   }
 
   Future<void> _openLogLocation() async {
+    final l10n = AppLocalizations.of(context);
     try {
       await _channel.invokeMethod<void>(
         'openLogLocation',
@@ -149,13 +254,15 @@ class _SettingsPageState extends State<SettingsPage> {
         return;
       }
       setState(() {
-        _message =
-            error.message ?? 'Не удалось открыть расположение лог-файла.';
+        _message = error.message ??
+            (l10n?.settingsLogOpenLocationError ??
+                'Failed to open log file location.');
       });
     }
   }
 
   Future<void> _clearLogs() async {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isBusy = true;
       _message = null;
@@ -169,7 +276,7 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _logPreview = '';
         _isBusy = false;
-        _message = 'Буфер логов очищен.';
+        _message = l10n?.settingsLogClearedMessage ?? 'Log buffer cleared.';
       });
     } on PlatformException catch (error) {
       if (!mounted) {
@@ -177,7 +284,25 @@ class _SettingsPageState extends State<SettingsPage> {
       }
       setState(() {
         _isBusy = false;
-        _message = error.message ?? 'Не удалось очистить лог.';
+        _message = error.message ??
+            (l10n?.settingsLogClearError ?? 'Failed to clear log.');
+      });
+    }
+  }
+
+  Future<void> _openExactAlarmSettings() async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await _channel.invokeMethod<void>('openExactAlarmSettings');
+      await _loadDiagnostics();
+    } on PlatformException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _message = error.message ??
+            (l10n?.settingsExactAlarmOpenError ??
+                'Failed to open exact alarm settings.');
       });
     }
   }
@@ -200,10 +325,93 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   _SectionCard(
                     title: l10n.settingsLanguageTitle,
-                    subtitle: 'Выберите язык приложения.',
+                    subtitle: l10n.settingsLanguageSubtitle,
                     child: const Align(
                       alignment: Alignment.centerLeft,
                       child: AppLanguageSwitcher(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _SectionCard(
+                    title: l10n.settingsAutostartTitle,
+                    subtitle:
+                        l10n.settingsAutostartSubtitle,
+                    child: SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      value: _autostartEnabled,
+                      onChanged: _isBusy ? null : _setAutostartEnabled,
+                      title: Text(l10n.settingsAutostartToggleTitle),
+                      subtitle: Text(l10n.settingsAutostartToggleSubtitle),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _SectionCard(
+                    title: l10n.settingsMediaProjectionTitle,
+                    subtitle:
+                        l10n.settingsMediaProjectionSubtitle,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              _mediaProjectionGranted
+                                  ? Icons.check_circle_outline
+                                  : Icons.error_outline,
+                              color: _mediaProjectionGranted
+                                  ? Colors.green
+                                  : Colors.orange,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _mediaProjectionGranted
+                                  ? l10n.settingsMediaProjectionStatusGranted
+                                  : l10n.settingsMediaProjectionStatusMissing,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: _isBusy ? null : _requestMediaProjectionPermission,
+                          icon: const Icon(Icons.screen_share_outlined),
+                          label: Text(l10n.settingsMediaProjectionRequestAction),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _SectionCard(
+                    title: l10n.settingsExactAlarmTitle,
+                    subtitle: l10n.settingsExactAlarmSubtitle,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              _exactAlarmsAllowed
+                                  ? Icons.check_circle_outline
+                                  : Icons.warning_amber_outlined,
+                              color:
+                                  _exactAlarmsAllowed ? Colors.green : Colors.orange,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _exactAlarmsAllowed
+                                    ? l10n.settingsExactAlarmStatusAllowed
+                                    : l10n.settingsExactAlarmStatusLimited,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: _isBusy ? null : _openExactAlarmSettings,
+                          icon: const Icon(Icons.alarm_outlined),
+                          label: Text(l10n.settingsExactAlarmOpenAction),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -211,8 +419,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     builder: (context, state) {
                       return _SectionCard(
                         title: l10n.settingsExecutionTitle,
-                        subtitle:
-                            'Настройте параметры воспроизведения записанных действий.',
+                        subtitle: l10n.settingsExecutionDelay,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -226,8 +433,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                 Expanded(
                                   child: Slider.adaptive(
                                     min: 1,
-                                    max: 10,
-                                    divisions: 9,
+                                    max: 120,
+                                    divisions: 119,
                                     value: state.executionDelayMs / 1000,
                                     onChanged: (value) {
                                       context.read<MainScreenBloc>().add(

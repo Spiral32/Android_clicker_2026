@@ -34,6 +34,22 @@ abstract class PlatformBridgeRepository {
   Future<bool> resetState();
 
   Future<ExecutionSummary> startExecution({int? delayMs});
+  
+  Future<ExecutionSummary> startScenarioExecution({
+    required String scenarioId,
+    int? delayMs,
+  });
+  
+  Future<bool> bindCurrentRecordingToScenario(String scenarioId);
+
+  Future<List<Map<String, dynamic>>> exportScenarioActions(String scenarioId);
+
+  Future<bool> importScenarioActions({
+    required String scenarioId,
+    required List<Map<String, dynamic>> actions,
+  });
+
+  Future<bool> deleteScenarioActions(String scenarioId);
 
   Future<ExecutionSummary> stopExecution();
 
@@ -54,6 +70,14 @@ abstract class PlatformBridgeRepository {
   Future<void> setLoggingEnabled(bool enabled);
 
   Future<void> setLogToFileEnabled(bool enabled);
+
+  Future<bool> getLoggingEnabled();
+
+  Future<bool> getLogToFileEnabled();
+
+  Future<bool> getAutostartEnabled();
+
+  Future<void> setAutostartEnabled(bool enabled);
 
   Stream<ExecutionSummary> get executionUpdates;
 }

@@ -11,6 +11,9 @@
   "mainAutostartActionEnable": "Enable floating button",
   "mainAutostartActionDisable": "Disable floating button",
   "mainOpenSettings": "Settings",
+  "mainRecorderTip": "Recording works in a step-by-step non-blocking mode. After start, use the on-screen recorder panel to add taps, double taps, long presses, and swipes.",
+  "mainRecorderOpenPanel": "Open recorder panel",
+  "mainRecorderStopPanel": "Finish recording",
   "mainPlatformSectionTitle": "Platform status",
   "mainPlatformUnavailable": "Platform data unavailable",
   "mainPlatformLabel": "Platform",
@@ -20,10 +23,91 @@
   "mainLocaleLabel": "System locale",
   "settingsTitle": "Settings",
   "settingsLanguageTitle": "Language",
+  "settingsLanguageSubtitle": "Choose the app language.",
   "settingsLanguageRussian": "Russian",
   "settingsLanguageEnglish": "English",
+  "settingsAutostartTitle": "Autostart",
+  "settingsAutostartSubtitle": "Control schedule restoration after device reboot.",
+  "settingsAutostartToggleTitle": "Enable autostart after reboot",
+  "settingsAutostartToggleSubtitle": "When disabled, BOOT_COMPLETED does not restore schedules automatically.",
+  "settingsAutostartEnabledMessage": "Autostart after reboot is enabled.",
+  "settingsAutostartDisabledMessage": "Autostart after reboot is disabled.",
+  "settingsAutostartChangeError": "Failed to change autostart setting.",
+  "settingsMediaProjectionTitle": "MediaProjection",
+  "settingsMediaProjectionSubtitle": "This permission is required only for screen capture and screenshot verification.",
+  "settingsMediaProjectionStatusGranted": "Status: permission granted",
+  "settingsMediaProjectionStatusMissing": "Status: permission not granted",
+  "settingsMediaProjectionRequestAction": "Request MediaProjection manually",
+  "settingsMediaProjectionGrantedMessage": "MediaProjection permission granted.",
+  "settingsMediaProjectionDeniedMessage": "MediaProjection permission not granted.",
+  "settingsMediaProjectionRequestError": "Failed to request MediaProjection.",
+  "settingsExactAlarmTitle": "Exact alarms",
+  "settingsExactAlarmSubtitle": "For maximum schedule accuracy, allow exact alarms in Android system settings.",
+  "settingsExactAlarmStatusAllowed": "Status: exact alarms allowed",
+  "settingsExactAlarmStatusLimited": "Status: exact alarms limited, schedule may start with delay",
+  "settingsExactAlarmOpenAction": "Open exact alarm settings",
+  "settingsExactAlarmOpenError": "Failed to open exact alarm settings.",
+  "settingsDiagnosticsLoadError": "Failed to load diagnostics.",
+  "settingsLogExportedMessage": "Log exported to Download folder.",
+  "settingsLogExportError": "Failed to export log.",
+  "settingsLogOpenLocationError": "Failed to open log file location.",
+  "settingsLogClearedMessage": "Log buffer cleared.",
+  "settingsLogClearError": "Failed to clear log.",
   "settingsWebSocketTitle": "WebSocket",
-  "settingsWebSocketPlaceholder": "WSS settings will be available in stage 10",
+  "settingsWebSocketSubtitle": "Control the built-in server for remote commands and diagnostics.",
+  "settingsWebSocketEnableTitle": "Enable server",
+  "settingsWebSocketEnableSubtitle": "Starts a single-client WebSocket server with token auth (Authorization: Bearer preferred).",
+  "settingsWebSocketEnableAction": "Enable server",
+  "settingsWebSocketDisableAction": "Disable server",
+  "settingsWebSocketRunningLabel": "Server",
+  "settingsWebSocketStatusRunning": "running",
+  "settingsWebSocketStatusStopped": "stopped",
+  "settingsWebSocketClientLabel": "Client",
+  "settingsWebSocketStatusClientConnected": "connected",
+  "settingsWebSocketStatusNoClient": "no client",
+  "settingsWebSocketTransportLabel": "Transport",
+  "settingsWebSocketAuthLabel": "Auth",
+  "settingsWebSocketAuthModeQueryToken": "bearer token",
+  "settingsWebSocketPortLabel": "Port",
+  "settingsWebSocketApplyPort": "Apply",
+  "settingsWebSocketTokenLabel": "Access token",
+  "settingsWebSocketRegenerateToken": "Regenerate token",
+  "settingsWebSocketUrlsLabel": "Connection URLs",
+  "settingsWebSocketRefreshAction": "Refresh",
+  "settingsWebSocketUnavailableAddress": "No local IPv4 address is available right now.",
+  "settingsWebSocketLoadError": "Failed to load WebSocket status",
+  "settingsWebSocketTimeoutError": "WebSocket status did not respond in time. Try refreshing again.",
+  "settingsWebSocketPortError": "Port must be between 1024 and 65535.",
+  "settingsDiagnosticsTitle": "Diagnostics & logs",
+  "settingsDiagnosticsSubtitle": "Manage debug logging and quickly export log file.",
+  "settingsEnableLoggingTitle": "Enable logging",
+  "settingsEnableLoggingSubtitle": "Capture technical logs for diagnostics",
+  "settingsLogToFileTitle": "Log to file",
+  "settingsNoLogFilePath": "No file path available",
+  "settingsRefreshAction": "Refresh",
+  "settingsClearAction": "Clear",
+  "settingsExportAction": "Export",
+  "settingsShareAction": "Share",
+  "settingsNoLogsAvailable": "No logs available",
+  "settingsErrorLoadingLogsPrefix": "Error loading logs",
+  "settingsLogsCleared": "Logs cleared",
+  "settingsErrorClearingLogsPrefix": "Error clearing logs",
+  "settingsLogsExportedPrefix": "Logs exported to",
+  "settingsFailedToExportLogs": "Failed to export logs",
+  "settingsErrorExportingLogsPrefix": "Error exporting logs",
+  "settingsNoExportedLogsToShare": "No exported logs to share. Export first.",
+  "settingsGenericErrorPrefix": "Error",
+  "settingsPermissionsAllGranted": "All key permissions are granted.",
+  "settingsPermissionsMissingSummary": "Some required permissions are missing. Open each missing permission directly from buttons below.",
+  "settingsPermissionAccessibilityLabel": "Accessibility service",
+  "settingsPermissionOverlayLabel": "Display over apps",
+  "settingsPermissionMediaProjectionLabel": "MediaProjection",
+  "settingsPermissionGranted": "granted",
+  "settingsPermissionMissing": "not granted",
+  "settingsExecutionPermissionsRequired": "To run scenarios, first grant required permissions: Accessibility service and Display over apps.",
+  "settingsLogSourceLabel": "Source",
+  "settingsLogSourceBuffer": "Buffer",
+  "settingsLogSourceFileFallback": "File fallback",
   "languageSwitcherTooltip": "Change language",
   "permissionsTitle": "Permissions",
   "permissionsAllGranted": "All required permissions are granted. Primary actions are unlocked.",
@@ -31,7 +115,7 @@
   "permissionsAccessibilityAction": "Open accessibility settings",
   "permissionsOverlayDescription": "Then allow drawing over other apps. This is required for the background UI and later floating overlay button.",
   "permissionsOverlayAction": "Open overlay settings",
-  "permissionsMediaProjectionDescription": "The final step is screen capture approval. This permission will be checked before every scenario launch.",
+  "permissionsMediaProjectionDescription": "Screen capture permission is requested separately, only for screenshots and screen verification features.",
   "permissionsMediaProjectionAction": "Request MediaProjection",
   "overlayStatusTitle": "Floating overlay",
   "overlayStatusVisible": "Visible and draggable",
@@ -69,5 +153,72 @@
   "errorExecutionAction": "Failed to execute scenario",
   "errorExecutionNotAllowed": "Execution not allowed in current state",
   "errorExecutionPauseFailed": "Failed to pause execution",
-  "errorExecutionResumeFailed": "Failed to resume execution"
+  "errorExecutionResumeFailed": "Failed to resume execution",
+  "schedulerTitle": "Scheduler",
+  "noSchedulesMessage": "No schedules yet",
+  "noSchedulesDescription": "Create your first schedule to automate scenario execution",
+  "deleteScheduleTitle": "Delete Schedule",
+  "deleteScheduleMessage": "Are you sure you want to delete '{name}'?",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "addScheduleTitle": "Add Schedule",
+  "editScheduleTitle": "Edit Schedule",
+  "scheduleNameLabel": "Name",
+  "scheduleNameRequired": "Name is required",
+  "scheduleTypeLabel": "Type",
+  "scheduleTypeOneTime": "One time",
+  "scheduleTypeDaily": "Daily",
+  "scheduleTypeWeekly": "Weekly",
+  "hourLabel": "Hour",
+  "minuteLabel": "Minute",
+  "invalidHour": "Hour must be 0-23",
+  "invalidMinute": "Minute must be 0-59",
+  "daysOfWeekLabel": "Days of week",
+  "scheduleScenarioLabel": "Scenario",
+  "scheduleScenarioRequired": "Select a scenario",
+  "scheduleScenarioRequiredToCreate": "Create at least one scenario first",
+  "scheduleScenarioMissing": "Missing scenario",
+  "save": "Save"
+  ,"scenarioScreenTitle": "Scenarios"
+  ,"scenarioCreate": "Create Scenario"
+  ,"scenarioCreateCompact": "Create"
+  ,"scenarioRunAll": "Run All Scenarios"
+  ,"scenarioRunAllCompact": "Run All"
+  ,"scenarioQuickLaunch": "Quick Launch"
+  ,"scenarioNameHint": "Scenario name"
+  ,"scenarioColumnName": "Name"
+  ,"scenarioColumnSteps": "Steps"
+  ,"scenarioEmptyNotAllowed": "You cannot save an empty scenario. Record at least one action first."
+  ,"scenarioLimitReached": "Maximum 50 scenarios allowed."
+  ,"scenarioNameMustBeUnique": "Scenario name must be unique."
+  ,"scenarioQuickLaunchEmpty": "No scenarios selected for Quick Launch."
+  ,"scenarioRunAllEmpty": "No enabled scenarios for Run All."
+  ,"scenarioExecutionBusy": "Execution is already in progress."
+  ,"scenarioBatchDone": "Scenario batch execution finished."
+  ,"scenarioRename": "Rename"
+  ,"scenarioDelete": "Delete"
+  ,"scenarioDeleteConfirmTitle": "Delete Scenario"
+  ,"scenarioDeleteConfirmMessage": "Are you sure you want to delete scenario '{name}'?"
+  ,"scenarioRenameTitle": "Rename Scenario"
+  ,"scenarioExport": "Export Scenarios"
+  ,"scenarioImport": "Import Scenarios"
+  ,"scenarioExportEmpty": "No scenarios to export."
+  ,"scenarioExportDone": "Scenarios exported successfully."
+  ,"scenarioExportFailed": "Failed to export scenarios."
+  ,"scenarioImportDone": "Scenarios imported successfully."
+  ,"scenarioImportInvalidJson": "Import file contains invalid JSON."
+  ,"scenarioImportNoItems": "No valid scenarios found in import file."
+  ,"mainScenarioSectionTitle": "Scenarios"
+  ,"mainOverviewTabTitle": "Overview"
+  ,"mainStatusPermissions": "Permissions"
+  ,"mainStatusOverlay": "Overlay"
+  ,"mainStatusRecorder": "Recorder"
+  ,"mainStatusActions": "Actions"
+  ,"mainStatusOk": "OK"
+  ,"mainStatusOff": "OFF"
+  ,"schedulerScenarioPrefix": "Scenario"
+  ,"notesLatestChangesTitle": "Latest changes"
+  ,"notesExportCrashFix": "Fixed app crash during settings/log export."
+  ,"notesMainScreenRedesign": "Main screen redesigned for clearer status and action blocks."
+  ,"notesSchedulerScenarioVisible": "Scheduler cards now show the selected scenario."
 }
