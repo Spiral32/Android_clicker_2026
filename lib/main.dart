@@ -56,13 +56,17 @@ class ProgSetTouchApp extends StatelessWidget {
         RepositoryProvider.value(value: appScope.platformBridge),
         RepositoryProvider.value(value: appScope.scenarioRepository),
         RepositoryProvider.value(value: appScope.scenarioService),
+        RepositoryProvider.value(value: appScope.settingsRepository),
         RepositoryProvider.value(value: appScope.schedulerRepository),
         RepositoryProvider.value(value: appScope.schedulerService),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
-            create: (_) => SettingsBloc(logger: appScope.logger),
+            create: (_) => SettingsBloc(
+              logger: appScope.logger,
+              repository: appScope.settingsRepository,
+            ),
           ),
           BlocProvider(
             create: (_) => SchedulerBloc(

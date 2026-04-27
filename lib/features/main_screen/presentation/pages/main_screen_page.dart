@@ -18,6 +18,7 @@ import 'package:prog_set_touch/features/scenario/domain/scenario_item.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_repository.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_service.dart';
 import 'package:prog_set_touch/features/scenario/presentation/bloc/scenario_bloc.dart';
+import 'package:prog_set_touch/features/settings/domain/settings_repository.dart';
 import 'package:prog_set_touch/features/scheduler/presentation/pages/scheduler_screen.dart';
 import 'package:prog_set_touch/features/settings/presentation/pages/settings_page.dart';
 import 'package:share_plus/share_plus.dart';
@@ -33,6 +34,7 @@ class MainScreenPage extends StatelessWidget {
         BlocProvider(
           create: (context) => MainScreenBloc(
             platformBridgeRepository: context.read<PlatformBridgeDataSource>(),
+            settingsRepository: context.read<SettingsRepository>(),
             logger: context.read<AppLogger>(),
           )..add(const MainScreenRequested()),
         ),

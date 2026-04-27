@@ -11,6 +11,7 @@ import 'package:prog_set_touch/features/main_screen/domain/platform_info.dart';
 import 'package:prog_set_touch/features/main_screen/domain/permission_status.dart';
 import 'package:prog_set_touch/features/main_screen/domain/permission_type.dart';
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
+import 'package:prog_set_touch/features/settings/domain/settings_repository.dart';
 
 part 'main_screen_event.dart';
 part 'main_screen_state.dart';
@@ -18,10 +19,16 @@ part 'main_screen_state.dart';
 class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
   MainScreenBloc({
     required PlatformBridgeRepository platformBridgeRepository,
+    required SettingsRepository settingsRepository,
     required AppLogger logger,
   })  : _platformBridgeRepository = platformBridgeRepository,
+        _settingsRepository = settingsRepository,
         _logger = logger,
-        super(const MainScreenState()) {
+        super(
+          MainScreenState(
+            executionDelayMs: settingsRepository.load().executionDelayMs,
+          ),
+        ) {
     on<MainScreenRequested>(_onRequested);
     on<MainScreenPermissionActionPressed>(_onPermissionActionPressed);
     on<MainScreenOverlayToggleRequested>(_onOverlayToggleRequested);
@@ -43,6 +50,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
   }
 
   final PlatformBridgeRepository _platformBridgeRepository;
+  final SettingsRepository _settingsRepository;
   final AppLogger _logger;
   int _requestVersion = 0;
   StreamSubscription<ExecutionSummary>? _executionSubscription;
@@ -602,11 +610,16 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     }
   }
 
-  void _onExecutionDelayChanged(
+  Future<void> _onExecutionDelayChanged(
     MainScreenExecutionDelayChanged event,
     Emitter<MainScreenState> emit,
-  ) {
+  ) async {
     emit(state.copyWith(executionDelayMs: event.delayMs));
+    try {
+      await _settingsRepository.saveExecutionDelayMs(event.delayMs);
+    } catch (error, stackTrace) {
+      _logger.logError('main_screen_bloc_execution_delay', error, stackTrace);
+    }
   }
 
   Future<void> _onExecutionUpdateReceived(

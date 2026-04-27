@@ -6,17 +6,20 @@ class AppSettings extends Equatable {
     required this.locale,
     required this.websocketHost,
     required this.websocketPort,
+    required this.executionDelayMs,
   });
 
   final AppLocale locale;
   final String websocketHost;
   final int websocketPort;
+  final int executionDelayMs;
 
   factory AppSettings.initial() {
     return const AppSettings(
       locale: AppLocale.ru,
       websocketHost: '',
       websocketPort: 443,
+      executionDelayMs: 1000,
     );
   }
 
@@ -24,11 +27,13 @@ class AppSettings extends Equatable {
     AppLocale? locale,
     String? websocketHost,
     int? websocketPort,
+    int? executionDelayMs,
   }) {
     return AppSettings(
       locale: locale ?? this.locale,
       websocketHost: websocketHost ?? this.websocketHost,
       websocketPort: websocketPort ?? this.websocketPort,
+      executionDelayMs: executionDelayMs ?? this.executionDelayMs,
     );
   }
 
@@ -37,5 +42,6 @@ class AppSettings extends Equatable {
         locale,
         websocketHost,
         websocketPort,
+        executionDelayMs,
       ];
 }

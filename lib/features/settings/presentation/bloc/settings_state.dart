@@ -11,6 +11,10 @@ class SettingsState extends Equatable {
     return const SettingsState(locale: AppLocale.ru);
   }
 
+  factory SettingsState.fromSettings(AppSettings settings) {
+    return SettingsState(locale: settings.locale);
+  }
+
   SettingsState copyWith({
     AppLocale? locale,
   }) {
