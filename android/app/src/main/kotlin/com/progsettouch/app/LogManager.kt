@@ -16,16 +16,20 @@ import java.util.Locale
 class LogManager private constructor(private val context: Context) {
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
     private val fileDateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
+    private val prefs = context.getSharedPreferences(loggingPrefsName, Context.MODE_PRIVATE)
     private val logBuffer = StringBuilder()
     private var currentLogFile: File? = null
     private var fileWriter: FileWriter? = null
-    private var isEnabled = true
-    private var logToFile = true
+    private var isEnabled = prefs.getBoolean(loggingEnabledKey, true)
+    private var logToFile = prefs.getBoolean(logToFileEnabledKey, true)
     private val maxBufferSize = 10000
 
     companion object {
         private const val TAG = "LogManager"
         private const val LOG_DIR = "ProgSetTouchLogs"
+        private const val loggingPrefsName = "progset_logging"
+        private const val loggingEnabledKey = "logging_enabled"
+        private const val logToFileEnabledKey = "log_to_file_enabled"
         private var instance: LogManager? = null
 
         fun getInstance(context: Context): LogManager {
@@ -85,7 +89,6 @@ class LogManager private constructor(private val context: Context) {
         val timestamp = dateFormat.format(Date())
         val logLine = "[$timestamp] $level/$tag: $message"
 
-        // Log to Android system log
         when (level) {
             "DEBUG" -> Log.d(tag, message)
             "INFO" -> Log.i(tag, message)
@@ -93,7 +96,6 @@ class LogManager private constructor(private val context: Context) {
             "ERROR" -> Log.e(tag, message)
         }
 
-        // Buffer for Flutter export
         synchronized(logBuffer) {
             logBuffer.appendLine(logLine)
             if (logBuffer.length > maxBufferSize) {
@@ -101,9 +103,9 @@ class LogManager private constructor(private val context: Context) {
             }
         }
 
-        // Write to file
         if (logToFile) {
             try {
+                ensureFileWriterReady()
                 fileWriter?.apply {
                     write(logLine)
                     write("\n")
@@ -116,21 +118,48 @@ class LogManager private constructor(private val context: Context) {
     }
 
     fun setEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(loggingEnabledKey, enabled).apply()
         isEnabled = enabled
-        d(TAG, "Logging ${if (enabled) "enabled" else "disabled"}")
+        Log.i(TAG, "Logging ${if (enabled) "enabled" else "disabled"}")
+        if (enabled) {
+            i(TAG, "Logging enabled")
+        }
     }
 
     fun isLoggingEnabled(): Boolean = isEnabled
 
     fun setLogToFile(enabled: Boolean) {
+        prefs.edit().putBoolean(logToFileEnabledKey, enabled).apply()
         logToFile = enabled
-        if (enabled && fileWriter == null) {
-            initLogFile()
+        if (enabled) {
+            ensureFileWriterReady()
+            d(TAG, "File logging enabled")
+        } else {
+            closeCurrentFileWriter()
+            d(TAG, "File logging disabled")
         }
-        d(TAG, "File logging ${if (enabled) "enabled" else "disabled"}")
     }
 
     fun isLogToFileEnabled(): Boolean = logToFile
+
+    private fun ensureFileWriterReady() {
+        if (!logToFile) {
+            return
+        }
+        if (fileWriter == null) {
+            initLogFile()
+        }
+    }
+
+    private fun closeCurrentFileWriter() {
+        try {
+            fileWriter?.close()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to close log file", e)
+        } finally {
+            fileWriter = null
+        }
+    }
 
     fun getLogBuffer(): String {
         return synchronized(logBuffer) {
@@ -210,12 +239,10 @@ class LogManager private constructor(private val context: Context) {
                 append("\n=== End of Export ===\n")
             }
 
-            // Android 10+ (API 29+) - используем MediaStore для сохранения в общую папку Downloads
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 return exportUsingMediaStore(fileName, exportContent)
             }
 
-            // Android 9 и ниже - используем публичную папку Downloads напрямую
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             if (!downloadsDir.exists()) {
                 downloadsDir.mkdirs()
@@ -227,7 +254,6 @@ class LogManager private constructor(private val context: Context) {
             }
             i(TAG, "Logs exported to: ${exportFile.absolutePath}")
             exportFile.absolutePath
-
         } catch (e: Exception) {
             e(TAG, "Failed to export logs", e)
             null
@@ -248,7 +274,6 @@ class LogManager private constructor(private val context: Context) {
                     outputStream.write(content.toByteArray())
                 }
 
-                // Получаем реальный путь к файлу
                 val projection = arrayOf(MediaStore.Downloads.DATA)
                 var filePath: String? = null
                 context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
@@ -272,11 +297,6 @@ class LogManager private constructor(private val context: Context) {
     }
 
     fun close() {
-        try {
-            fileWriter?.close()
-            fileWriter = null
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to close log file", e)
-        }
+        closeCurrentFileWriter()
     }
 }

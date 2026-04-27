@@ -45,6 +45,9 @@ Active stage details:
     - stage results are documented in memory docs/changelog
 
 Stage 11 implementation progress:
+- [x] Locale persistence added through shared settings repository
+- [x] Execution delay persistence added through shared settings repository
+- [x] Native logging toggles now persist across restart
 - [ ] Settings storage contract finalized
 - [ ] Persistent settings backend audited and hardened
 - [ ] Advanced configuration flows prioritized

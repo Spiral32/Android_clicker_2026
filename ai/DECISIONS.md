@@ -319,3 +319,17 @@ Applied direction:
 - Android export opens `Share.shareXFiles(...)` with the generated JSON file
 - non-Android platforms continue using `FilePicker.saveFile`
 - the fix was confirmed working by the user on 2026-04-27
+
+[2026-04-27]
+Decision:
+Stage 11 settings persistence begins with a shared Flutter settings repository plus native persistence for Android-owned logging flags.
+
+Why:
+- locale and execution delay are user-facing app settings that must survive restart
+- logging toggles are configured from Flutter UI but owned by Android `LogManager`
+- Stage 11 should reduce split-brain settings behavior between Flutter memory state and native runtime state
+
+Applied direction:
+- Flutter locale is stored in `SharedPreferences` through a dedicated settings repository
+- execution delay is loaded into `MainScreenBloc` from the same repository and saved on change
+- Android `LogManager` persists `logging_enabled` and `log_to_file_enabled` in native shared preferences
