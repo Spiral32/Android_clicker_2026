@@ -324,14 +324,9 @@ class RecorderManager(
         isPointCaptureRecording = false
         lastTapData = null
 
-        // Restore previous actions if the current session was empty
-        if (recordedActions.isEmpty() && previousActionsBackup != null) {
-            recordedActions.addAll(previousActionsBackup!!)
-            logger.i(
-                    "RecorderManager",
-                    "Current session is empty, restored ${recordedActions.size} previous actions"
-            )
-        }
+        // If the session recorded nothing, keep it empty.
+        // Restoring the previous actions here causes new scenario recordings to
+        // accidentally reuse old actions.
         previousActionsBackup = null
 
         saveActions()
@@ -1140,6 +1135,8 @@ data class RecordedAction(
         val endY: Double,
         val durationMs: Long,
         val stepDelayMs: Long = 1000L,
+        val verificationEnabled: Boolean = false,
+        val thresholdPercent: Double = 1.0,
 ) {
     fun toMap(): Map<String, Any> {
         return mapOf(
@@ -1151,6 +1148,8 @@ data class RecordedAction(
                 "endY" to endY,
                 "durationMs" to durationMs,
                 "stepDelayMs" to stepDelayMs,
+                "verificationEnabled" to verificationEnabled,
+                "thresholdPercent" to thresholdPercent,
         )
     }
 }

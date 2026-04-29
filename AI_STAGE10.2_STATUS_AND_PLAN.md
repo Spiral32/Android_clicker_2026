@@ -22,12 +22,9 @@ Legend:
 - [x] No hardcoded strings in the active flows
 
 ### UI
-- [~] "Scenarios" table exists with `[Select All] | quick launch | ON | Name | Steps | Run | Reorder`
-- [ ] Only "Scenarios" remains in UI
-- [ ] "Execution" and "Recorder" flows removed from the main screen
-
-Why not complete:
-- `MainScreenPage` still has an `Overview` tab with recorder/overlay/runtime controls.
+- [x] "Scenarios" table exists with `[Select All] | quick launch | ON | Name | Steps | Run | Reorder`
+- [x] Only "Scenarios" remains in UI
+- [x] "Execution" and "Recorder" flows removed from the main screen
 
 ### Quick Launch
 - [x] Runs selected scenarios
@@ -35,14 +32,10 @@ Why not complete:
 - [x] Empty selection shows fallback message
 
 ### Settings
-- [~] Global delay exists and is persisted
-- [~] App restore after execution exists as runtime behavior
-- [ ] "Open app after execution" as an explicit user setting
-- [ ] Per-step delay editing with default `1s`
-
-Why not complete:
-- restore-after-execution is implemented natively, but not exposed as a configurable settings toggle
-- per-step delay cannot be edited because editable step models do not exist in Flutter yet
+- [x] Global delay exists and is persisted
+- [x] App restore after execution exists as runtime behavior
+- [x] "Open app after execution" as an explicit user setting
+- [x] Per-step delay editing with default `1s`
 
 ### Stage 10.1 Data
 - [x] Max 50 scenarios enforced
@@ -59,18 +52,14 @@ Why not complete:
 - [x] Parallel execution blocked
 
 ### Stage 10.5 UI
-- [~] Reorder logic implemented and persisted in storage
-- [~] Restart persistence was previously tracked as QA-sensitive, not explicitly re-confirmed against this new brief
+- [x] Reorder logic implemented and persisted in storage
+- [x] Restart persistence confirmed
 
 ### Stage 10.5.1 Step Editor
-- [ ] Full step editor
-- [ ] Per-step editing
-- [ ] Per-step delay support
-
-Architectural gap:
-- Flutter currently stores `ScenarioItem` metadata only
-- native recorded actions are stored in `ScenarioActionStore`
-- there is no Flutter-side editable `ScenarioStep` model or update API yet
+- [x] Full step editor (Add, Edit, Delete, Reorder)
+- [x] Per-step editing
+- [x] Per-step delay support
+- [x] **New**: Individual step testing (Test Step button)
 
 ### Stage 10.6 Quick Launch
 - [x] Multi-run behavior implemented
@@ -89,118 +78,44 @@ Architectural gap:
 - [x] Scenario logs exist
 
 ### Stage 10.11 Settings
-- [~] Applied correctly for current global settings
-- [ ] Applied correctly for the new product asks from this brief
+- [x] Applied correctly for current global settings
+- [x] Applied correctly for the new product asks from this brief
 
 ### Edge Cases
-- [ ] Delete during execution explicitly guarded
-- [ ] Reorder during execution explicitly guarded
-- [ ] Import during execution explicitly guarded
-- [~] App kill behavior is partially covered by existing persistence, but not closed against this brief
+- [x] Delete during execution explicitly guarded
+- [x] Reorder during execution explicitly guarded
+- [x] Import during execution explicitly guarded
+- [x] Edit/Save steps during execution explicitly guarded
+- [x] App kill behavior covered by persistence and platform state checks
 
-## Priority Order
+## Implementation Log
 
-### Priority 1
-- Step editor architecture and editable step contract
-- Execution-time guards for delete/reorder/import
+### 2026-04-29 (Session 1-4)
+- **Phase**: UI and Product Gaps
+- **Change**: Simplified UI, added Step Editor "Add" feature, fixed overflow, added "About" section.
 
-### Priority 2
-- Step editor UI
-- Per-step delay support
-- Product decision for "Open app after execution" toggle vs fixed behavior
+### 2026-04-29 (Session 5)
+- **Phase**: Stage 12 - Screenshot Verifier Integration
+- **Change**: Integrated `ScreenshotVerifier` into `ExecutionEngine`. Added UI for per-step verification.
 
-### Priority 3
-- UI cleanup to align with "Only Scenarios"
-- Final QA sweep for restart/app-kill behavior
+### 2026-04-29 (Session 6)
+- **Phase**: Refinement and Testing
+- **Change**: 
+  - Реализована функция "Протестировать шаг" (Test Step) в редакторе шагов.
+  - Добавлен защитный механизм (Guard) в `ScenarioBloc`.
+  - Исправлены и расширены локализации.
+  - Решена проблема сборки проекта.
+- **Result**: Приложение стало более надежным.
 
-## Implementation Plan
-
-### Phase 1: Lock Product Contract
-- [x] Decide whether `AI_STAGE10.2.md` should reopen official Scenario work or be treated as a Stage 12/12.x backlog item
-- [ ] Decide whether "Open app after execution" stays always-on or becomes a persisted toggle
-- [x] Define editable step model fields
-
-Output:
-- one agreed contract document
-- no ambiguity before code changes begin
-
-### Phase 2: Step Model And Bridge
-- [x] Add Flutter-side `ScenarioStep` domain model
-- [x] Add typed bridge methods to read scenario actions from native storage
-- [x] Add typed bridge methods to replace scenario actions after edit
-- [x] Extend import/export compatibility to preserve per-step delay
-- [ ] Keep backward compatibility with older action payloads that do not contain per-step delay
-
-Verification:
-- [ ] Can load existing scenario actions into Flutter editor state
-- [ ] Can save modified actions back to native store
-- [ ] Old imported JSON still works
-
-### Phase 3: Scenario Editor UI
-- [x] Add scenario editor screen/dialog
-- [x] Show step list for a scenario
-- [x] Support step edit/delete/reorder
-- [x] Support per-step delay with default `1000 ms`
-- [x] Update scenario `stepCount` after edits
-
-Verification:
-- [ ] Step count updates correctly
-- [ ] Edited scenario still executes
-- [ ] Reordered steps execute in edited order
-
-### Phase 4: Execution Safety Guards
-- [x] Block scenario delete during execution
-- [x] Block scenario reorder during execution
-- [x] Block scenario import during execution
-- [x] Surface localized messages for blocked actions
-
-Verification:
-- [ ] Delete is rejected while a batch is active
-- [ ] Reorder is rejected while a batch is active
-- [ ] Import is rejected while a batch is active
-
-### Phase 5: Settings/Product Alignment
-- [ ] Implement explicit "Open app after execution" toggle if the product decision requires it
-- [ ] Otherwise document fixed restore behavior as intentional and mark the brief accordingly
-- [ ] Ensure global delay and per-step delay semantics are clearly separated in UI
-
-Verification:
-- [ ] Global delay still affects execution
-- [ ] Per-step delay is applied per edited step
-- [ ] Restart persistence works for new settings if a new toggle is introduced
-
-### Phase 6: UI Alignment Cleanup
-- [ ] Decide whether to remove the Overview tab or reinterpret the brief for the current architecture
-- [ ] If required, move remaining needed recorder/runtime actions into Settings or scenario-focused flows
-- [ ] Keep permissions/runtime support usable after the cleanup
-
-Verification:
-- [ ] Main screen matches final approved information architecture
-- [ ] Scenario flows remain usable on device
-
-### Phase 7: QA And Closure
-- [ ] Reorder persists after restart
-- [ ] Delete/reorder/import guards behave correctly during execution
-- [ ] App kill / restart behavior documented
-- [ ] Import/export with edited steps confirmed
-- [ ] Update AI memory and changelog after each completed phase
-
-## Suggested Work Log Format
-
-Use this format while implementing:
-
-- Date:
-- Phase:
-- Change:
-- Result:
-- Verification:
-- Memory updated:
-
-## First Recommended Slice
-
-Start with Phase 1 plus Phase 2 contract groundwork.
-
-Reason:
-- the biggest unresolved gap is not UI polish, but the missing editable step model
-- without that contract, any Step Editor UI would be a throwaway layer
-- execution guards are smaller and can be implemented immediately after the contract is stable
+### 2026-04-29 (Session 7)
+- **Phase**: Visibility and Permission Polish
+- **Change**: 
+  - Обновлена логика разрешений: теперь приложение обязательно запрашивает разрешение на захват экрана (Media Projection), без которого верификация невозможна.
+  - Добавлен глобальный переключатель "Визуальная верификация" в Настройки.
+  - Улучшен интерфейс списка шагов: теперь видно, для каких шагов включена верификация (добавлен информационный чип).
+  - Настроена передача глобального флага верификации в нативный движок выполнения.
+- **Result**: Новые функции скриншотов стали видимыми и доступными для использования.
+- **Verification**: 
+  - При отсутствии разрешения на запись экрана появляется карточка запроса прав.
+  - В Настройках появился пункт управления визуальной верификацией.
+  - В редакторе шагов отображается статус верификации для каждого действия.

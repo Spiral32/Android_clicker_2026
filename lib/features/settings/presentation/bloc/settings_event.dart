@@ -47,6 +47,24 @@ final class SettingsLogToFileToggled extends SettingsEvent {
   List<Object?> get props => [enabled];
 }
 
+final class SettingsRestoreAppToggled extends SettingsEvent {
+  const SettingsRestoreAppToggled(this.enabled);
+
+  final bool enabled;
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+final class SettingsGlobalVerificationToggled extends SettingsEvent {
+  const SettingsGlobalVerificationToggled(this.enabled);
+
+  final bool enabled;
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 final class SettingsWebSocketStatusRequested extends SettingsEvent {
   const SettingsWebSocketStatusRequested();
 }

@@ -624,6 +624,8 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
           executionDelayMs: AppSettings.normalized(
             locale: AppSettings.defaultLocale,
             executionDelayMs: event.delayMs,
+            restoreAppAfterExecution: true,
+            globalVerificationEnabled: true,
           ).executionDelayMs,
         ),
       );

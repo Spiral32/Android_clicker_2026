@@ -9,21 +9,29 @@ class AppSettings extends Equatable {
   const AppSettings({
     required this.locale,
     required this.executionDelayMs,
+    required this.restoreAppAfterExecution,
+    required this.globalVerificationEnabled,
   });
 
   final AppLocale locale;
   final int executionDelayMs;
+  final bool restoreAppAfterExecution;
+  final bool globalVerificationEnabled;
 
   factory AppSettings.initial() {
     return const AppSettings(
       locale: defaultLocale,
       executionDelayMs: minExecutionDelayMs,
+      restoreAppAfterExecution: true,
+      globalVerificationEnabled: true,
     );
   }
 
   factory AppSettings.normalized({
     required AppLocale locale,
     required int executionDelayMs,
+    required bool restoreAppAfterExecution,
+    required bool globalVerificationEnabled,
   }) {
     return AppSettings(
       locale: locale,
@@ -33,16 +41,24 @@ class AppSettings extends Equatable {
             maxExecutionDelayMs,
           )
           .toInt(),
+      restoreAppAfterExecution: restoreAppAfterExecution,
+      globalVerificationEnabled: globalVerificationEnabled,
     );
   }
 
   AppSettings copyWith({
     AppLocale? locale,
     int? executionDelayMs,
+    bool? restoreAppAfterExecution,
+    bool? globalVerificationEnabled,
   }) {
     return AppSettings.normalized(
       locale: locale ?? this.locale,
       executionDelayMs: executionDelayMs ?? this.executionDelayMs,
+      restoreAppAfterExecution:
+          restoreAppAfterExecution ?? this.restoreAppAfterExecution,
+      globalVerificationEnabled:
+          globalVerificationEnabled ?? this.globalVerificationEnabled,
     );
   }
 
@@ -50,5 +66,7 @@ class AppSettings extends Equatable {
   List<Object?> get props => [
         locale,
         executionDelayMs,
+        restoreAppAfterExecution,
+        globalVerificationEnabled,
       ];
 }

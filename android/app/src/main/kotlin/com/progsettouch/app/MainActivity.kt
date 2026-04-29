@@ -301,6 +301,45 @@ class MainActivity : FlutterActivity() {
                 result.success(mapOf("success" to actionStore.deleteScenarioActions(scenarioId)))
             }
 
+            "testScenarioStep" -> {
+                val accessibilityService = ProgSetAccessibilityService.instance
+                if (accessibilityService == null) {
+                    result.error("accessibility_service_unavailable", "Service not connected", null)
+                    return
+                }
+
+                val type = call.argument<String>("type") ?: ""
+                val pointerCount = call.argument<Int>("pointerCount") ?: 1
+                val startX = call.argument<Double>("startX") ?: 0.0
+                val startY = call.argument<Double>("startY") ?: 0.0
+                val endX = call.argument<Double>("endX") ?: 0.0
+                val endY = call.argument<Double>("endY") ?: 0.0
+                val durationMs = call.argument<Number>("durationMs")?.toLong() ?: 100L
+                val stepDelayMs = call.argument<Number>("stepDelayMs")?.toLong() ?: 1000L
+                val verificationEnabled = call.argument<Boolean>("verificationEnabled") ?: false
+                val thresholdPercent = call.argument<Double>("thresholdPercent") ?: 1.0
+
+                val action = RecordedAction(
+                    type = type,
+                    pointerCount = pointerCount,
+                    startX = startX,
+                    startY = startY,
+                    endX = endX,
+                    endY = endY,
+                    durationMs = durationMs,
+                    stepDelayMs = stepDelayMs,
+                    verificationEnabled = verificationEnabled,
+                    thresholdPercent = thresholdPercent
+                )
+
+                Thread {
+                    val success = accessibilityService.testScenarioStep(action)
+                    runOnUiThread {
+                        result.success(mapOf("success" to success))
+                    }
+                }.start()
+            }
+
             "openLogLocation" -> {
                 openLogLocation()
                 result.success(null)
@@ -337,6 +376,12 @@ class MainActivity : FlutterActivity() {
             "setAutostartEnabled" -> {
                 val enabled = call.argument<Boolean>("enabled") ?: true
                 setAutostartEnabled(enabled)
+                result.success(null)
+            }
+
+            "setRestoreAppAfterExecution" -> {
+                val enabled = call.argument<Boolean>("enabled") ?: true
+                ProgSetAccessibilityService.instance?.setRestoreAppAfterExecution(enabled)
                 result.success(null)
             }
 
@@ -413,7 +458,8 @@ class MainActivity : FlutterActivity() {
                 }
 
                 val delayMs = call.argument<Int>("delayMs")
-                val executionSummary = accessibilityService.startExecution(delayMs)
+                val globalVerificationEnabled = call.argument<Boolean>("globalVerificationEnabled") ?: true
+                val executionSummary = accessibilityService.startExecution(delayMs, globalVerificationEnabled)
                 result.success(executionSummary.toMap())
             }
 
@@ -435,7 +481,8 @@ class MainActivity : FlutterActivity() {
                 }
 
                 val delayMs = call.argument<Int>("delayMs")
-                val executionSummary = accessibilityService.startScenarioExecution(scenarioId, delayMs)
+                val globalVerificationEnabled = call.argument<Boolean>("globalVerificationEnabled") ?: true
+                val executionSummary = accessibilityService.startScenarioExecution(scenarioId, delayMs, globalVerificationEnabled)
                 result.success(executionSummary.toMap())
             }
 

@@ -7,7 +7,7 @@ plugins {
 android {
     namespace "com.progsettouch.app"
     compileSdk 35
-    ndkVersion flutter.ndkVersion
+    ndkVersion "26.1.10909125"
 
     defaultConfig {
         applicationId "com.progsettouch.app"

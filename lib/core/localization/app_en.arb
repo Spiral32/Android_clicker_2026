@@ -144,6 +144,11 @@
   "settingsExecutionTitle": "Execution Settings",
   "settingsExecutionDelay": "Delay between actions",
   "settingsExecutionDelayUnit": "{seconds} sec.",
+  "settingsRestoreAppTitle": "Restore app",
+  "settingsRestoreAppSubtitle": "Open the app after finishing scenario execution",
+  "settingsVisualVerificationTitle": "Visual Verification",
+  "settingsVisualVerificationSubtitle": "Global toggle for screenshot verification during execution",
+  "settingsRestoreAppChangeError": "Failed to change restore app setting",
   "statusUnavailable": "Unavailable",
   "errorPlatformLoad": "Failed to load platform data",
   "errorPermissionAction": "Failed to perform permission action",
@@ -178,120 +183,138 @@
   "scheduleScenarioRequired": "Select a scenario",
   "scheduleScenarioRequiredToCreate": "Create at least one scenario first",
   "scheduleScenarioMissing": "Missing scenario",
-  "save": "Save"
-  ,"scenarioScreenTitle": "Scenarios"
-  ,"scenarioCreate": "Create Scenario"
-  ,"scenarioCreateCompact": "Create"
-  ,"scenarioRunAll": "Run All Scenarios"
-  ,"scenarioRunAllCompact": "Run All"
-  ,"scenarioQuickLaunch": "Quick Launch"
-  ,"scenarioNameHint": "Scenario name"
-  ,"scenarioColumnName": "Name"
-  ,"scenarioColumnSteps": "Steps"
-  ,"scenarioEmptyNotAllowed": "You cannot save an empty scenario. Record at least one action first."
-  ,"scenarioLimitReached": "Maximum 50 scenarios allowed."
-  ,"scenarioNameMustBeUnique": "Scenario name must be unique."
-  ,"scenarioQuickLaunchEmpty": "No scenarios selected for Quick Launch."
-  ,"scenarioRunAllEmpty": "No enabled scenarios for Run All."
-  ,"scenarioExecutionBusy": "Execution is already in progress."
-  ,"scenarioBatchDone": "Scenario batch execution finished."
-  ,"scenarioRename": "Rename"
-  ,"scenarioStepEditorOpen": "Edit Steps"
-  ,"scenarioStepEditorSaved": "Scenario steps saved."
-  ,"scenarioStepEditorSaveFailed": "Failed to save scenario steps."
-  ,"scenarioStepEditorLoadFailed": "Failed to load scenario steps"
-  ,"scenarioStepEditorTitle": "Edit Steps: {name}"
-  ,"@scenarioStepEditorTitle": {
+  "save": "Save",
+  "settingsAboutTitle": "About",
+  "settingsAboutSubtitle": "How to use Prog Set Touch",
+  "settingsAboutDescriptionTitle": "App Description",
+  "settingsAboutSectionBasics": "Basics",
+  "settingsAboutBasicsContent": "Prog Set Touch is a powerful tool for automating on-screen actions. The core concept is recording a sequence of actions (taps, swipes) and then playing them back on demand or by schedule.",
+  "settingsAboutSectionRecording": "Recording a Scenario",
+  "settingsAboutRecordingContent": "1. Press '+' in the top bar.\n2. Use the floating control panel on the screen to add actions.\n3. Once recording is finished, save the scenario with a unique name.",
+  "settingsAboutSectionExecution": "Execution",
+  "settingsAboutExecutionContent": "You can run a scenario with the 'Play' button in the list or use 'Quick Launch' (lightning icon) to run a group of selected scenarios. You can set the delay between actions in the settings.",
+  "settingsAboutSectionOverlay": "Floating Button",
+  "settingsAboutOverlayContent": "The 'eye' icon in the top bar enables/disables the floating button. It is required for quick recording and managing the automation process over other apps.",
+  "settingsAboutSectionPermissions": "Permissions",
+  "settingsAboutPermissionsContent": "Accessibility service (for simulating touches) and Display over apps (for the floating button) permissions are required.",
+  "scenarioEditWhileExecutingRejected": "Cannot edit steps while execution is active",
+  "scenarioStepEditorAddStep": "Add Step",
+  "scenarioStepEditorVerificationLabel": "Verify screen changes",
+  "scenarioStepEditorVerificationSubtitle": "Verify if the screen content changed after executing this step",
+  "scenarioStepEditorThresholdLabel": "Change Threshold (%)",
+  "scenarioScreenTitle": "Scenarios",
+  "scenarioCreate": "Create Scenario",
+  "scenarioCreateCompact": "Create",
+  "scenarioRunAll": "Run All Scenarios",
+  "scenarioRunAllCompact": "Run All",
+  "scenarioQuickLaunch": "Quick Launch",
+  "scenarioNameHint": "Scenario name",
+  "scenarioColumnName": "Name",
+  "scenarioColumnSteps": "Steps",
+  "scenarioEmptyNotAllowed": "You cannot save an empty scenario. Record at least one action first.",
+  "scenarioLimitReached": "Maximum 50 scenarios allowed.",
+  "scenarioNameMustBeUnique": "Scenario name must be unique.",
+  "scenarioQuickLaunchEmpty": "No scenarios selected for Quick Launch.",
+  "scenarioRunAllEmpty": "No enabled scenarios for Run All.",
+  "scenarioExecutionBusy": "Execution is already in progress.",
+  "scenarioBatchDone": "Scenario batch execution finished.",
+  "scenarioRename": "Rename",
+  "scenarioStepEditorOpen": "Edit Steps",
+  "scenarioStepEditorSaved": "Scenario steps saved.",
+  "scenarioStepEditorSaveFailed": "Failed to save scenario steps.",
+  "scenarioStepEditorLoadFailed": "Failed to load scenario steps",
+  "scenarioStepEditorTitle": "Edit Steps: {name}",
+  "@scenarioStepEditorTitle": {
     "placeholders": {
       "name": {}
     }
-  }
-  ,"scenarioStepEditorSubtitle": "Adjust step order, gesture parameters, and per-step delay."
-  ,"scenarioStepEditorCount": "{count} steps"
-  ,"@scenarioStepEditorCount": {
+  },
+  "scenarioStepEditorSubtitle": "Adjust step order, gesture parameters, and per-step delay.",
+  "scenarioStepEditorCount": "{count} steps",
+  "@scenarioStepEditorCount": {
     "placeholders": {
       "count": {}
     }
-  }
-  ,"scenarioStepEditorStepLabel": "Step {index}"
-  ,"@scenarioStepEditorStepLabel": {
+  },
+  "scenarioStepEditorStepLabel": "Step {index}",
+  "@scenarioStepEditorStepLabel": {
     "placeholders": {
       "index": {}
     }
-  }
-  ,"scenarioStepEditorEditTitle": "Edit Step"
-  ,"scenarioStepEditorTypeLabel": "Action Type"
-  ,"scenarioStepEditorPointerCountLabel": "Pointer Count"
-  ,"scenarioStepEditorDurationLabel": "Gesture Duration (ms)"
-  ,"scenarioStepEditorDelayLabel": "Delay After Step (ms)"
-  ,"scenarioStepEditorStartXLabel": "Start X"
-  ,"scenarioStepEditorStartYLabel": "Start Y"
-  ,"scenarioStepEditorEndXLabel": "End X"
-  ,"scenarioStepEditorEndYLabel": "End Y"
-  ,"scenarioStepEditorInvalidValues": "Please enter valid numeric values for the step."
-  ,"scenarioStepEditorPointerCount": "Pointers: {count}"
-  ,"@scenarioStepEditorPointerCount": {
+  },
+  "scenarioStepEditorEditTitle": "Edit Step",
+  "scenarioStepEditorTypeLabel": "Action Type",
+  "scenarioStepEditorPointerCountLabel": "Pointer Count",
+  "scenarioStepEditorDurationLabel": "Gesture Duration (ms)",
+  "scenarioStepEditorDelayLabel": "Delay After Step (ms)",
+  "scenarioStepEditorStartXLabel": "Start X",
+  "scenarioStepEditorStartYLabel": "Start Y",
+  "scenarioStepEditorEndXLabel": "End X",
+  "scenarioStepEditorEndYLabel": "End Y",
+  "scenarioStepEditorInvalidValues": "Please enter valid numeric values for the step.",
+  "scenarioStepEditorPointerCount": "Pointers: {count}",
+  "@scenarioStepEditorPointerCount": {
     "placeholders": {
       "count": {}
     }
-  }
-  ,"scenarioStepEditorDuration": "Duration: {durationMs} ms"
-  ,"@scenarioStepEditorDuration": {
+  },
+  "scenarioStepEditorDuration": "Duration: {durationMs} ms",
+  "@scenarioStepEditorDuration": {
     "placeholders": {
       "durationMs": {}
     }
-  }
-  ,"scenarioStepEditorDelay": "Delay: {delayMs} ms"
-  ,"@scenarioStepEditorDelay": {
+  },
+  "scenarioStepEditorDelay": "Delay: {delayMs} ms",
+  "@scenarioStepEditorDelay": {
     "placeholders": {
       "delayMs": {}
     }
-  }
-  ,"scenarioStepEditorStart": "Start: {x}, {y}"
-  ,"@scenarioStepEditorStart": {
+  },
+  "scenarioStepEditorStart": "Start: {x}, {y}",
+  "@scenarioStepEditorStart": {
     "placeholders": {
       "x": {},
       "y": {}
     }
-  }
-  ,"scenarioStepEditorEnd": "End: {x}, {y}"
-  ,"@scenarioStepEditorEnd": {
+  },
+  "scenarioStepEditorEnd": "End: {x}, {y}",
+  "@scenarioStepEditorEnd": {
     "placeholders": {
       "x": {},
       "y": {}
     }
-  }
-  ,"scenarioStepTypeTap": "Tap"
-  ,"scenarioStepTypeDoubleTap": "Double Tap"
-  ,"scenarioStepTypeLongPress": "Long Press"
-  ,"scenarioStepTypeSwipe": "Swipe"
-  ,"scenarioEditBlockedWhileExecuting": "Cannot edit scenario steps while execution is in progress."
-  ,"scenarioDeleteBlockedWhileExecuting": "Cannot delete a scenario while execution is in progress."
-  ,"scenarioImportBlockedWhileExecuting": "Cannot import scenarios while execution is in progress."
-  ,"scenarioReorderBlockedWhileExecuting": "Cannot reorder scenarios while execution is in progress."
-  ,"scenarioDelete": "Delete"
-  ,"scenarioDeleteConfirmTitle": "Delete Scenario"
-  ,"scenarioDeleteConfirmMessage": "Are you sure you want to delete scenario '{name}'?"
-  ,"scenarioRenameTitle": "Rename Scenario"
-  ,"scenarioExport": "Export Scenarios"
-  ,"scenarioImport": "Import Scenarios"
-  ,"scenarioExportEmpty": "No scenarios to export."
-  ,"scenarioExportDone": "Scenarios exported successfully."
-  ,"scenarioExportFailed": "Failed to export scenarios."
-  ,"scenarioImportDone": "Scenarios imported successfully."
-  ,"scenarioImportInvalidJson": "Import file contains invalid JSON."
-  ,"scenarioImportNoItems": "No valid scenarios found in import file."
-  ,"mainScenarioSectionTitle": "Scenarios"
-  ,"mainOverviewTabTitle": "Overview"
-  ,"mainStatusPermissions": "Permissions"
-  ,"mainStatusOverlay": "Overlay"
-  ,"mainStatusRecorder": "Recorder"
-  ,"mainStatusActions": "Actions"
-  ,"mainStatusOk": "OK"
-  ,"mainStatusOff": "OFF"
-  ,"schedulerScenarioPrefix": "Scenario"
-  ,"notesLatestChangesTitle": "Latest changes"
-  ,"notesExportCrashFix": "Fixed app crash during settings/log export."
-  ,"notesMainScreenRedesign": "Main screen redesigned for clearer status and action blocks."
-  ,"notesSchedulerScenarioVisible": "Scheduler cards now show the selected scenario."
+  },
+  "scenarioStepTypeTap": "Tap",
+  "scenarioStepTypeDoubleTap": "Double Tap",
+  "scenarioStepTypeLongPress": "Long Press",
+  "scenarioStepTypeSwipe": "Swipe",
+  "scenarioEditBlockedWhileExecuting": "Cannot edit scenario steps while execution is in progress.",
+  "scenarioDeleteBlockedWhileExecuting": "Cannot delete a scenario while execution is in progress.",
+  "scenarioImportBlockedWhileExecuting": "Cannot import scenarios while execution is in progress.",
+  "scenarioReorderBlockedWhileExecuting": "Cannot reorder scenarios while execution is in progress.",
+  "scenarioDelete": "Delete",
+  "scenarioDeleteConfirmTitle": "Delete Scenario",
+  "scenarioDeleteConfirmMessage": "Are you sure you want to delete scenario '{name}'?",
+  "scenarioRenameTitle": "Rename Scenario",
+  "scenarioExport": "Export Scenarios",
+  "scenarioImport": "Import Scenarios",
+  "scenarioExportEmpty": "No scenarios to export.",
+  "scenarioExportDone": "Scenarios exported successfully.",
+  "scenarioExportFailed": "Failed to export scenarios.",
+  "scenarioImportDone": "Scenarios imported successfully.",
+  "scenarioImportInvalidJson": "Import file contains invalid JSON.",
+  "scenarioImportNoItems": "No valid scenarios found in import file.",
+  "mainScenarioSectionTitle": "Scenarios",
+  "mainOverviewTabTitle": "Overview",
+  "mainStatusPermissions": "Permissions",
+  "mainStatusOverlay": "Overlay",
+  "mainStatusRecorder": "Recorder",
+  "mainStatusActions": "Actions",
+  "mainStatusOk": "OK",
+  "mainStatusOff": "OFF",
+  "schedulerScenarioPrefix": "Scenario",
+  "notesLatestChangesTitle": "Latest changes",
+  "notesExportCrashFix": "Fixed app crash during settings/log export.",
+  "notesMainScreenRedesign": "Main screen redesigned for clearer status and action blocks.",
+  "notesSchedulerScenarioVisible": "Scheduler cards now show the selected scenario."
 }

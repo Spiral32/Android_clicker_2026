@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:prog_set_touch/core/localization/app_localizations.dart';
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
 
 class RecorderSummaryCard extends StatelessWidget {

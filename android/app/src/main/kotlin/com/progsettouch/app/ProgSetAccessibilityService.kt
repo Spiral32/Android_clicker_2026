@@ -20,6 +20,7 @@ class ProgSetAccessibilityService : AccessibilityService() {
     private var lastRecordedActions: List<RecordedAction> = emptyList()
     private var mediaProjection: android.media.projection.MediaProjection? = null
     @Volatile private var overlayStopInProgress = false
+    private var shouldRestoreApp = true
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -29,8 +30,8 @@ class ProgSetAccessibilityService : AccessibilityService() {
         stateMachine = StateMachine(this)
         overlayManager = OverlayManager(this)
         recorderManager = RecorderManager(this)
-        executionEngine = ExecutionEngine(this, this)
         screenshotVerifier = ScreenshotVerifier(this)
+        executionEngine = ExecutionEngine(this, this, screenshotVerifier)
         recorderManager.setOnStopRequested {
             logger.d("ProgSetAccessibilityService", "Recorder stop requested from overlay control")
             overlayStopInProgress = true
@@ -71,11 +72,13 @@ class ProgSetAccessibilityService : AccessibilityService() {
                 stateMachine.transition(AppState.IDLE)
             }
             onExecutionUpdateListener?.invoke(summary)
-            restoreApp()
+            if (shouldRestoreApp) {
+                restoreApp()
+            }
         }
 
         executionEngine.setOnActionExecuted { index, action, success ->
-            onExecutionUpdateListener?.invoke(executionEngine.summary())
+            onExecutionUpdateListener?.invoke(executionEngine.buildSummary())
         }
     }
 
@@ -158,6 +161,10 @@ class ProgSetAccessibilityService : AccessibilityService() {
     fun hideOverlay() = overlayManager.hide()
 
     fun isOverlayVisible(): Boolean = overlayManager.isVisible()
+
+    fun setRestoreAppAfterExecution(enabled: Boolean) {
+        shouldRestoreApp = enabled
+    }
 
     fun startRecorder(mode: String = "CONTINUOUS"): RecorderSummary {
         // Validate state before starting
@@ -246,7 +253,10 @@ class ProgSetAccessibilityService : AccessibilityService() {
     }
 
     // Execution methods
-    fun startExecution(delayMs: Int? = null): ExecutionSummary {
+    fun startExecution(
+            delayMs: Int? = null,
+            globalVerificationEnabled: Boolean = true
+    ): ExecutionSummary {
         // Validate state before starting
         if (!stateMachine.canStartExecution()) {
             val currentState = stateMachine.getCurrentState()
@@ -287,23 +297,30 @@ class ProgSetAccessibilityService : AccessibilityService() {
 
         val config =
                 if (delayMs != null) {
-                    ExecutionConfig(delayBetweenActionsMs = delayMs.toLong().coerceAtLeast(1000L))
+                    ExecutionConfig(
+                            delayBetweenActionsMs = delayMs.toLong().coerceAtLeast(1000L),
+                            globalVerificationEnabled = globalVerificationEnabled
+                    )
                 } else {
-                    ExecutionConfig()
+                    ExecutionConfig(globalVerificationEnabled = globalVerificationEnabled)
                 }
 
         return executionEngine.start(actions, config)
     }
 
-    fun startScenarioExecution(scenarioId: String, delayMs: Int? = null): ExecutionSummary {
+    fun startScenarioExecution(
+            scenarioId: String,
+            delayMs: Int? = null,
+            globalVerificationEnabled: Boolean = true
+    ): ExecutionSummary {
         if (!stateMachine.canStartExecution()) {
             val currentState = stateMachine.getCurrentState()
             return ExecutionSummary(
-                isExecuting = false,
-                totalActions = 0,
-                completedActions = 0,
-                failedActions = 0,
-                error = "Cannot start execution from state: $currentState",
+                    isExecuting = false,
+                    totalActions = 0,
+                    completedActions = 0,
+                    failedActions = 0,
+                    error = "Cannot start execution from state: $currentState",
             )
         }
 
@@ -318,11 +335,11 @@ class ProgSetAccessibilityService : AccessibilityService() {
 
         if (actions.isEmpty()) {
             return ExecutionSummary(
-                isExecuting = false,
-                totalActions = 0,
-                completedActions = 0,
-                failedActions = 0,
-                error = "No actions stored for scenarioId=$scenarioId",
+                    isExecuting = false,
+                    totalActions = 0,
+                    completedActions = 0,
+                    failedActions = 0,
+                    error = "No actions stored for scenarioId=$scenarioId",
             )
         }
         lastRecordedActions = actions
@@ -330,21 +347,24 @@ class ProgSetAccessibilityService : AccessibilityService() {
         val result = stateMachine.transition(AppState.EXECUTING)
         if (result is StateTransitionResult.Failure) {
             return ExecutionSummary(
-                isExecuting = false,
-                totalActions = actions.size,
-                completedActions = 0,
-                failedActions = 0,
-                error = result.reason,
+                    isExecuting = false,
+                    totalActions = actions.size,
+                    completedActions = 0,
+                    failedActions = 0,
+                    error = result.reason,
             )
         }
 
         minimizeApp()
         val config =
-            if (delayMs != null) {
-                ExecutionConfig(delayBetweenActionsMs = delayMs.toLong().coerceAtLeast(1000L))
-            } else {
-                ExecutionConfig()
-            }
+                if (delayMs != null) {
+                    ExecutionConfig(
+                            delayBetweenActionsMs = delayMs.toLong().coerceAtLeast(1000L),
+                            globalVerificationEnabled = globalVerificationEnabled
+                    )
+                } else {
+                    ExecutionConfig(globalVerificationEnabled = globalVerificationEnabled)
+                }
         return executionEngine.start(actions, config)
     }
 
@@ -394,7 +414,11 @@ class ProgSetAccessibilityService : AccessibilityService() {
         return resumed
     }
 
-    fun executionSummary(): ExecutionSummary = executionEngine.summary()
+    fun testScenarioStep(action: RecordedAction): Boolean {
+        return executionEngine.testAction(action)
+    }
+
+    fun executionSummary(): ExecutionSummary = executionEngine.buildSummary()
 
     /** Take a screenshot and return verification capabilities. */
     fun takeScreenshotForVerification(): VerificationResult {

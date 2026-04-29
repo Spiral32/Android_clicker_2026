@@ -2,4 +2,4 @@ arb-dir: lib/core/localization
 template-arb-file: app_ru.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
-synthetic-package: true
+synthetic-package: false

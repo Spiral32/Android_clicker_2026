@@ -4,7 +4,7 @@ import 'package:prog_set_touch/features/scheduler/domain/schedule.dart';
 void main() {
   group('Schedule', () {
     test('should create Schedule with required fields', () {
-      final schedule = Schedule(
+      final schedule = const Schedule(
         id: 'test_id',
         name: 'Test Schedule',
         type: ScheduleType.daily,
@@ -26,7 +26,7 @@ void main() {
     });
 
     test('should copy Schedule with changes', () {
-      final original = Schedule(
+      final original = const Schedule(
         id: 'test_id',
         name: 'Test Schedule',
         type: ScheduleType.daily,
@@ -50,7 +50,7 @@ void main() {
     });
 
     test('should handle weekly schedule with daysOfWeek', () {
-      final schedule = Schedule(
+      final schedule = const Schedule(
         id: 'weekly_id',
         name: 'Weekly Schedule',
         type: ScheduleType.weekly,

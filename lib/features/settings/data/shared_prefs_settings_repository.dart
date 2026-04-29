@@ -8,6 +8,8 @@ class SharedPrefsSettingsRepository implements SettingsRepository {
 
   static const _localeKey = 'app_locale';
   static const _executionDelayMsKey = 'execution_delay_ms';
+  static const _restoreAppAfterExecutionKey = 'restore_app_after_execution';
+  static const _globalVerificationEnabledKey = 'global_verification_enabled';
   final SharedPreferences _prefs;
 
   @override
@@ -18,10 +20,18 @@ class SharedPrefsSettingsRepository implements SettingsRepository {
         : AppLocale.fromLanguageCode(localeCode);
     final executionDelayMs = _prefs.getInt(_executionDelayMsKey) ??
         AppSettings.initial().executionDelayMs;
+    final restoreAppAfterExecution =
+        _prefs.getBool(_restoreAppAfterExecutionKey) ??
+            AppSettings.initial().restoreAppAfterExecution;
+    final globalVerificationEnabled =
+        _prefs.getBool(_globalVerificationEnabledKey) ??
+            AppSettings.initial().globalVerificationEnabled;
 
     return AppSettings.normalized(
       locale: locale,
       executionDelayMs: executionDelayMs,
+      restoreAppAfterExecution: restoreAppAfterExecution,
+      globalVerificationEnabled: globalVerificationEnabled,
     );
   }
 
@@ -40,6 +50,18 @@ class SharedPrefsSettingsRepository implements SettingsRepository {
         )
         .toInt();
     await _prefs.setInt(_executionDelayMsKey, normalizedDelayMs);
+    return load();
+  }
+
+  @override
+  Future<AppSettings> saveRestoreAppAfterExecution(bool restore) async {
+    await _prefs.setBool(_restoreAppAfterExecutionKey, restore);
+    return load();
+  }
+
+  @override
+  Future<AppSettings> saveGlobalVerificationEnabled(bool enabled) async {
+    await _prefs.setBool(_globalVerificationEnabledKey, enabled);
     return load();
   }
 }

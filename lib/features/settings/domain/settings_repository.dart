@@ -7,4 +7,8 @@ abstract class SettingsRepository {
   Future<AppSettings> saveLocale(AppLocale locale);
 
   Future<AppSettings> saveExecutionDelayMs(int delayMs);
+
+  Future<AppSettings> saveRestoreAppAfterExecution(bool restore);
+
+  Future<AppSettings> saveGlobalVerificationEnabled(bool enabled);
 }

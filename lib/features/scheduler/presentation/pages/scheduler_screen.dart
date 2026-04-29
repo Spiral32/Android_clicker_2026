@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:prog_set_touch/core/error/app_logger.dart';
-import 'package:prog_set_touch/core/localization/localization_extensions.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_repository.dart';
 import 'package:prog_set_touch/features/scheduler/domain/schedule.dart'
     as domain;
 import 'package:prog_set_touch/features/scheduler/presentation/bloc/scheduler_bloc.dart';
 import 'package:prog_set_touch/features/scheduler/presentation/widgets/schedule_form.dart';
 import 'package:prog_set_touch/features/scheduler/presentation/widgets/schedule_list_item.dart';
+import 'package:prog_set_touch/core/localization/localization_extensions.dart';
 
 class SchedulerScreen extends StatelessWidget {
   const SchedulerScreen({super.key});

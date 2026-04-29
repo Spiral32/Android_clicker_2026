@@ -22,6 +22,9 @@ class ScenarioStep extends Equatable {
   static const int defaultStepDelayMs = 1000;
   static const int minGestureDurationMs = 50;
   static const int minStepDelayMs = 0;
+  static const double minThresholdPercent = 0.1;
+  static const double maxThresholdPercent = 100.0;
+  static const double defaultThresholdPercent = 1.0;
 
   const ScenarioStep({
     required this.type,
@@ -32,6 +35,8 @@ class ScenarioStep extends Equatable {
     required this.endY,
     required this.durationMs,
     required this.stepDelayMs,
+    this.verificationEnabled = false,
+    this.thresholdPercent = 1.0,
   });
 
   final ScenarioStepType type;
@@ -42,12 +47,31 @@ class ScenarioStep extends Equatable {
   final double endY;
   final int durationMs;
   final int stepDelayMs;
+  final bool verificationEnabled;
+  final double thresholdPercent;
+
+  factory ScenarioStep.initial() {
+    return const ScenarioStep(
+      type: ScenarioStepType.tap,
+      pointerCount: 1,
+      startX: 500,
+      startY: 1000,
+      endX: 500,
+      endY: 1000,
+      durationMs: 100,
+      stepDelayMs: defaultStepDelayMs,
+      verificationEnabled: false,
+      thresholdPercent: defaultThresholdPercent,
+    );
+  }
 
   factory ScenarioStep.fromMap(Map<String, dynamic> map) {
     final rawType = (map['type']?.toString() ?? '').trim();
     final rawPointerCount = map['pointerCount'];
     final rawDurationMs = map['durationMs'];
     final rawStepDelayMs = map['stepDelayMs'];
+    final rawVerificationEnabled = map['verificationEnabled'];
+    final rawThresholdPercent = map['thresholdPercent'];
 
     return ScenarioStep(
       type: ScenarioStepType.fromValue(rawType),
@@ -64,6 +88,11 @@ class ScenarioStep extends Equatable {
         rawStepDelayMs,
         fallback: defaultStepDelayMs,
       ).clamp(minStepDelayMs, 600000),
+      verificationEnabled: _toBool(rawVerificationEnabled),
+      thresholdPercent: _toDouble(
+        rawThresholdPercent,
+        fallback: defaultThresholdPercent,
+      ).clamp(minThresholdPercent, maxThresholdPercent),
     );
   }
 
@@ -76,6 +105,8 @@ class ScenarioStep extends Equatable {
     double? endY,
     int? durationMs,
     int? stepDelayMs,
+    bool? verificationEnabled,
+    double? thresholdPercent,
   }) {
     return ScenarioStep(
       type: type ?? this.type,
@@ -86,6 +117,8 @@ class ScenarioStep extends Equatable {
       endY: endY ?? this.endY,
       durationMs: durationMs ?? this.durationMs,
       stepDelayMs: stepDelayMs ?? this.stepDelayMs,
+      verificationEnabled: verificationEnabled ?? this.verificationEnabled,
+      thresholdPercent: thresholdPercent ?? this.thresholdPercent,
     );
   }
 
@@ -99,6 +132,8 @@ class ScenarioStep extends Equatable {
       'endY': endY,
       'durationMs': durationMs,
       'stepDelayMs': stepDelayMs,
+      'verificationEnabled': verificationEnabled,
+      'thresholdPercent': thresholdPercent,
     };
   }
 
@@ -112,6 +147,8 @@ class ScenarioStep extends Equatable {
         endY,
         durationMs,
         stepDelayMs,
+        verificationEnabled,
+        thresholdPercent,
       ];
 
   static int _toInt(Object? value, {required int fallback}) {
@@ -123,12 +160,21 @@ class ScenarioStep extends Equatable {
     };
   }
 
-  static double _toDouble(Object? value) {
+  static double _toDouble(Object? value, {double fallback = 0}) {
     return switch (value) {
       double() => value,
       num() => value.toDouble(),
-      String() => double.tryParse(value) ?? 0,
-      _ => 0,
+      String() => double.tryParse(value) ?? fallback,
+      _ => fallback,
+    };
+  }
+
+  static bool _toBool(Object? value) {
+    return switch (value) {
+      bool() => value,
+      int() => value != 0,
+      String() => value.toLowerCase() == 'true',
+      _ => false,
     };
   }
 }

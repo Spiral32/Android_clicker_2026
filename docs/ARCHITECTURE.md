@@ -3,7 +3,7 @@
 ## Official Project Stage
 
 Current official stage:
-- `Stage 10 — Scenario Storage`
+- `Stage 12 — Screenshot Verifier Integration`
 
 Stage rule:
 - only one stage is active at a time
@@ -21,13 +21,14 @@ Stage sequence:
 - Stage 7: Scheduler ✅
 - Stage 8: Autostart ✅
 - Stage 9: WebSocket Server ✅
-- Stage 10: Scenario Storage
-- Stage 11: Settings Persistence and Advanced Configuration
-- Stage 12: Screenshot Verifier Integration
+- Stage 10: Scenario Storage ✅
+- Stage 11: Settings Persistence and Advanced Configuration ✅
+- Stage 12: Screenshot Verifier Integration ✅
 
-Stage 10 status:
-- active implementation stage after Stage 9 closure
-- storage architecture is the current delivery focus
+Stage 12 status: ✅
+- wire ScreenshotVerifier into execution pipeline behind a stable contract
+- Add per-step verification settings (toggle + threshold)
+- Implement before/after capture and similarity check in ExecutionEngine
 
 ## Layer Structure (Strict)
 
@@ -208,7 +209,7 @@ Scenario → ExecutionEngine → AccessibilityController → dispatchGesture()
 ## Stage Governance (Supersedes Ambiguity)
 
 Official current stage:
-- `Stage 10 — Scenario Storage`
+- `Stage 12 — Screenshot Verifier Integration`
 
 Mandatory rule:
 - only one stage is active at a time

@@ -26,10 +26,12 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
 
   final AppLogger _logger;
   final MethodChannel _channel;
-  final _executionUpdatesController = StreamController<ExecutionSummary>.broadcast();
+  final _executionUpdatesController =
+      StreamController<ExecutionSummary>.broadcast();
 
   @override
-  Stream<ExecutionSummary> get executionUpdates => _executionUpdatesController.stream;
+  Stream<ExecutionSummary> get executionUpdates =>
+      _executionUpdatesController.stream;
 
   Future<dynamic> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
@@ -38,7 +40,8 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
         _executionUpdatesController.add(ExecutionSummary.fromMap(map));
         break;
       default:
-        _logger.logInfo('platform_bridge_data_source', 'Unknown method from platform: ${call.method}');
+        _logger.logInfo('platform_bridge_data_source',
+            'Unknown method from platform: ${call.method}');
     }
   }
 
@@ -77,7 +80,8 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   @override
   Future<PermissionStatus> getPermissionStatus() async {
     try {
-      final result = await _channel.invokeMethod<dynamic>('getPermissionStatus');
+      final result =
+          await _channel.invokeMethod<dynamic>('getPermissionStatus');
       return _mapPermissionStatus(result);
     } on PlatformException catch (error, stackTrace) {
       _logger.logError(
@@ -111,15 +115,16 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   @override
   Future<PermissionStatus> requestMediaProjectionPermission() async {
     try {
-      final result =
-          await _channel.invokeMethod<dynamic>('requestMediaProjectionPermission');
+      final result = await _channel
+          .invokeMethod<dynamic>('requestMediaProjectionPermission');
       return _mapPermissionStatus(result);
     } on PlatformException catch (error, stackTrace) {
       _logger.logError(
         'platform_bridge_data_source',
         error,
         stackTrace,
-        context: 'PlatformException while requesting media projection permission',
+        context:
+            'PlatformException while requesting media projection permission',
       );
       rethrow;
     } catch (error, stackTrace) {
@@ -127,7 +132,8 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
         'platform_bridge_data_source',
         error,
         stackTrace,
-        context: 'Unexpected error while requesting media projection permission',
+        context:
+            'Unexpected error while requesting media projection permission',
       );
       rethrow;
     }
@@ -154,9 +160,12 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   }
 
   @override
-  Future<RecorderSummary> startRecorder({RecorderMode mode = RecorderMode.continuous}) async {
-    final modeString = mode == RecorderMode.pointCapture ? 'POINT_CAPTURE' : 'CONTINUOUS';
-    final result = await _channel.invokeMethod<dynamic>('startRecorder', {'mode': modeString});
+  Future<RecorderSummary> startRecorder(
+      {RecorderMode mode = RecorderMode.continuous}) async {
+    final modeString =
+        mode == RecorderMode.pointCapture ? 'POINT_CAPTURE' : 'CONTINUOUS';
+    final result = await _channel
+        .invokeMethod<dynamic>('startRecorder', {'mode': modeString});
     return _mapRecorderSummary(PlatformResultParser.parseMap(result));
   }
 
@@ -185,10 +194,16 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   }
 
   @override
-  Future<ExecutionSummary> startExecution({int? delayMs}) async {
+  Future<ExecutionSummary> startExecution({
+    int? delayMs,
+    bool? globalVerificationEnabled,
+  }) async {
     final result = await _channel.invokeMethod<dynamic>(
       'startExecution',
-      {'delayMs': delayMs},
+      {
+        'delayMs': delayMs,
+        'globalVerificationEnabled': globalVerificationEnabled,
+      },
     );
     return ExecutionSummary.fromMap(PlatformResultParser.parseMap(result));
   }
@@ -197,12 +212,14 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   Future<ExecutionSummary> startScenarioExecution({
     required String scenarioId,
     int? delayMs,
+    bool? globalVerificationEnabled,
   }) async {
     final result = await _channel.invokeMethod<dynamic>(
       'startScenarioExecution',
       {
         'scenarioId': scenarioId,
         'delayMs': delayMs,
+        'globalVerificationEnabled': globalVerificationEnabled,
       },
     );
     return ExecutionSummary.fromMap(PlatformResultParser.parseMap(result));
@@ -275,6 +292,16 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
     final result = await _channel.invokeMethod<dynamic>(
       'deleteScenarioActions',
       {'scenarioId': scenarioId},
+    );
+    final map = PlatformResultParser.parseMap(result);
+    return map['success'] as bool? ?? false;
+  }
+
+  @override
+  Future<bool> testScenarioStep(ScenarioStep step) async {
+    final result = await _channel.invokeMethod<dynamic>(
+      'testScenarioStep',
+      step.toMap(),
     );
     final map = PlatformResultParser.parseMap(result);
     return map['success'] as bool? ?? false;
@@ -368,12 +395,14 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
 
   @override
   Future<void> setLoggingEnabled(bool enabled) async {
-    await _channel.invokeMethod<void>('setLoggingEnabled', {'enabled': enabled});
+    await _channel
+        .invokeMethod<void>('setLoggingEnabled', {'enabled': enabled});
   }
 
   @override
   Future<void> setLogToFileEnabled(bool enabled) async {
-    await _channel.invokeMethod<void>('setLogToFileEnabled', {'enabled': enabled});
+    await _channel
+        .invokeMethod<void>('setLogToFileEnabled', {'enabled': enabled});
   }
 
   @override
@@ -396,7 +425,8 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
 
   @override
   Future<void> setAutostartEnabled(bool enabled) async {
-    await _channel.invokeMethod<void>('setAutostartEnabled', {'enabled': enabled});
+    await _channel
+        .invokeMethod<void>('setAutostartEnabled', {'enabled': enabled});
   }
 
   @override
@@ -412,7 +442,8 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
 
   @override
   Future<WebSocketStatus> getWebSocketStatus() async {
-    final result = await _invokeMap('getWebSocketStatus').timeout(_webSocketMethodTimeout);
+    final result =
+        await _invokeMap('getWebSocketStatus').timeout(_webSocketMethodTimeout);
     return WebSocketStatus.fromMap(result);
   }
 
@@ -447,6 +478,14 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
       );
     }
     return WebSocketStatus.fromMap(payload);
+  }
+
+  @override
+  Future<void> setRestoreAppAfterExecution(bool enabled) async {
+    await _channel.invokeMethod<dynamic>(
+      'setRestoreAppAfterExecution',
+      {'enabled': enabled},
+    );
   }
 
   Future<void> _invokeVoid(String method) async {
@@ -512,7 +551,9 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
 
   RecorderSummary _mapRecorderSummary(Map<String, dynamic> map) {
     final modeString = map['mode'] as String? ?? 'CONTINUOUS';
-    final mode = modeString == 'POINT_CAPTURE' ? RecorderMode.pointCapture : RecorderMode.continuous;
+    final mode = modeString == 'POINT_CAPTURE'
+        ? RecorderMode.pointCapture
+        : RecorderMode.continuous;
 
     return RecorderSummary(
       isRecording: map['isRecording'] as bool? ?? false,

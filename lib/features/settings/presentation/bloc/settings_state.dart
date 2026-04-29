@@ -6,9 +6,13 @@ class SettingsState extends Equatable {
     this.autostartEnabled = true,
     this.loggingEnabled = true,
     this.logToFileEnabled = true,
+    this.restoreAppAfterExecution = true,
+    this.globalVerificationEnabled = true,
     this.isNativeSettingsLoading = true,
     this.isAutostartBusy = false,
     this.isLoggingBusy = false,
+    this.isRestoreAppBusy = false,
+    this.isGlobalVerificationBusy = false,
     this.webSocketStatus = const WebSocketStatus(),
     this.isWebSocketLoading = true,
     this.isWebSocketBusy = false,
@@ -20,9 +24,13 @@ class SettingsState extends Equatable {
   final bool autostartEnabled;
   final bool loggingEnabled;
   final bool logToFileEnabled;
+  final bool restoreAppAfterExecution;
+  final bool globalVerificationEnabled;
   final bool isNativeSettingsLoading;
   final bool isAutostartBusy;
   final bool isLoggingBusy;
+  final bool isRestoreAppBusy;
+  final bool isGlobalVerificationBusy;
   final WebSocketStatus webSocketStatus;
   final bool isWebSocketLoading;
   final bool isWebSocketBusy;
@@ -34,7 +42,11 @@ class SettingsState extends Equatable {
   }
 
   factory SettingsState.fromSettings(AppSettings settings) {
-    return SettingsState(locale: settings.locale);
+    return SettingsState(
+      locale: settings.locale,
+      restoreAppAfterExecution: settings.restoreAppAfterExecution,
+      globalVerificationEnabled: settings.globalVerificationEnabled,
+    );
   }
 
   SettingsState copyWith({
@@ -42,9 +54,13 @@ class SettingsState extends Equatable {
     bool? autostartEnabled,
     bool? loggingEnabled,
     bool? logToFileEnabled,
+    bool? restoreAppAfterExecution,
+    bool? globalVerificationEnabled,
     bool? isNativeSettingsLoading,
     bool? isAutostartBusy,
     bool? isLoggingBusy,
+    bool? isRestoreAppBusy,
+    bool? isGlobalVerificationBusy,
     WebSocketStatus? webSocketStatus,
     bool? isWebSocketLoading,
     bool? isWebSocketBusy,
@@ -58,10 +74,17 @@ class SettingsState extends Equatable {
       autostartEnabled: autostartEnabled ?? this.autostartEnabled,
       loggingEnabled: loggingEnabled ?? this.loggingEnabled,
       logToFileEnabled: logToFileEnabled ?? this.logToFileEnabled,
+      restoreAppAfterExecution:
+          restoreAppAfterExecution ?? this.restoreAppAfterExecution,
+      globalVerificationEnabled:
+          globalVerificationEnabled ?? this.globalVerificationEnabled,
       isNativeSettingsLoading:
           isNativeSettingsLoading ?? this.isNativeSettingsLoading,
       isAutostartBusy: isAutostartBusy ?? this.isAutostartBusy,
       isLoggingBusy: isLoggingBusy ?? this.isLoggingBusy,
+      isRestoreAppBusy: isRestoreAppBusy ?? this.isRestoreAppBusy,
+      isGlobalVerificationBusy:
+          isGlobalVerificationBusy ?? this.isGlobalVerificationBusy,
       webSocketStatus: webSocketStatus ?? this.webSocketStatus,
       isWebSocketLoading: isWebSocketLoading ?? this.isWebSocketLoading,
       isWebSocketBusy: isWebSocketBusy ?? this.isWebSocketBusy,
@@ -77,9 +100,13 @@ class SettingsState extends Equatable {
         autostartEnabled,
         loggingEnabled,
         logToFileEnabled,
+        restoreAppAfterExecution,
+        globalVerificationEnabled,
         isNativeSettingsLoading,
         isAutostartBusy,
         isLoggingBusy,
+        isRestoreAppBusy,
+        isGlobalVerificationBusy,
         webSocketStatus,
         isWebSocketLoading,
         isWebSocketBusy,

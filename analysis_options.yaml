@@ -1,0 +1,11 @@
+analyzer:
+  exclude:
+    - workspace/**
+    - ai/**
+    - build/**
+    - .dart_tool/**
+
+linter:
+  rules:
+    - avoid_print
+    - prefer_const_constructors

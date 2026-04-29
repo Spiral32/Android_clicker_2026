@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:prog_set_touch/features/main_screen/data/platform_bridge_data_source.dart';
+import 'package:prog_set_touch/core/localization/app_localizations.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_item.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_step.dart';
 import 'package:prog_set_touch/features/scenario/presentation/bloc/scenario_bloc.dart';
@@ -62,8 +62,23 @@ class _ScenarioStepEditorDialogState extends State<ScenarioStepEditorDialog> {
     if (updated == null || !mounted) return;
     setState(() {
       _steps = [
-        for (var i = 0; i < _steps.length; i++) if (i == index) updated else _steps[i],
+        for (var i = 0; i < _steps.length; i++)
+          if (i == index) updated else _steps[i],
       ];
+    });
+  }
+
+  Future<void> _addStep() async {
+    final newStep = await showDialog<ScenarioStep>(
+      context: context,
+      builder: (_) => _ScenarioStepEditDialog(
+        step: ScenarioStep.initial(),
+        isNew: true,
+      ),
+    );
+    if (newStep == null || !mounted) return;
+    setState(() {
+      _steps = [..._steps, newStep];
     });
   }
 
@@ -79,7 +94,8 @@ class _ScenarioStepEditorDialogState extends State<ScenarioStepEditorDialog> {
     }
     setState(() {
       _steps = [
-        for (var i = 0; i < _steps.length; i++) if (i != index) _steps[i],
+        for (var i = 0; i < _steps.length; i++)
+          if (i != index) _steps[i],
       ];
     });
   }
@@ -120,83 +136,117 @@ class _ScenarioStepEditorDialogState extends State<ScenarioStepEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Dialog(
+    final theme = Theme.of(context);
+    return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 720),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.scenarioStepEditorTitle(widget.scenario.name),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.scenarioStepEditorSubtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF5A6B7D),
-                    ),
-              ),
-              const SizedBox(height: 16),
-              if (_isLoading)
-                const Expanded(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_errorText != null)
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      _errorText!,
-                      textAlign: TextAlign.center,
-                    ),
+      content: SizedBox(
+        width: 760,
+        height: 600,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.scenarioStepEditorTitle(widget.scenario.name),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
-                )
-              else
-                Expanded(
-                  child: ReorderableListView.builder(
-                    itemCount: _steps.length,
-                    onReorder: _onReorder,
-                    itemBuilder: (context, index) {
-                      final step = _steps[index];
-                      return _ScenarioStepCard(
-                        key: ValueKey('${step.type.value}-$index'),
-                        index: index,
-                        step: step,
-                        onEdit: () => _editStep(index),
-                        onDelete: _isSaving ? null : () => _deleteStep(index),
-                      );
-                    },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.scenarioStepEditorSubtitle,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF5A6B7D),
+                  ),
+            ),
+            const SizedBox(height: 16),
+            if (_isLoading)
+              const Expanded(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_errorText != null)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    _errorText!,
+                    textAlign: TextAlign.center,
                   ),
                 ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Text(
-                    l10n.scenarioStepEditorCount(_steps.length),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
-                    child: Text(l10n.commonCancel),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _isSaving ? null : _save,
-                    icon: const Icon(Icons.save_outlined),
-                    label: Text(l10n.save),
-                  ),
-                ],
+              )
+            else
+              Expanded(
+                child: ReorderableListView.builder(
+                  itemCount: _steps.length,
+                  onReorder: _onReorder,
+                  itemBuilder: (context, index) {
+                    final step = _steps[index];
+                    return _ScenarioStepCard(
+                      key: ValueKey('${step.type.value}-$index'),
+                      index: index,
+                      step: step,
+                      onEdit: () => _editStep(index),
+                      onDelete: _isSaving ? null : () => _deleteStep(index),
+                    );
+                  },
+                ),
               ),
-            ],
-          ),
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.layers_outlined,
+                        size: 20, color: theme.primaryColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.scenarioStepEditorCount(_steps.length),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: _isSaving ? null : _save,
+                  icon: const Icon(Icons.save_outlined),
+                  label: Text(l10n.save),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _isSaving ? null : _addStep,
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: Text(l10n.scenarioStepEditorAddStep),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed:
+                      _isSaving ? null : () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                  label: Text(l10n.commonCancel),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    foregroundColor: theme.colorScheme.error,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -252,7 +302,8 @@ class _ScenarioStepCard extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       _StepInfoChip(
-                        text: l10n.scenarioStepEditorPointerCount(step.pointerCount),
+                        text: l10n
+                            .scenarioStepEditorPointerCount(step.pointerCount),
                       ),
                       _StepInfoChip(
                         text: l10n.scenarioStepEditorDuration(step.durationMs),
@@ -273,6 +324,13 @@ class _ScenarioStepCard extends StatelessWidget {
                             step.endY.toStringAsFixed(1),
                           ),
                         ),
+                      if (step.verificationEnabled)
+                        _StepInfoChip(
+                          text: 'Verify (${step.thresholdPercent}%)',
+                          color: Colors.blue.shade50,
+                          borderColor: Colors.blue.shade100,
+                          textColor: Colors.blue.shade700,
+                        ),
                     ],
                   ),
                 ],
@@ -282,6 +340,7 @@ class _ScenarioStepCard extends StatelessWidget {
               onPressed: onEdit,
               icon: const Icon(Icons.edit_outlined),
             ),
+            _TestStepButton(step: step),
             IconButton(
               onPressed: onDelete,
               color: Colors.red,
@@ -303,26 +362,90 @@ class _ScenarioStepCard extends StatelessWidget {
   }
 }
 
+class _TestStepButton extends StatefulWidget {
+  const _TestStepButton({required this.step});
+
+  final ScenarioStep step;
+
+  @override
+  State<_TestStepButton> createState() => _TestStepButtonState();
+}
+
+class _TestStepButtonState extends State<_TestStepButton> {
+  bool _isTesting = false;
+
+  Future<void> _test() async {
+    setState(() => _isTesting = true);
+    try {
+      final repository = context.read<PlatformBridgeDataSource>();
+      final success = await repository.testScenarioStep(widget.step);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? "Test success" : "Test failed"),
+          backgroundColor: success ? Colors.green : Colors.red,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isTesting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isTesting) {
+      return const Padding(
+        padding: EdgeInsets.all(12),
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    return IconButton(
+      onPressed: _test,
+      tooltip: "Test step",
+      icon: const Icon(Icons.play_circle_outline, color: Colors.green),
+    );
+  }
+}
+
 class _StepInfoChip extends StatelessWidget {
-  const _StepInfoChip({required this.text});
+  const _StepInfoChip({
+    required this.text,
+    this.color,
+    this.borderColor,
+    this.textColor,
+  });
 
   final String text;
+  final Color? color;
+  final Color? borderColor;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: color ?? const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFD8E2EE)),
+        border: Border.all(color: borderColor ?? const Color(0xFFD8E2EE)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
+            color: textColor,
           ),
         ),
       ),
@@ -333,12 +456,15 @@ class _StepInfoChip extends StatelessWidget {
 class _ScenarioStepEditDialog extends StatefulWidget {
   const _ScenarioStepEditDialog({
     required this.step,
+    this.isNew = false,
   });
 
   final ScenarioStep step;
+  final bool isNew;
 
   @override
-  State<_ScenarioStepEditDialog> createState() => _ScenarioStepEditDialogState();
+  State<_ScenarioStepEditDialog> createState() =>
+      _ScenarioStepEditDialogState();
 }
 
 class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
@@ -350,6 +476,8 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
   late final TextEditingController _endYController;
   late final TextEditingController _durationController;
   late final TextEditingController _delayController;
+  late bool _verificationEnabled;
+  late final TextEditingController _thresholdController;
 
   @override
   void initState() {
@@ -364,8 +492,10 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
     _endYController = TextEditingController(text: step.endY.toString());
     _durationController =
         TextEditingController(text: step.durationMs.toString());
-    _delayController =
-        TextEditingController(text: step.stepDelayMs.toString());
+    _delayController = TextEditingController(text: step.stepDelayMs.toString());
+    _verificationEnabled = step.verificationEnabled;
+    _thresholdController =
+        TextEditingController(text: step.thresholdPercent.toString());
   }
 
   @override
@@ -377,6 +507,7 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
     _endYController.dispose();
     _durationController.dispose();
     _delayController.dispose();
+    _thresholdController.dispose();
     super.dispose();
   }
 
@@ -389,6 +520,7 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
     final startY = double.tryParse(_startYController.text.trim());
     final endX = double.tryParse(_endXController.text.trim());
     final endY = double.tryParse(_endYController.text.trim());
+    final threshold = double.tryParse(_thresholdController.text.trim());
 
     if (pointerCount == null ||
         durationMs == null ||
@@ -396,7 +528,8 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
         startX == null ||
         startY == null ||
         endX == null ||
-        endY == null) {
+        endY == null ||
+        threshold == null) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -415,6 +548,11 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
         endY: endY,
         durationMs: durationMs,
         stepDelayMs: delayMs,
+        verificationEnabled: _verificationEnabled,
+        thresholdPercent: threshold.clamp(
+          ScenarioStep.minThresholdPercent,
+          ScenarioStep.maxThresholdPercent,
+        ),
       ),
     );
   }
@@ -422,8 +560,11 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     return AlertDialog(
-      title: Text(l10n.scenarioStepEditorEditTitle),
+      title: Text(widget.isNew
+          ? l10n.scenarioStepEditorAddStep
+          : l10n.scenarioStepEditorEditTitle),
       content: SingleChildScrollView(
         child: SizedBox(
           width: 420,
@@ -446,7 +587,8 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
                               l10n.scenarioStepTypeDoubleTap,
                             ScenarioStepType.longPress =>
                               l10n.scenarioStepTypeLongPress,
-                            ScenarioStepType.swipe => l10n.scenarioStepTypeSwipe,
+                            ScenarioStepType.swipe =>
+                              l10n.scenarioStepTypeSwipe,
                           },
                         ),
                       ),
@@ -508,6 +650,26 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.scenarioStepEditorVerificationLabel),
+                subtitle: Text(l10n.scenarioStepEditorVerificationSubtitle),
+                value: _verificationEnabled,
+                onChanged: (value) =>
+                    setState(() => _verificationEnabled = value),
+              ),
+              if (_verificationEnabled) ...[
+                const SizedBox(height: 8),
+                _NumberField(
+                  controller: _thresholdController,
+                  label: l10n.scenarioStepEditorThresholdLabel,
+                  helperText:
+                      'Min: ${ScenarioStep.minThresholdPercent}% | Max: ${ScenarioStep.maxThresholdPercent}%',
+                ),
+              ],
             ],
           ),
         ),
@@ -530,10 +692,12 @@ class _NumberField extends StatelessWidget {
   const _NumberField({
     required this.controller,
     required this.label,
+    this.helperText,
   });
 
   final TextEditingController controller;
   final String label;
+  final String? helperText;
 
   @override
   Widget build(BuildContext context) {
@@ -542,6 +706,7 @@ class _NumberField extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: label,
+        helperText: helperText,
         border: const OutlineInputBorder(),
         isDense: true,
       ),

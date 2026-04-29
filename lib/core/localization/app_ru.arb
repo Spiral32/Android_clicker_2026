@@ -144,6 +144,11 @@
   "settingsExecutionTitle": "Настройки выполнения",
   "settingsExecutionDelay": "Задержка между действиями",
   "settingsExecutionDelayUnit": "{seconds} сек.",
+  "settingsRestoreAppTitle": "Восстановить приложение",
+  "settingsRestoreAppSubtitle": "Открыть приложение после завершения выполнения сценария",
+  "settingsVisualVerificationTitle": "Визуальная верификация",
+  "settingsVisualVerificationSubtitle": "Глобальный переключатель проверки скриншотов во время выполнения",
+  "settingsRestoreAppChangeError": "Не удалось изменить настройку восстановления приложения",
   "statusUnavailable": "Недоступно",
   "errorPlatformLoad": "Не удалось загрузить данные платформы",
   "errorPermissionAction": "Не удалось выполнить действие для разрешения",
@@ -178,120 +183,138 @@
   "scheduleScenarioRequired": "Выберите сценарий",
   "scheduleScenarioRequiredToCreate": "Сначала создайте хотя бы один сценарий",
   "scheduleScenarioMissing": "Сценарий не найден",
-  "save": "Сохранить"
-  ,"scenarioScreenTitle": "Сценарии"
-  ,"scenarioCreate": "Создать сценарий"
-  ,"scenarioCreateCompact": "Создать"
-  ,"scenarioRunAll": "Запустить все сценарии"
-  ,"scenarioRunAllCompact": "Запустить все"
-  ,"scenarioQuickLaunch": "Быстрый запуск"
-  ,"scenarioNameHint": "Название сценария"
-  ,"scenarioColumnName": "Название"
-  ,"scenarioColumnSteps": "Шаги"
-  ,"scenarioEmptyNotAllowed": "Нельзя сохранить пустой сценарий. Сначала запишите хотя бы одно действие."
-  ,"scenarioLimitReached": "Допустимо максимум 50 сценариев."
-  ,"scenarioNameMustBeUnique": "Название сценария должно быть уникальным."
-  ,"scenarioQuickLaunchEmpty": "Не выбраны сценарии для быстрого запуска."
-  ,"scenarioRunAllEmpty": "Нет включенных сценариев для запуска."
-  ,"scenarioExecutionBusy": "Выполнение уже идет."
-  ,"scenarioBatchDone": "Пакетное выполнение сценариев завершено."
-  ,"scenarioRename": "Переименовать"
-  ,"scenarioDelete": "Удалить"
-  ,"scenarioDeleteConfirmTitle": "Удалить сценарий"
-  ,"scenarioDeleteConfirmMessage": "Вы уверены, что хотите удалить сценарий «{name}»?"
-  ,"scenarioRenameTitle": "Переименовать сценарий"
-  ,"scenarioExport": "Экспорт сценариев"
-  ,"scenarioImport": "Импорт сценариев"
-  ,"scenarioExportEmpty": "Нет сценариев для экспорта."
-  ,"scenarioExportDone": "Сценарии успешно экспортированы."
-  ,"scenarioExportFailed": "Не удалось экспортировать сценарии."
-  ,"scenarioImportDone": "Сценарии успешно импортированы."
-  ,"scenarioImportInvalidJson": "Некорректный JSON файла импорта."
-  ,"scenarioImportNoItems": "В файле импорта нет валидных сценариев."
-  ,"mainScenarioSectionTitle": "Сценарии"
-  ,"mainOverviewTabTitle": "Обзор"
-  ,"mainStatusPermissions": "Разрешения"
-  ,"mainStatusOverlay": "Overlay"
-  ,"mainStatusRecorder": "Рекордер"
-  ,"mainStatusActions": "Действия"
-  ,"mainStatusOk": "OK"
-  ,"mainStatusOff": "OFF"
-  ,"schedulerScenarioPrefix": "Сценарий"
-  ,"notesLatestChangesTitle": "Последние изменения"
-  ,"notesExportCrashFix": "Исправлен вылет при экспорте настроек/логов."
-  ,"notesMainScreenRedesign": "Главный экран переработан: улучшена читаемость статусов и блоков действий."
-  ,"notesSchedulerScenarioVisible": "В карточке планировщика теперь видно выбранный сценарий."
-  ,"scenarioStepEditorOpen": "Редактировать шаги"
-  ,"scenarioStepEditorSaved": "Шаги сценария сохранены."
-  ,"scenarioStepEditorSaveFailed": "Не удалось сохранить шаги сценария."
-  ,"scenarioStepEditorLoadFailed": "Не удалось загрузить шаги сценария"
-  ,"scenarioStepEditorTitle": "Редактировать шаги: {name}"
-  ,"@scenarioStepEditorTitle": {
+  "save": "Сохранить",
+  "settingsAboutTitle": "О программе",
+  "settingsAboutSubtitle": "Как пользоваться Prog Set Touch",
+  "settingsAboutDescriptionTitle": "Описание работы",
+  "settingsAboutSectionBasics": "Основы работы",
+  "settingsAboutBasicsContent": "Prog Set Touch — это мощный инструмент автоматизации действий на экране. Основная концепция заключается в записи последовательности действий (тапов, свайпов) и их последующем воспроизведении по требованию или расписанию.",
+  "settingsAboutSectionRecording": "Запись сценария",
+  "settingsAboutRecordingContent": "1. Нажмите '+' в верхней панели.\n2. Используйте плавающую панель управления на экране для добавления действий.\n3. После завершения записи сохраните сценарий под уникальным именем.",
+  "settingsAboutSectionExecution": "Выполнение",
+  "settingsAboutExecutionContent": "Вы можете запустить сценарий кнопкой 'Play' в списке или использовать 'Quick Launch' (молния) для запуска группы выбранных сценариев. В настройках можно установить задержку между действиями.",
+  "settingsAboutSectionOverlay": "Плавающая кнопка",
+  "settingsAboutOverlayContent": "Иконка 'глаза' в верхней панели включает/выключает плавающую кнопку. Она необходима для быстрой записи и управления процессом автоматизации поверх других приложений.",
+  "settingsAboutSectionPermissions": "Разрешения",
+  "settingsAboutPermissionsContent": "Для работы требуются разрешения на 'Спец. возможности' (для имитации нажатий) и 'Отображение поверх окон' (для плавающей кнопки).",
+  "scenarioEditWhileExecutingRejected": "Нельзя редактировать шаги во время выполнения",
+  "scenarioStepEditorAddStep": "Добавить шаг",
+  "scenarioStepEditorVerificationLabel": "Проверка изменений экрана",
+  "scenarioStepEditorVerificationSubtitle": "Проверять, изменилось ли содержимое экрана после выполнения этого шага",
+  "scenarioStepEditorThresholdLabel": "Порог чувствительности (%)",
+  "scenarioScreenTitle": "Сценарии",
+  "scenarioCreate": "Создать сценарий",
+  "scenarioCreateCompact": "Создать",
+  "scenarioRunAll": "Запустить все сценарии",
+  "scenarioRunAllCompact": "Запустить все",
+  "scenarioQuickLaunch": "Быстрый запуск",
+  "scenarioNameHint": "Название сценария",
+  "scenarioColumnName": "Название",
+  "scenarioColumnSteps": "Шаги",
+  "scenarioEmptyNotAllowed": "Нельзя сохранить пустой сценарий. Сначала запишите хотя бы одно действие.",
+  "scenarioLimitReached": "Допустимо максимум 50 сценариев.",
+  "scenarioNameMustBeUnique": "Название сценария должно быть уникальным.",
+  "scenarioQuickLaunchEmpty": "Не выбраны сценарии для быстрого запуска.",
+  "scenarioRunAllEmpty": "Нет включенных сценариев для запуска.",
+  "scenarioExecutionBusy": "Выполнение уже идет.",
+  "scenarioBatchDone": "Пакетное выполнение сценариев завершено.",
+  "scenarioRename": "Переименовать",
+  "scenarioDelete": "Удалить",
+  "scenarioDeleteConfirmTitle": "Удалить сценарий",
+  "scenarioDeleteConfirmMessage": "Вы уверены, что хотите удалить сценарий «{name}»?",
+  "scenarioRenameTitle": "Переименовать сценарий",
+  "scenarioExport": "Экспорт сценариев",
+  "scenarioImport": "Импорт сценариев",
+  "scenarioExportEmpty": "Нет сценариев для экспорта.",
+  "scenarioExportDone": "Сценарии успешно экспортированы.",
+  "scenarioExportFailed": "Не удалось экспортировать сценарии.",
+  "scenarioImportDone": "Сценарии успешно импортированы.",
+  "scenarioImportInvalidJson": "Некорректный JSON файла импорта.",
+  "scenarioImportNoItems": "В файле импорта нет валидных сценариев.",
+  "mainScenarioSectionTitle": "Сценарии",
+  "mainOverviewTabTitle": "Обзор",
+  "mainStatusPermissions": "Разрешения",
+  "mainStatusOverlay": "Overlay",
+  "mainStatusRecorder": "Рекордер",
+  "mainStatusActions": "Действия",
+  "mainStatusOk": "OK",
+  "mainStatusOff": "OFF",
+  "schedulerScenarioPrefix": "Сценарий",
+  "notesLatestChangesTitle": "Последние изменения",
+  "notesExportCrashFix": "Исправлен вылет при экспорте настроек/логов.",
+  "notesMainScreenRedesign": "Главный экран переработан: улучшена читаемость статусов и блоков действий.",
+  "notesSchedulerScenarioVisible": "В карточке планировщика теперь видно выбранный сценарий.",
+  "scenarioStepEditorOpen": "Редактировать шаги",
+  "scenarioStepEditorSaved": "Шаги сценария сохранены.",
+  "scenarioStepEditorSaveFailed": "Не удалось сохранить шаги сценария.",
+  "scenarioStepEditorLoadFailed": "Не удалось загрузить шаги сценария",
+  "scenarioStepEditorTitle": "Редактировать шаги: {name}",
+  "@scenarioStepEditorTitle": {
     "placeholders": {
       "name": {}
     }
-  }
-  ,"scenarioStepEditorSubtitle": "Изменяйте порядок шагов, параметры жестов и задержку после каждого шага."
-  ,"scenarioStepEditorCount": "Шагов: {count}"
-  ,"@scenarioStepEditorCount": {
+  },
+  "scenarioStepEditorSubtitle": "Изменяйте порядок шагов, параметры жестов и задержку после каждого шага.",
+  "scenarioStepEditorCount": "Шагов: {count}",
+  "@scenarioStepEditorCount": {
     "placeholders": {
       "count": {}
     }
-  }
-  ,"scenarioStepEditorStepLabel": "Шаг {index}"
-  ,"@scenarioStepEditorStepLabel": {
+  },
+  "scenarioStepEditorStepLabel": "Шаг {index}",
+  "@scenarioStepEditorStepLabel": {
     "placeholders": {
       "index": {}
     }
-  }
-  ,"scenarioStepEditorEditTitle": "Редактировать шаг"
-  ,"scenarioStepEditorTypeLabel": "Тип действия"
-  ,"scenarioStepEditorPointerCountLabel": "Число касаний"
-  ,"scenarioStepEditorDurationLabel": "Длительность жеста (мс)"
-  ,"scenarioStepEditorDelayLabel": "Задержка после шага (мс)"
-  ,"scenarioStepEditorStartXLabel": "Start X"
-  ,"scenarioStepEditorStartYLabel": "Start Y"
-  ,"scenarioStepEditorEndXLabel": "End X"
-  ,"scenarioStepEditorEndYLabel": "End Y"
-  ,"scenarioStepEditorInvalidValues": "Введите корректные числовые значения для шага."
-  ,"scenarioStepEditorPointerCount": "Касаний: {count}"
-  ,"@scenarioStepEditorPointerCount": {
+  },
+  "scenarioStepEditorEditTitle": "Редактировать шаг",
+  "scenarioStepEditorTypeLabel": "Тип действия",
+  "scenarioStepEditorPointerCountLabel": "Число касаний",
+  "scenarioStepEditorDurationLabel": "Длительность жеста (мс)",
+  "scenarioStepEditorDelayLabel": "Задержка после шага (мс)",
+  "scenarioStepEditorStartXLabel": "Start X",
+  "scenarioStepEditorStartYLabel": "Start Y",
+  "scenarioStepEditorEndXLabel": "End X",
+  "scenarioStepEditorEndYLabel": "End Y",
+  "scenarioStepEditorInvalidValues": "Введите корректные числовые значения для шага.",
+  "scenarioStepEditorPointerCount": "Касаний: {count}",
+  "@scenarioStepEditorPointerCount": {
     "placeholders": {
       "count": {}
     }
-  }
-  ,"scenarioStepEditorDuration": "Длительность: {durationMs} мс"
-  ,"@scenarioStepEditorDuration": {
+  },
+  "scenarioStepEditorDuration": "Длительность: {durationMs} мс",
+  "@scenarioStepEditorDuration": {
     "placeholders": {
       "durationMs": {}
     }
-  }
-  ,"scenarioStepEditorDelay": "Задержка: {delayMs} мс"
-  ,"@scenarioStepEditorDelay": {
+  },
+  "scenarioStepEditorDelay": "Задержка: {delayMs} мс",
+  "@scenarioStepEditorDelay": {
     "placeholders": {
       "delayMs": {}
     }
-  }
-  ,"scenarioStepEditorStart": "Начало: {x}, {y}"
-  ,"@scenarioStepEditorStart": {
+  },
+  "scenarioStepEditorStart": "Начало: {x}, {y}",
+  "@scenarioStepEditorStart": {
     "placeholders": {
       "x": {},
       "y": {}
     }
-  }
-  ,"scenarioStepEditorEnd": "Конец: {x}, {y}"
-  ,"@scenarioStepEditorEnd": {
+  },
+  "scenarioStepEditorEnd": "Конец: {x}, {y}",
+  "@scenarioStepEditorEnd": {
     "placeholders": {
       "x": {},
       "y": {}
     }
-  }
-  ,"scenarioStepTypeTap": "Тап"
-  ,"scenarioStepTypeDoubleTap": "Двойной тап"
-  ,"scenarioStepTypeLongPress": "Долгое нажатие"
-  ,"scenarioStepTypeSwipe": "Свайп"
-  ,"scenarioEditBlockedWhileExecuting": "Нельзя редактировать шаги сценария во время выполнения."
-  ,"scenarioDeleteBlockedWhileExecuting": "Нельзя удалить сценарий во время выполнения."
-  ,"scenarioImportBlockedWhileExecuting": "Нельзя импортировать сценарии во время выполнения."
-  ,"scenarioReorderBlockedWhileExecuting": "Нельзя менять порядок сценариев во время выполнения."
+  },
+  "scenarioStepTypeTap": "Тап",
+  "scenarioStepTypeDoubleTap": "Двойной тап",
+  "scenarioStepTypeLongPress": "Долгое нажатие",
+  "scenarioStepTypeSwipe": "Свайп",
+  "scenarioEditBlockedWhileExecuting": "Нельзя редактировать шаги сценария во время выполнения.",
+  "scenarioDeleteBlockedWhileExecuting": "Нельзя удалить сценарий во время выполнения.",
+  "scenarioImportBlockedWhileExecuting": "Нельзя импортировать сценарии во время выполнения.",
+  "scenarioReorderBlockedWhileExecuting": "Нельзя менять порядок сценариев во время выполнения."
 }

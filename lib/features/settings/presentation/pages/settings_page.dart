@@ -5,9 +5,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:prog_set_touch/core/error/app_logger.dart';
+import 'package:prog_set_touch/core/localization/app_localizations.dart';
 import 'package:prog_set_touch/features/main_screen/data/platform_bridge_data_source.dart';
 import 'package:prog_set_touch/features/main_screen/presentation/bloc/main_screen_bloc.dart';
 import 'package:prog_set_touch/features/scenario/presentation/bloc/scenario_bloc.dart';
@@ -45,11 +45,17 @@ class SettingsPage extends StatelessWidget {
               const SizedBox(height: 16),
               const _ExactAlarmSection(),
               const SizedBox(height: 16),
+              const _RestoreAppSection(),
+              const SizedBox(height: 16),
               const _WebSocketSection(),
               const SizedBox(height: 16),
               const _LoggingSection(),
               const SizedBox(height: 16),
               const _ScenarioTransferSection(),
+              const SizedBox(height: 16),
+              const _VisualVerificationSection(),
+              const SizedBox(height: 16),
+              const _AboutSection(),
             ],
           ),
         ),
@@ -63,10 +69,173 @@ class SettingsPage extends StatelessWidget {
     return switch (errorKey) {
       'settingsNativeStatusLoadError' => l10n.settingsGenericErrorPrefix,
       'settingsAutostartChangeError' => l10n.settingsAutostartChangeError,
+      'settingsRestoreAppChangeError' => l10n.settingsRestoreAppChangeError,
       'settingsLoggingChangeError' => l10n.settingsGenericErrorPrefix,
       'settingsLogToFileChangeError' => l10n.settingsGenericErrorPrefix,
       _ => null,
     };
+  }
+}
+
+class _RestoreAppSection extends StatelessWidget {
+  const _RestoreAppSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, state) {
+        return _SectionCard(
+          icon: Icons.settings_backup_restore,
+          title: l10n.settingsRestoreAppTitle,
+          subtitle: l10n.settingsRestoreAppSubtitle,
+          child: SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.settingsRestoreAppTitle),
+            subtitle: Text(l10n.settingsRestoreAppSubtitle),
+            value: state.restoreAppAfterExecution,
+            onChanged: state.isRestoreAppBusy
+                ? null
+                : (enabled) => context
+                    .read<SettingsBloc>()
+                    .add(SettingsRestoreAppToggled(enabled)),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _VisualVerificationSection extends StatelessWidget {
+  const _VisualVerificationSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, state) {
+        return _SectionCard(
+          icon: Icons.camera_enhance_outlined,
+          title: l10n.settingsVisualVerificationTitle,
+          subtitle: l10n.settingsVisualVerificationSubtitle,
+          child: SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.settingsVisualVerificationTitle),
+            subtitle: Text(l10n.settingsVisualVerificationSubtitle),
+            value: state.globalVerificationEnabled,
+            onChanged: state.isGlobalVerificationBusy
+                ? null
+                : (enabled) => context
+                    .read<SettingsBloc>()
+                    .add(SettingsGlobalVerificationToggled(enabled)),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AboutSection extends StatelessWidget {
+  const _AboutSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return _SectionCard(
+      icon: Icons.info_outline,
+      title: l10n.settingsAboutTitle,
+      subtitle: l10n.settingsAboutSubtitle,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(l10n.settingsAboutDescriptionTitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _showAboutDialog(context),
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.settingsAboutDescriptionTitle),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _AboutSubsection(
+                title: l10n.settingsAboutSectionBasics,
+                content: l10n.settingsAboutBasicsContent,
+              ),
+              _AboutSubsection(
+                title: l10n.settingsAboutSectionRecording,
+                content: l10n.settingsAboutRecordingContent,
+              ),
+              _AboutSubsection(
+                title: l10n.settingsAboutSectionExecution,
+                content: l10n.settingsAboutExecutionContent,
+              ),
+              _AboutSubsection(
+                title: l10n.settingsAboutSectionOverlay,
+                content: l10n.settingsAboutOverlayContent,
+              ),
+              _AboutSubsection(
+                title: l10n.settingsAboutSectionPermissions,
+                content: l10n.settingsAboutPermissionsContent,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AboutSubsection extends StatelessWidget {
+  const _AboutSubsection({
+    required this.title,
+    required this.content,
+  });
+
+  final String title;
+  final String content;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            content,
+            style: theme.textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -221,7 +390,8 @@ class _ExactAlarmSectionState extends State<_ExactAlarmSection> {
                   runSpacing: 10,
                   children: [
                     FilledButton.tonalIcon(
-                      onPressed: _isBusy ? null : () => _runAction(_openSettings),
+                      onPressed:
+                          _isBusy ? null : () => _runAction(_openSettings),
                       icon: const Icon(Icons.open_in_new),
                       label: Text(l10n.settingsExactAlarmOpenAction),
                     ),
@@ -372,7 +542,8 @@ class _LoggingSectionState extends State<_LoggingSection> {
 
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
-        final togglesBusy = state.isNativeSettingsLoading || state.isLoggingBusy;
+        final togglesBusy =
+            state.isNativeSettingsLoading || state.isLoggingBusy;
         return _SectionCard(
           icon: Icons.monitor_heart_outlined,
           title: l10n.settingsDiagnosticsTitle,
@@ -531,8 +702,8 @@ class _WebSocketSectionState extends State<_WebSocketSection> {
         final authMode = status.authMode;
         final urls = status.urls;
 
-        final canSyncPort =
-            _portController.text.isEmpty || _portController.text == _lastSyncedPort;
+        final canSyncPort = _portController.text.isEmpty ||
+            _portController.text == _lastSyncedPort;
         if (canSyncPort && port.isNotEmpty && port != _lastSyncedPort) {
           _portController.text = port;
           _lastSyncedPort = port;
@@ -649,16 +820,14 @@ class _WebSocketSectionState extends State<_WebSocketSection> {
                         OutlinedButton.icon(
                           onPressed: state.isWebSocketBusy
                               ? null
-                              : () => context
-                                  .read<SettingsBloc>()
-                                  .add(const SettingsWebSocketStatusRequested()),
+                              : () => context.read<SettingsBloc>().add(
+                                  const SettingsWebSocketStatusRequested()),
                           icon: const Icon(Icons.refresh),
                           label: Text(l10n.settingsWebSocketRefreshAction),
                         ),
                         FilledButton.tonalIcon(
-                          onPressed: state.isWebSocketBusy
-                              ? null
-                              : _regenerateToken,
+                          onPressed:
+                              state.isWebSocketBusy ? null : _regenerateToken,
                           icon: const Icon(Icons.key_outlined),
                           label: Text(l10n.settingsWebSocketRegenerateToken),
                         ),
@@ -1102,43 +1271,56 @@ class _ExecutionSection extends StatelessWidget {
     final theme = Theme.of(context);
 
     return BlocBuilder<MainScreenBloc, MainScreenState>(
-      builder: (context, state) {
-        final delaySeconds = (state.executionDelayMs / 1000).round();
+      builder: (context, mainState) {
+        final delaySeconds = (mainState.executionDelayMs / 1000).round();
         return _SectionCard(
           icon: Icons.speed_outlined,
           title: l10n.settingsExecutionTitle,
           subtitle: l10n.settingsExecutionDelay,
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Slider.adaptive(
-                  min: 1,
-                  max: 120,
-                  divisions: 119,
-                  value: delaySeconds.toDouble(),
-                  onChanged: (value) {
-                    context.read<MainScreenBloc>().add(
-                          MainScreenExecutionDelayChanged(
-                              (value * 1000).round()),
-                        );
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F4F8),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFD1D9E4)),
-                ),
-                child: Text(
-                  l10n.settingsExecutionDelayUnit(delaySeconds),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+              Row(
+                children: [
+                  Expanded(
+                    child: Slider.adaptive(
+                      min: 1,
+                      max: 120,
+                      divisions: 119,
+                      value: delaySeconds.toDouble(),
+                      onChanged: (value) {
+                        context.read<MainScreenBloc>().add(
+                              MainScreenExecutionDelayChanged(
+                                  (value * 1000).round()),
+                            );
+                      },
+                    ),
                   ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F4F8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFD1D9E4)),
+                    ),
+                    child: Text(
+                      l10n.settingsExecutionDelayUnit(delaySeconds),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              Text(
+                l10n.settingsRestoreAppSubtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.blueGrey.shade600,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
             ],
@@ -1216,15 +1398,7 @@ class _ScenarioTransferSection extends StatelessWidget {
                         type: FileType.custom,
                         allowedExtensions: const ['json'],
                       );
-                      if (path == null) {
-                        logger.logInfo(
-                          'settings_page',
-                          'Scenario export cancelled from settings',
-                          payload: {'action': 'scenario_export_cancel'},
-                        );
-                        return;
-                      }
-                      await File(path).writeAsString(payload);
+                      await File(path!).writeAsString(payload);
                     }
 
                     logger.logInfo(
@@ -1291,7 +1465,8 @@ class _ScenarioTransferSection extends StatelessWidget {
                       );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l10n.scenarioImportInvalidJson)),
+                          SnackBar(
+                              content: Text(l10n.scenarioImportInvalidJson)),
                         );
                       }
                       return;

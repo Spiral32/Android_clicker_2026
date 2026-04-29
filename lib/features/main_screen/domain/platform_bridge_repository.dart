@@ -6,7 +6,8 @@ import 'package:prog_set_touch/features/main_screen/domain/permission_status.dar
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_step.dart';
 import 'package:prog_set_touch/features/settings/domain/web_socket_status.dart';
-export 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart' show RecorderMode;
+export 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart'
+    show RecorderMode;
 
 abstract class PlatformBridgeRepository {
   Future<PlatformInfo> getPlatformInfo();
@@ -37,13 +38,17 @@ abstract class PlatformBridgeRepository {
 
   Future<bool> resetState();
 
-  Future<ExecutionSummary> startExecution({int? delayMs});
-  
+  Future<ExecutionSummary> startExecution({
+    int? delayMs,
+    bool? globalVerificationEnabled,
+  });
+
   Future<ExecutionSummary> startScenarioExecution({
     required String scenarioId,
     int? delayMs,
+    bool? globalVerificationEnabled,
   });
-  
+
   Future<bool> bindCurrentRecordingToScenario(String scenarioId);
 
   Future<List<Map<String, dynamic>>> exportScenarioActions(String scenarioId);
@@ -61,6 +66,8 @@ abstract class PlatformBridgeRepository {
   });
 
   Future<bool> deleteScenarioActions(String scenarioId);
+
+  Future<bool> testScenarioStep(ScenarioStep step);
 
   Future<ExecutionSummary> stopExecution();
 
@@ -97,6 +104,8 @@ abstract class PlatformBridgeRepository {
   Future<WebSocketStatus> getWebSocketStatus();
 
   Future<WebSocketStatus> setWebSocketEnabled(bool enabled);
+
+  Future<void> setRestoreAppAfterExecution(bool enabled);
 
   Future<WebSocketStatus> setWebSocketPort(int port);
 

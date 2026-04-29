@@ -9,6 +9,7 @@ import 'package:prog_set_touch/features/scenario/domain/scenario_item.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_repository.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_service.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_step.dart';
+import 'package:prog_set_touch/features/settings/domain/settings_repository.dart';
 
 part 'scenario_event.dart';
 part 'scenario_state.dart';
@@ -18,10 +19,12 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     required ScenarioRepository repository,
     required ScenarioService service,
     required PlatformBridgeRepository platformBridgeRepository,
+    required SettingsRepository settingsRepository,
     required AppLogger logger,
   })  : _repository = repository,
         _service = service,
         _platformBridgeRepository = platformBridgeRepository,
+        _settingsRepository = settingsRepository,
         _logger = logger,
         super(const ScenarioState()) {
     on<ScenarioLoadRequested>(_onLoadRequested);
@@ -43,6 +46,7 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
   final ScenarioRepository _repository;
   final ScenarioService _service;
   final PlatformBridgeRepository _platformBridgeRepository;
+  final SettingsRepository _settingsRepository;
   final AppLogger _logger;
 
   Future<void> _onLoadRequested(
@@ -472,7 +476,7 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     if (decoded == null) {
       _logScenarioError(
         'import_rejected_json',
-        FormatException('Invalid scenario import JSON'),
+        const FormatException('Invalid scenario import JSON'),
         null,
         context: 'Scenario import rejected due to invalid JSON',
       );
@@ -528,7 +532,8 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
         if (entry.actions.isEmpty) {
           continue;
         }
-        final importSuccess = await _platformBridgeRepository.importScenarioActions(
+        final importSuccess =
+            await _platformBridgeRepository.importScenarioActions(
           scenarioId: entry.item.id,
           actions: entry.actions,
         );
@@ -564,6 +569,17 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     ScenarioStepsSaveRequested event,
     Emitter<ScenarioState> emit,
   ) async {
+    if (state.isExecuting) {
+      _logScenarioError(
+        'steps_save_rejected_executing',
+        StateError('Cannot edit scenario steps while execution is active'),
+        null,
+        context: 'Scenario steps save rejected due to active execution',
+      );
+      emit(state.copyWith(messageKey: 'scenarioEditWhileExecutingRejected'));
+      return;
+    }
+
     if (event.steps.isEmpty) {
       _logScenarioError(
         'steps_save_rejected_empty',
@@ -671,8 +687,9 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
       final fallbackStepCount = stepCountRaw is num
           ? stepCountRaw.toInt()
           : int.tryParse(stepCountRaw?.toString() ?? '') ?? 0;
-      final stepCount =
-          importedActions.isNotEmpty ? importedActions.length : fallbackStepCount;
+      final stepCount = importedActions.isNotEmpty
+          ? importedActions.length
+          : fallbackStepCount;
       if (name.isEmpty || !_service.hasExecutableSteps(stepCount)) {
         continue;
       }
@@ -703,7 +720,28 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
         .whereType<Map>()
         .map(
           (entry) => entry.map(
-            (key, value) => MapEntry(key.toString(), value),
+            (key, value) {
+              final stringKey = key.toString();
+              var val = value;
+              // Ensure numeric values are properly typed for the platform bridge
+              if (val is String) {
+                if (stringKey == 'verificationEnabled') {
+                  val = val.toLowerCase() == 'true';
+                } else if ([
+                  'startX',
+                  'startY',
+                  'endX',
+                  'endY',
+                  'thresholdPercent'
+                ].contains(stringKey)) {
+                  val = double.tryParse(val) ?? 0.0;
+                } else if (['pointerCount', 'durationMs', 'stepDelayMs']
+                    .contains(stringKey)) {
+                  val = int.tryParse(val) ?? 0;
+                }
+              }
+              return MapEntry(stringKey, val);
+            },
           ),
         )
         .where((entry) => (entry['type']?.toString().trim() ?? '').isNotEmpty)
@@ -725,6 +763,9 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     }
 
     try {
+      final settings = _settingsRepository.load();
+      final delayMs = settings.executionDelayMs;
+      final globalVerificationEnabled = settings.globalVerificationEnabled;
       final appState = await _platformBridgeRepository.getCurrentState();
       if (appState.isExecuting) {
         _logScenarioError(
@@ -766,6 +807,8 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
 
         final started = await _platformBridgeRepository.startScenarioExecution(
           scenarioId: scenario.id,
+          delayMs: delayMs,
+          globalVerificationEnabled: globalVerificationEnabled,
         );
         if (!started.isExecuting) {
           _logScenarioError(

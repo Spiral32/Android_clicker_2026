@@ -30,11 +30,21 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<SettingsWebSocketEnabledToggled>(_onWebSocketEnabledToggled);
     on<SettingsWebSocketPortSubmitted>(_onWebSocketPortSubmitted);
     on<SettingsWebSocketTokenRegenerated>(_onWebSocketTokenRegenerated);
+    on<SettingsRestoreAppToggled>(_onRestoreAppToggled);
+    on<SettingsGlobalVerificationToggled>(_onGlobalVerificationToggled);
+
+    _initNativeSettings();
   }
 
-  final AppLogger _logger;
   final SettingsRepository _repository;
   final PlatformBridgeRepository _platformBridgeRepository;
+  final AppLogger _logger;
+
+  Future<void> _initNativeSettings() async {
+    final settings = _repository.load();
+    await _platformBridgeRepository
+        .setRestoreAppAfterExecution(settings.restoreAppAfterExecution);
+  }
 
   Future<void> _onLocaleChanged(
     SettingsLocaleChanged event,
@@ -216,7 +226,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     try {
       emit(state.copyWith(isWebSocketBusy: true, clearWebSocketError: true));
-      final status = await _platformBridgeRepository.setWebSocketPort(event.port);
+      final status =
+          await _platformBridgeRepository.setWebSocketPort(event.port);
       emit(
         state.copyWith(
           webSocketStatus: status,
@@ -265,5 +276,60 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       return 'websocket_timeout';
     }
     return 'websocket_error:$error';
+  }
+
+  Future<void> _onRestoreAppToggled(
+    SettingsRestoreAppToggled event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(isRestoreAppBusy: true, clearError: true));
+      await _platformBridgeRepository
+          .setRestoreAppAfterExecution(event.enabled);
+      final settings =
+          await _repository.saveRestoreAppAfterExecution(event.enabled);
+      emit(
+        state.copyWith(
+          restoreAppAfterExecution: settings.restoreAppAfterExecution,
+          isRestoreAppBusy: false,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('settings_bloc_restore_app', error, stackTrace);
+      emit(
+        state.copyWith(
+          isRestoreAppBusy: false,
+          errorKey: 'settingsRestoreAppChangeError',
+        ),
+      );
+    }
+  }
+
+  Future<void> _onGlobalVerificationToggled(
+    SettingsGlobalVerificationToggled event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(isGlobalVerificationBusy: true, clearError: true));
+      // No native call yet, but we store it in prefs
+      final settings =
+          await _repository.saveGlobalVerificationEnabled(event.enabled);
+      emit(
+        state.copyWith(
+          globalVerificationEnabled: settings.globalVerificationEnabled,
+          isGlobalVerificationBusy: false,
+          clearError: true,
+        ),
+      );
+    } catch (error, stackTrace) {
+      _logger.logError('settings_bloc_global_verification', error, stackTrace);
+      emit(
+        state.copyWith(
+          isGlobalVerificationBusy: false,
+          errorKey: 'settingsGenericErrorPrefix',
+        ),
+      );
+    }
   }
 }

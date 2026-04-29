@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:prog_set_touch/core/di/app_scope.dart';
 import 'package:prog_set_touch/core/error/app_logger.dart';
 import 'package:prog_set_touch/core/localization/app_locale.dart';
+import 'package:prog_set_touch/core/localization/app_localizations.dart';
 import 'package:prog_set_touch/core/localization/localization_extensions.dart';
 import 'package:prog_set_touch/features/main_screen/presentation/pages/main_screen_page.dart';
 import 'package:prog_set_touch/features/scheduler/presentation/bloc/scheduler_bloc.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:prog_set_touch/core/localization/localization_extensions.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_item.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_repository.dart';
 import 'package:prog_set_touch/features/scheduler/domain/schedule.dart';
+import 'package:prog_set_touch/core/localization/localization_extensions.dart';
 
 class ScheduleForm extends StatefulWidget {
   const ScheduleForm({

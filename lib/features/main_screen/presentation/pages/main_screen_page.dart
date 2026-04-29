@@ -4,16 +4,13 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:prog_set_touch/core/error/app_logger.dart';
+import 'package:prog_set_touch/core/localization/app_localizations.dart';
 import 'package:prog_set_touch/features/main_screen/data/platform_bridge_data_source.dart';
 import 'package:prog_set_touch/features/main_screen/domain/recorder_summary.dart';
 import 'package:prog_set_touch/features/main_screen/presentation/bloc/main_screen_bloc.dart';
-import 'package:prog_set_touch/features/main_screen/presentation/widgets/main_action_card.dart';
 import 'package:prog_set_touch/features/main_screen/presentation/widgets/permission_gate_card.dart';
-import 'package:prog_set_touch/features/main_screen/presentation/widgets/platform_info_card.dart';
-import 'package:prog_set_touch/features/main_screen/presentation/widgets/recorder_summary_card.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_item.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_repository.dart';
 import 'package:prog_set_touch/features/scenario/domain/scenario_service.dart';
@@ -44,11 +41,43 @@ class MainScreenPage extends StatelessWidget {
             repository: context.read<ScenarioRepository>(),
             service: context.read<ScenarioService>(),
             platformBridgeRepository: context.read<PlatformBridgeDataSource>(),
+            settingsRepository: context.read<SettingsRepository>(),
             logger: context.read<AppLogger>(),
           )..add(const ScenarioLoadRequested()),
         ),
       ],
       child: const _MainScreenView(),
+    );
+  }
+}
+
+class _ControlIconButton extends StatelessWidget {
+  const _ControlIconButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.icon,
+    required this.color,
+  });
+
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDisabled = onPressed == null;
+    return IconButton.filledTonal(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon),
+      style: IconButton.styleFrom(
+        foregroundColor: isDisabled ? Colors.grey : color,
+        backgroundColor: (isDisabled ? Colors.grey : color).withOpacity(0.12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
     );
   }
 }
@@ -61,19 +90,17 @@ class _MainScreenView extends StatefulWidget {
 }
 
 class _MainScreenViewState extends State<_MainScreenView>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+    with WidgetsBindingObserver {
+  String? _pendingScenarioName;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -115,6 +142,16 @@ class _MainScreenViewState extends State<_MainScreenView>
               ..showSnackBar(SnackBar(content: Text(message)));
           },
         ),
+        BlocListener<MainScreenBloc, MainScreenState>(
+          listenWhen: (previous, current) =>
+              previous.recorderSummary.isRecording &&
+              !current.recorderSummary.isRecording,
+          listener: (context, state) {
+            if (_pendingScenarioName != null) {
+              _stopAndSavePendingScenario(context);
+            }
+          },
+        ),
       ],
       child: BlocBuilder<MainScreenBloc, MainScreenState>(
         builder: (context, mainState) {
@@ -125,35 +162,8 @@ class _MainScreenViewState extends State<_MainScreenView>
               return Scaffold(
                 appBar: AppBar(
                   title: Text(l10n.mainScreenTitle),
-                  bottom: TabBar(
-                    controller: _tabController,
-                    tabs: [
-                      Tab(text: l10n.mainOverviewTabTitle),
-                      Tab(text: l10n.mainScenarioSectionTitle),
-                    ],
-                  ),
                   actions: [
                     const AppLanguageMenuButton(),
-                    IconButton(
-                      tooltip: l10n.mainOpenSettings,
-                      onPressed: () {
-                        final mainScreenBloc = context.read<MainScreenBloc>();
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => MultiBlocProvider(
-                              providers: [
-                                BlocProvider.value(value: mainScreenBloc),
-                                BlocProvider.value(
-                                  value: context.read<ScenarioBloc>(),
-                                ),
-                              ],
-                              child: const SettingsPage(),
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.settings_outlined),
-                    ),
                     IconButton(
                       tooltip: l10n.schedulerTitle,
                       onPressed: () {
@@ -168,290 +178,217 @@ class _MainScreenViewState extends State<_MainScreenView>
                   ],
                 ),
                 body: SafeArea(
-                  child: TabBarView(
-                    controller: _tabController,
+                  child: Column(
                     children: [
-                      SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            Padding(
+                      // Modern Control Panel
+                      Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                        child: DecoratedBox(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: const Color(0xFFD8E2EE)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l10n.mainPlatformSectionTitle,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    _StatusChip(
-                                      label: l10n.mainStatusPermissions,
-                                      isOk: mainState.permissionStatus.areAllGranted,
-                                    ),
-                                    _StatusChip(
-                                      label: l10n.mainStatusOverlay,
-                                      isOk: mainState.overlayStatus.visible,
-                                    ),
-                                    _StatusChip(
-                                      label: l10n.mainStatusRecorder,
-                                      isOk: mainState.recorderSummary.isRecording,
-                                    ),
-                                    _StatusChip(
-                                      label: l10n.mainStatusActions,
-                                      isOk: mainState.recorderSummary.totalActions > 0,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                if (mainState.status == MainScreenStatus.loaded ||
-                                    mainState.status == MainScreenStatus.failure)
-                                  PermissionGateCard(
-                                    permissionStatus: mainState.permissionStatus,
-                                    isLoading:
-                                        mainState.isPermissionActionInProgress,
-                                    onActionPressed: (permissionType) {
-                                      context.read<MainScreenBloc>().add(
-                                            MainScreenPermissionActionPressed(
-                                                permissionType),
-                                          );
-                                    },
-                                  ),
-                                MainActionCard(
-                                  title: mainState.recorderSummary.isRecording
-                                      ? l10n.mainRecorderStopPanel
-                                      : l10n.mainRecorderOpenPanel,
-                                  icon: Icons.touch_app_outlined,
-                                  backgroundColor:
-                                      mainState.recorderSummary.isRecording
-                                          ? const Color(0xFFB42318)
-                                          : const Color(0xFF34C759),
-                                  foregroundColor: Colors.white,
-                                  enabled: actionsEnabled &&
-                                      mainState.overlayStatus.visible &&
-                                      !mainState.isRecorderActionInProgress,
-                                  onTap: () {
-                                    context.read<MainScreenBloc>().add(
-                                          mainState.recorderSummary.isRecording
-                                              ? const MainScreenRecorderStopRequested()
-                                              : const MainScreenRecorderStartRequested(
-                                                  mode:
-                                                      RecorderMode.pointCapture,
-                                                ),
-                                        );
-                                  },
-                                ),
-                                MainActionCard(
-                                  title: mainState.overlayStatus.visible
-                                      ? l10n.mainAutostartActionDisable
-                                      : l10n.mainAutostartActionEnable,
-                                  icon: Icons.power_settings_new_outlined,
-                                  backgroundColor:
-                                      mainState.overlayStatus.visible
-                                          ? Colors.orangeAccent
-                                          : theme.colorScheme.primary,
-                                  foregroundColor: Colors.white,
-                                  enabled: actionsEnabled &&
-                                      !mainState.recorderSummary.isRecording &&
-                                      !mainState.isOverlayActionInProgress,
-                                  onTap: () {
-                                    context.read<MainScreenBloc>().add(
-                                          const MainScreenOverlayToggleRequested(),
-                                        );
-                                  },
-                                ),
-                                if (mainState.recorderSummary.totalActions > 0)
-                                  RecorderSummaryCard(
-                                    recorderSummary: mainState.recorderSummary,
-                                  ),
-                                PlatformInfoCard(
-                                  platformInfo: mainState.platformInfo,
-                                ),
-                              ],
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant
+                                  .withOpacity(0.5),
                             ),
                           ),
-                        ),
-                      ),
-                            Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: const Color(0xFFD8E2EE)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final compact = constraints.maxWidth < 360;
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    Text(
-                                      l10n.mainScenarioSectionTitle,
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            onPressed: () => _showCreateDialog(context),
-                                            icon: Icon(
-                                              Icons.add,
-                                              size: compact ? 18 : 20,
-                                            ),
-                                            label: Text(
-                                              compact
-                                                  ? l10n.scenarioCreateCompact
-                                                  : l10n.scenarioCreate,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            onPressed: scenarioState.isExecuting
-                                                ? null
-                                                : () => context
-                                                    .read<ScenarioBloc>()
-                                                    .add(const ScenarioRunAllRequested()),
-                                            icon: Icon(
-                                              Icons.play_circle_outline,
-                                              size: compact ? 18 : 20,
-                                            ),
-                                            label: Text(
-                                              compact
-                                                  ? l10n.scenarioRunAllCompact
-                                                  : l10n.scenarioRunAll,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-
-                            const SizedBox(height: 24),
-                          ],
-                        ),
-                      ),
-                      SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 8),
-                            _ScenarioTableHeader(
-                              allSelected: scenarioState.isAllQuickLaunchSelected,
-                              partialSelected:
-                                  scenarioState.isAnyQuickLaunchSelected &&
-                                      !scenarioState.isAllQuickLaunchSelected,
-                              onSelectAll: () => context.read<ScenarioBloc>().add(
-                                    const ScenarioSelectAllQuickLaunchToggled(),
-                                  ),
-                            ),
-                            const Divider(height: 1),
-                            if (scenarioState.isExecuting)
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                                child: Column(
-                                  children: [
-                                    LinearProgressIndicator(
-                                      value: scenarioState.totalInBatch > 0
-                                          ? scenarioState.completedInBatch /
-                                              scenarioState.totalInBatch
-                                          : null,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    if (scenarioState.executionSummary.isExecuting)
-                                      Text(
-                                        l10n.executionProgress(
-                                          scenarioState
-                                              .executionSummary.completedActions,
-                                          scenarioState.executionSummary.totalActions,
-                                        ),
-                                        style: theme.textTheme.bodySmall,
-                                      ),
-                                  ],
-                                ),
+                          child: Row(
+                            children: [
+                              _ControlIconButton(
+                                tooltip: l10n.scenarioCreate,
+                                onPressed: () {
+                                  if (_pendingScenarioName != null) {
+                                    _stopAndSavePendingScenario(context);
+                                    return;
+                                  }
+                                  _showCreateDialog(context);
+                                },
+                                icon: _pendingScenarioName != null
+                                    ? Icons.stop_circle
+                                    : Icons.add_rounded,
+                                color: _pendingScenarioName != null
+                                    ? Colors.orange
+                                    : theme.colorScheme.primary,
                               ),
-                            scenarioState.isLoading
-                                ? const Padding(
-                                    padding: EdgeInsets.all(24),
-                                    child: Center(
-                                        child: CircularProgressIndicator()),
-                                  )
-                                : ReorderableListView.builder(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: scenarioState.scenarios.length,
-                                    onReorder: (oldIndex, newIndex) {
-                                      var adjusted = newIndex;
-                                      if (newIndex > oldIndex) {
-                                        adjusted = newIndex - 1;
+                              const SizedBox(width: 8),
+                              _ControlIconButton(
+                                tooltip: l10n.scenarioRunAll,
+                                onPressed: scenarioState.isExecuting
+                                    ? null
+                                    : () => context
+                                        .read<ScenarioBloc>()
+                                        .add(const ScenarioRunAllRequested()),
+                                icon: Icons.play_arrow_rounded,
+                                color: Colors.green.shade600,
+                              ),
+                              const SizedBox(width: 8),
+                              _ControlIconButton(
+                                tooltip: mainState.overlayStatus.visible
+                                    ? l10n.mainAutostartActionDisable
+                                    : l10n.mainAutostartActionEnable,
+                                onPressed: (mainState
+                                            .permissionStatus.areAllGranted &&
+                                        !mainState
+                                            .recorderSummary.isRecording &&
+                                        !mainState.isOverlayActionInProgress)
+                                    ? () {
+                                        context.read<MainScreenBloc>().add(
+                                              const MainScreenOverlayToggleRequested(),
+                                            );
                                       }
-                                      context.read<ScenarioBloc>().add(
-                                            ScenarioReordered(
-                                                oldIndex: oldIndex,
-                                                newIndex: adjusted),
-                                          );
-                                    },
-                                    itemBuilder: (context, index) {
-                                      final item =
-                                          scenarioState.scenarios[index];
-                                      return _ScenarioTableRow(
-                                        key: ValueKey(item.id),
-                                        index: index,
-                                        scenario: item,
-                                        isActive:
-                                            scenarioState.activeScenarioId ==
-                                                item.id,
-                                        onQuickLaunchToggled: () => context
-                                            .read<ScenarioBloc>()
-                                            .add(ScenarioQuickLaunchToggled(
-                                                item.id)),
-                                        onEnabledToggled: () => context
-                                            .read<ScenarioBloc>()
-                                            .add(ScenarioEnabledToggled(item.id)),
-                                        onRunSingle: scenarioState.isExecuting
-                                            ? null
-                                            : () => context
-                                                .read<ScenarioBloc>()
-                                                .add(ScenarioSingleRunRequested(
-                                                    item.id)),
-                                        onLongPress: () =>
-                                            _showScenarioActions(context, item),
-                                      );
-                                    },
+                                    : null,
+                                icon: mainState.overlayStatus.visible
+                                    ? Icons.visibility_off_rounded
+                                    : Icons.visibility_rounded,
+                                color: mainState.overlayStatus.visible
+                                    ? theme.colorScheme.primary
+                                    : Colors.blueGrey,
+                              ),
+                              const Spacer(),
+                              _ControlIconButton(
+                                tooltip: l10n.mainOpenSettings,
+                                onPressed: () {
+                                  final mainScreenBloc =
+                                      context.read<MainScreenBloc>();
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => MultiBlocProvider(
+                                        providers: [
+                                          BlocProvider.value(
+                                              value: mainScreenBloc),
+                                          BlocProvider.value(
+                                            value: context.read<ScenarioBloc>(),
+                                          ),
+                                        ],
+                                        child: const SettingsPage(),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: Icons.settings_outlined,
+                                color: Colors.blueGrey.shade700,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (!mainState.permissionStatus.areAllGranted)
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: PermissionGateCard(
+                            permissionStatus: mainState.permissionStatus,
+                            isLoading: mainState.isPermissionActionInProgress,
+                            onActionPressed: (permissionType) {
+                              context.read<MainScreenBloc>().add(
+                                    MainScreenPermissionActionPressed(
+                                        permissionType),
+                                  );
+                            },
+                          ),
+                        ),
+
+                      // Scenario List Section
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              _ScenarioTableHeader(
+                                allSelected:
+                                    scenarioState.isAllQuickLaunchSelected,
+                                partialSelected:
+                                    scenarioState.isAnyQuickLaunchSelected &&
+                                        !scenarioState.isAllQuickLaunchSelected,
+                                onSelectAll: () =>
+                                    context.read<ScenarioBloc>().add(
+                                          const ScenarioSelectAllQuickLaunchToggled(),
+                                        ),
+                              ),
+                              const Divider(height: 1),
+                              if (scenarioState.isExecuting)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                                  child: Column(
+                                    children: [
+                                      LinearProgressIndicator(
+                                        value: scenarioState.totalInBatch > 0
+                                            ? scenarioState.completedInBatch /
+                                                scenarioState.totalInBatch
+                                            : null,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      if (scenarioState
+                                          .executionSummary.isExecuting)
+                                        Text(
+                                          l10n.executionProgress(
+                                            scenarioState.executionSummary
+                                                .completedActions,
+                                            scenarioState
+                                                .executionSummary.totalActions,
+                                          ),
+                                          style: theme.textTheme.bodySmall,
+                                        ),
+                                    ],
                                   ),
-                            const SizedBox(height: 24),
-                          ],
+                                ),
+                              scenarioState.isLoading
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(24),
+                                      child: Center(
+                                          child: CircularProgressIndicator()),
+                                    )
+                                  : ReorderableListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: scenarioState.scenarios.length,
+                                      onReorder: (oldIndex, newIndex) {
+                                        var adjusted = newIndex;
+                                        if (newIndex > oldIndex) {
+                                          adjusted = newIndex - 1;
+                                        }
+                                        context.read<ScenarioBloc>().add(
+                                              ScenarioReordered(
+                                                  oldIndex: oldIndex,
+                                                  newIndex: adjusted),
+                                            );
+                                      },
+                                      itemBuilder: (context, index) {
+                                        final item =
+                                            scenarioState.scenarios[index];
+                                        return _ScenarioTableRow(
+                                          key: ValueKey(item.id),
+                                          index: index,
+                                          scenario: item,
+                                          isActive:
+                                              scenarioState.activeScenarioId ==
+                                                  item.id,
+                                          onQuickLaunchToggled: () => context
+                                              .read<ScenarioBloc>()
+                                              .add(ScenarioQuickLaunchToggled(
+                                                  item.id)),
+                                          onEnabledToggled: () => context
+                                              .read<ScenarioBloc>()
+                                              .add(ScenarioEnabledToggled(
+                                                  item.id)),
+                                          onRunSingle: scenarioState.isExecuting
+                                              ? null
+                                              : () => context
+                                                  .read<ScenarioBloc>()
+                                                  .add(
+                                                      ScenarioSingleRunRequested(
+                                                          item.id)),
+                                          onLongPress: () =>
+                                              _showScenarioActions(
+                                                  context, item),
+                                        );
+                                      },
+                                    ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -580,15 +517,7 @@ class _MainScreenViewState extends State<_MainScreenView>
           type: FileType.custom,
           allowedExtensions: const ['json'],
         );
-        if (path == null) {
-          _logger(context).logInfo(
-            'main_screen_page',
-            'Scenario export cancelled by user',
-            payload: {'action': 'scenario_export_cancel'},
-          );
-          return;
-        }
-        await File(path).writeAsString(payload);
+        await File(path!).writeAsString(payload);
       }
 
       _logger(context).logInfo(
@@ -673,6 +602,8 @@ class _MainScreenViewState extends State<_MainScreenView>
 
   Future<void> _showCreateDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
+    final mainState = context.read<MainScreenBloc>().state;
+    final scenarioState = context.read<ScenarioBloc>().state;
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
@@ -705,25 +636,93 @@ class _MainScreenViewState extends State<_MainScreenView>
       );
       return;
     }
-    if (context.mounted) {
-      final mainState = context.read<MainScreenBloc>().state;
-      _logger(context).logInfo(
-        'main_screen_page',
-        'Scenario create requested',
-        payload: {
-          'action': 'scenario_create_requested',
-          'name': name.trim(),
-          'stepCount': mainState.recorderSummary.totalActions,
-        },
-      );
+
+    final trimmedName = name.trim();
+
+    if (!context.mounted) return;
+    if (_pendingScenarioName != null ||
+        mainState.recorderSummary.isRecording ||
+        scenarioState.isExecuting) {
+      return;
+    }
+
+    if (!mainState.overlayStatus.visible) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(l10n.errorRecorderNeedsOverlay)),
+        );
+      return;
+    }
+
+    setState(() => _pendingScenarioName = trimmedName);
+    _logger(context).logInfo(
+      'main_screen_page',
+      'Scenario recording flow started',
+      payload: {
+        'action': 'scenario_recording_flow_started',
+        'name': trimmedName
+      },
+    );
+
+    try {
+      await context.read<PlatformBridgeDataSource>().startRecorder(
+            mode: RecorderMode.pointCapture,
+          );
+      if (!context.mounted) return;
+      context.read<MainScreenBloc>().add(const MainScreenRequested());
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(l10n.mainRecorderTip)),
+        );
+    } catch (error) {
+      if (!context.mounted) return;
+      setState(() => _pendingScenarioName = null);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('${l10n.settingsGenericErrorPrefix}: $error')),
+        );
+    }
+  }
+
+  Future<void> _stopAndSavePendingScenario(BuildContext context) async {
+    final pendingName = _pendingScenarioName;
+    if (pendingName == null) return;
+    final l10n = AppLocalizations.of(context)!;
+
+    try {
+      final summary =
+          await context.read<PlatformBridgeDataSource>().stopRecorder();
+      if (!context.mounted) return;
+
+      if (summary.totalActions <= 0) {
+        setState(() => _pendingScenarioName = null);
+        context.read<MainScreenBloc>().add(const MainScreenRequested());
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.scenarioEmptyNotAllowed)),
+          );
+        return;
+      }
+
       context.read<ScenarioBloc>().add(
             ScenarioCreateRequested(
-              name: name,
-              stepCount: mainState.recorderSummary.totalActions,
+              name: pendingName,
+              stepCount: summary.totalActions,
             ),
           );
-      // Optionally reset recorder summary in MainScreenBloc after saving to scenario
+      setState(() => _pendingScenarioName = null);
       context.read<MainScreenBloc>().add(const MainScreenRequested());
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('${l10n.settingsGenericErrorPrefix}: $error')),
+        );
     }
   }
 
@@ -870,36 +869,75 @@ class _ScenarioTableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Colors.grey[100],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade200),
+        ),
+      ),
       child: Row(
         children: [
           SizedBox(
             width: 32,
             child: Checkbox(
               tristate: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
               value: allSelected ? true : (partialSelected ? null : false),
               onChanged: (_) => onSelectAll(),
             ),
           ),
           const SizedBox(width: 8),
-          const SizedBox(width: 32, child: Icon(Icons.flash_on, size: 20)),
           const SizedBox(
-              width: 48,
-              child: Text('ON',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.bold))),
+            width: 32,
+            child: Icon(Icons.flash_on, size: 18, color: Colors.amber),
+          ),
+          const SizedBox(
+            width: 48,
+            child: Text(
+              'ON',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                color: Color(0xFF475569),
+              ),
+            ),
+          ),
           const SizedBox(width: 8),
           Expanded(
-              child: Text(l10n.scenarioColumnName,
-                  style: const TextStyle(fontWeight: FontWeight.bold))),
+            child: Text(
+              l10n.scenarioColumnName.toUpperCase(),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                letterSpacing: 0.5,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
           SizedBox(
-              width: 50,
-              child: Text(l10n.scenarioColumnSteps,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold))),
-          const SizedBox(width: 40, child: Icon(Icons.play_arrow, size: 20)),
-          const SizedBox(width: 32, child: Icon(Icons.drag_handle, size: 20)),
+            width: 50,
+            child: Text(
+              l10n.scenarioColumnSteps.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          const SizedBox(
+            width: 40,
+            child: Icon(Icons.play_arrow_rounded, size: 20, color: Colors.grey),
+          ),
+          const SizedBox(
+            width: 32,
+            child: Icon(Icons.swap_vert_rounded, size: 20, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -1030,7 +1068,7 @@ class _ScenarioTableRow extends StatelessWidget {
               width: 32,
               child: ReorderableDragStartListener(
                 index: index,
-                child: const Icon(Icons.drag_handle, size: 20),
+                child: const Icon(Icons.swap_vert, size: 20),
               ),
             ),
           ],

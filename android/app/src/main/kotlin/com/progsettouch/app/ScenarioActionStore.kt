@@ -37,16 +37,18 @@ class ScenarioActionStore(context: Context) {
         val jsonArray = JSONArray()
         actions.forEach { action ->
             jsonArray.put(
-                JSONObject().apply {
-                    put("type", action.type)
-                    put("pointerCount", action.pointerCount)
-                    put("startX", action.startX)
-                    put("startY", action.startY)
-                    put("endX", action.endX)
-                    put("endY", action.endY)
-                    put("durationMs", action.durationMs)
-                    put("stepDelayMs", action.stepDelayMs)
-                },
+                    JSONObject().apply {
+                        put("type", action.type)
+                        put("pointerCount", action.pointerCount)
+                        put("startX", action.startX)
+                        put("startY", action.startY)
+                        put("endX", action.endX)
+                        put("endY", action.endY)
+                        put("durationMs", action.durationMs)
+                        put("stepDelayMs", action.stepDelayMs)
+                        put("verificationEnabled", action.verificationEnabled)
+                        put("thresholdPercent", action.thresholdPercent)
+                    },
             )
         }
         return jsonArray
@@ -60,16 +62,19 @@ class ScenarioActionStore(context: Context) {
                 for (index in 0 until parsed.length()) {
                     val obj = parsed.getJSONObject(index)
                     add(
-                        RecordedAction(
-                            type = obj.optString("type"),
-                            pointerCount = obj.optInt("pointerCount", 1),
-                            startX = obj.optDouble("startX", 0.0),
-                            startY = obj.optDouble("startY", 0.0),
-                            endX = obj.optDouble("endX", 0.0),
-                            endY = obj.optDouble("endY", 0.0),
-                            durationMs = obj.optLong("durationMs", 50L),
-                            stepDelayMs = obj.optLong("stepDelayMs", 1000L),
-                        ),
+                            RecordedAction(
+                                    type = obj.optString("type"),
+                                    pointerCount = obj.optInt("pointerCount", 1),
+                                    startX = obj.optDouble("startX", 0.0),
+                                    startY = obj.optDouble("startY", 0.0),
+                                    endX = obj.optDouble("endX", 0.0),
+                                    endY = obj.optDouble("endY", 0.0),
+                                    durationMs = obj.optLong("durationMs", 50L),
+                                    stepDelayMs = obj.optLong("stepDelayMs", 1000L),
+                                    verificationEnabled =
+                                            obj.optBoolean("verificationEnabled", false),
+                                    thresholdPercent = obj.optDouble("thresholdPercent", 1.0),
+                            ),
                     )
                 }
             }
@@ -79,13 +84,14 @@ class ScenarioActionStore(context: Context) {
     }
 
     fun getStoredScenarioIds(): List<String> {
-        return prefs.all.keys
-            .asSequence()
-            .filter { it.startsWith(scenarioKeyPrefix) }
-            .map { it.removePrefix(scenarioKeyPrefix) }
-            .filter { it.isNotBlank() }
-            .sorted()
-            .toList()
+        return prefs.all
+                .keys
+                .asSequence()
+                .filter { it.startsWith(scenarioKeyPrefix) }
+                .map { it.removePrefix(scenarioKeyPrefix) }
+                .filter { it.isNotBlank() }
+                .sorted()
+                .toList()
     }
 
     private fun mapToRecordedAction(raw: Map<String, Any?>): RecordedAction? {
@@ -95,14 +101,16 @@ class ScenarioActionStore(context: Context) {
         }
 
         return RecordedAction(
-            type = type,
-            pointerCount = raw["pointerCount"].toIntValue(default = 1),
-            startX = raw["startX"].toDoubleValue(),
-            startY = raw["startY"].toDoubleValue(),
-            endX = raw["endX"].toDoubleValue(),
-            endY = raw["endY"].toDoubleValue(),
-            durationMs = raw["durationMs"].toLongValue(default = 50L),
-            stepDelayMs = raw["stepDelayMs"].toLongValue(default = 1000L),
+                type = type,
+                pointerCount = raw["pointerCount"].toIntValue(default = 1),
+                startX = raw["startX"].toDoubleValue(),
+                startY = raw["startY"].toDoubleValue(),
+                endX = raw["endX"].toDoubleValue(),
+                endY = raw["endY"].toDoubleValue(),
+                durationMs = raw["durationMs"].toLongValue(default = 50L),
+                stepDelayMs = raw["stepDelayMs"].toLongValue(default = 1000L),
+                verificationEnabled = raw["verificationEnabled"].toBoolValue(default = false),
+                thresholdPercent = raw["thresholdPercent"].toDoubleValue(default = 1.0),
         )
     }
 
@@ -145,6 +153,16 @@ private fun Any?.toDoubleValue(default: Double = 0.0): Double {
         is Long -> this.toDouble()
         is Number -> this.toDouble()
         is String -> this.toDoubleOrNull() ?: default
+        else -> default
+    }
+}
+
+private fun Any?.toBoolValue(default: Boolean): Boolean {
+    return when (this) {
+        is Boolean -> this
+        is Int -> this != 0
+        is Long -> this != 0L
+        is String -> this.lowercase() == "true"
         else -> default
     }
 }
