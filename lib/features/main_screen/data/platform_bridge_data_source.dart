@@ -160,12 +160,19 @@ class PlatformBridgeDataSource implements PlatformBridgeRepository {
   }
 
   @override
-  Future<RecorderSummary> startRecorder(
-      {RecorderMode mode = RecorderMode.continuous}) async {
+  Future<RecorderSummary> startRecorder({
+    RecorderMode mode = RecorderMode.continuous,
+    bool globalVerificationEnabled = true,
+  }) async {
     final modeString =
         mode == RecorderMode.pointCapture ? 'POINT_CAPTURE' : 'CONTINUOUS';
-    final result = await _channel
-        .invokeMethod<dynamic>('startRecorder', {'mode': modeString});
+    final result = await _channel.invokeMethod<dynamic>(
+      'startRecorder',
+      {
+        'mode': modeString,
+        'globalVerificationEnabled': globalVerificationEnabled,
+      },
+    );
     return _mapRecorderSummary(PlatformResultParser.parseMap(result));
   }
 

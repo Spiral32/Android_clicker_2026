@@ -29,6 +29,7 @@ class ExecutionEngine(
         private val context: Context,
         private val accessibilityService: AccessibilityService,
         private val screenshotVerifier: ScreenshotVerifier,
+        private val screenshotStorageManager: ScreenshotStorageManager,
 ) {
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val logger = LogManager.getInstance(context)
@@ -53,6 +54,9 @@ class ExecutionEngine(
     private val defaultDelayBetweenActionsMs = 1000L
     @Volatile private var currentActionIndex = 0
     private var actions: List<RecordedAction> = emptyList()
+    @Volatile private var completedActionsCount = 0
+    @Volatile private var failedActionsCount = 0
+    @Volatile private var executionError: String? = null
 
     /** Set callback for execution completion. */
     fun setOnExecutionComplete(listener: (ExecutionSummary) -> Unit) {
@@ -97,6 +101,9 @@ class ExecutionEngine(
 
         this.actions = actions
         this.currentActionIndex = 0
+        this.completedActionsCount = 0
+        this.failedActionsCount = 0
+        this.executionError = null
         this.shouldStop.set(false)
         this.isPaused.set(false)
         this.isExecuting.set(true)
@@ -135,6 +142,7 @@ class ExecutionEngine(
 
         val summary = buildSummary()
         isExecuting.set(false)
+        executionError = "stopped_by_user"
 
         logger.i(
                 "ExecutionEngine",
@@ -214,9 +222,6 @@ class ExecutionEngine(
     }
 
     private fun executeActions(config: ExecutionConfig) {
-        var completedCount = 0
-        var failedCount = 0
-
         for (i in actions.indices) {
             if (shouldStop.get() || Thread.interrupted()) {
                 logger.d(
@@ -241,55 +246,142 @@ class ExecutionEngine(
 
             currentActionIndex = i
             val action = actions[i]
-
+            var templateBitmap: android.graphics.Bitmap? = null
             try {
+                // Load template if verification is enabled and template exists
+                if (config.globalVerificationEnabled &&
+                                action.verificationEnabled &&
+                                !action.resultImageFileName.isNullOrEmpty()
+                ) {
+                    templateBitmap =
+                            screenshotStorageManager.loadScreenshot(action.resultImageFileName!!)
+                    if (templateBitmap == null) {
+                        logger.w(
+                                "ExecutionEngine",
+                                "Failed to load template: ${action.resultImageFileName}"
+                        )
+                    }
+                }
+
                 // Show visual feedback on main thread
                 if (config.enableVisualFeedback) {
                     mainHandler.post { showExecutionFeedback(action) }
                 }
 
-                // Execute the action with its own protection
-                val screenshotBefore = if (config.globalVerificationEnabled && action.verificationEnabled) {
-                    screenshotVerifier.captureScreenshot()
-                } else {
-                    null
-                }
-
+                // Execute the action
                 val success = executeAction(action)
+                var isActionVerified = true
 
                 if (success) {
-                    var verified = true
-                    if (screenshotBefore != null) {
-                        // Wait for UI to settle after action
-                        Thread.sleep(500)
-                        val screenshotAfter = screenshotVerifier.captureScreenshot()
-                        if (screenshotAfter != null) {
-                            verified = screenshotVerifier.verifyAction(
-                                screenshotBefore,
-                                screenshotAfter,
-                                VerifierConfig(thresholdPercent = action.thresholdPercent.toFloat())
-                            )
-                            screenshotAfter.recycle()
+                    if (templateBitmap != null) {
+                        val timeoutMs = action.timeoutMs.coerceAtLeast(1000L)
+                        val pollIntervalMs = 1000L
+                        val maxAttempts = (timeoutMs / pollIntervalMs).toInt().coerceAtLeast(1)
+                        var attempt = 0
+                        isActionVerified = false
+
+                        logger.d(
+                                "ExecutionEngine",
+                                "Starting template verification for action $i. Timeout: ${timeoutMs}ms"
+                        )
+
+                        while (attempt < maxAttempts) {
+                            if (shouldStop.get() || Thread.interrupted()) break
+
+                            val currentScreenshot = screenshotVerifier.captureScreenshot()
+                            if (currentScreenshot != null) {
+                                // We use HISTOGRAM for more robust comparison with template
+                                val similarity =
+                                        screenshotVerifier.compareScreenshots(
+                                                templateBitmap,
+                                                currentScreenshot,
+                                                ComparisonMethod.HISTOGRAM
+                                        )
+                                val similarityPercent = similarity * 100f
+
+                                logger.i(
+                                        "ExecutionEngine",
+                                        "Attempt $attempt: similarity=$similarityPercent%, threshold=${action.thresholdPercent}%"
+                                )
+
+                                if (similarityPercent >= action.thresholdPercent) {
+                                    isActionVerified = true
+                                    currentScreenshot.recycle()
+                                    break
+                                }
+                                currentScreenshot.recycle()
+                            } else if (screenshotVerifier.wasLastCaptureFlagSecure()) {
+                                logger.i(
+                                        "ExecutionEngine",
+                                        "Attempt $attempt: capture returned FLAG_SECURE, treating verification as success"
+                                )
+                                isActionVerified = true
+                                break
+                            }
+
+                            attempt++
+                            if (attempt < maxAttempts) {
+                                try {
+                                    Thread.sleep(pollIntervalMs)
+                                } catch (e: InterruptedException) {
+                                    break
+                                }
+                            }
                         }
-                        screenshotBefore.recycle()
+                    } else if (config.globalVerificationEnabled && action.verificationEnabled) {
+                        logger.w(
+                                "ExecutionEngine",
+                                "Action $i: Verification enabled but NO TEMPLATE FOUND. Skipping verification (Success by default)."
+                        )
+                        isActionVerified = true
                     }
 
-                    if (verified) {
-                        completedCount++
-                        logger.i("ExecutionEngine", "Action $i (${action.type}) completed and verified")
+                    if (isActionVerified) {
+                        completedActionsCount++
+                        logger.i(
+                                "ExecutionEngine",
+                                "Action $i (${action.type}) completed and verified"
+                        )
                     } else {
-                        failedCount++
-                        logger.w("ExecutionEngine", "Action $i (${action.type}) completed but verification failed")
+                        failedActionsCount++
+                        logger.w(
+                                "ExecutionEngine",
+                                "Action $i (${action.type}) completed but verification failed (timeout)"
+                        )
                     }
                 } else {
-                    failedCount++
-                    logger.w("ExecutionEngine", "Action $i (${action.type}) failed")
+                    isActionVerified = false
+                    failedActionsCount++
+                    logger.w("ExecutionEngine", "Action $i (${action.type}) failed to dispatch")
                 }
 
                 // Notify individual action status
-                val finalSuccess = success && (screenshotBefore == null || (screenshotBefore != null && completedCount > i))
-                mainHandler.post {
-                    onActionExecuted?.invoke(i, action, finalSuccess)
+                val finalSuccess = success && isActionVerified
+                mainHandler.post { onActionExecuted?.invoke(i, action, finalSuccess) }
+
+                if (!finalSuccess) {
+                    if (action.continueOnFailure) {
+                        // Product rule: stop current scenario and continue with the next scenario
+                        // in queue.
+                        executionError = "verification_failed_continue_next_scenario"
+                        logger.w(
+                                "ExecutionEngine",
+                                "Action failed, continueOnFailure=true. Stopping current scenario and returning control to batch runner."
+                        )
+                        break
+                    } else {
+                        executionError = "verification_failed_stop_batch"
+                        if (config.stopOnError) {
+                            shouldStop.set(true)
+                            logger.w("ExecutionEngine", "Action failed, stopOnError=true. Halting.")
+                        } else {
+                            logger.w(
+                                    "ExecutionEngine",
+                                    "Action failed, stopping current scenario and batch."
+                            )
+                        }
+                        break
+                    }
                 }
 
                 // Delay between actions (unless last action)
@@ -306,45 +398,75 @@ class ExecutionEngine(
                 logger.w("ExecutionEngine", "Execution thread interrupted during action $i")
                 break
             } catch (e: Exception) {
-                failedCount++
+                failedActionsCount++
                 logger.e("ExecutionEngine", "Unexpected error during action $i", e)
-                if (config.stopOnError) break
+                if (executionError == null) {
+                    executionError = "execution_unexpected_error"
+                }
+                if (config.stopOnError && !action.continueOnFailure) break
+            } finally {
+                templateBitmap?.recycle()
             }
         }
     }
 
-    /**
-     * Test a single action.
-     * Useful for verifying coordinates or verification logic.
-     */
+    /** Test a single action. Useful for verifying coordinates or verification logic. */
     fun testAction(action: RecordedAction): Boolean {
         logger.i("ExecutionEngine", "testAction() called for ${action.type}")
-        
-        val screenshotBefore = if (action.verificationEnabled) {
-            screenshotVerifier.captureScreenshot()
-        } else {
-            null
-        }
 
-        val success = executeAction(action)
-
-        var verified = true
-        if (success && screenshotBefore != null) {
-            // Wait for UI to settle
-            Thread.sleep(500)
-            val screenshotAfter = screenshotVerifier.captureScreenshot()
-            if (screenshotAfter != null) {
-                verified = screenshotVerifier.verifyAction(
-                    screenshotBefore,
-                    screenshotAfter,
-                    VerifierConfig(thresholdPercent = action.thresholdPercent.toFloat())
-                )
-                screenshotAfter.recycle()
+        var templateBitmap: android.graphics.Bitmap? = null
+        try {
+            if (action.verificationEnabled && !action.resultImageFileName.isNullOrEmpty()) {
+                templateBitmap =
+                        screenshotStorageManager.loadScreenshot(action.resultImageFileName!!)
             }
-            screenshotBefore.recycle()
-        }
 
-        return success && verified
+            val success = executeAction(action)
+
+            var verified = true
+            if (success && templateBitmap != null) {
+                val timeoutMs = action.timeoutMs.coerceAtLeast(1000L)
+                val pollIntervalMs = 1000L
+                val maxAttempts = (timeoutMs / pollIntervalMs).toInt().coerceAtLeast(1)
+                var attempt = 0
+                verified = false
+
+                while (attempt < maxAttempts) {
+                    val screenshotAfter = screenshotVerifier.captureScreenshot()
+                    if (screenshotAfter != null) {
+                        val similarity =
+                                screenshotVerifier.compareScreenshots(
+                                        templateBitmap,
+                                        screenshotAfter,
+                                        ComparisonMethod.HISTOGRAM
+                                )
+                        verified = (similarity * 100f) >= action.thresholdPercent
+                        screenshotAfter.recycle()
+                    } else if (screenshotVerifier.wasLastCaptureFlagSecure()) {
+                        logger.i(
+                                "ExecutionEngine",
+                                "Test step attempt $attempt: FLAG_SECURE detected, treating verification as success"
+                        )
+                        verified = true
+                    }
+
+                    if (verified) break
+
+                    attempt++
+                    if (attempt < maxAttempts) {
+                        try {
+                            Thread.sleep(pollIntervalMs)
+                        } catch (e: InterruptedException) {
+                            break
+                        }
+                    }
+                }
+            }
+
+            return success && verified
+        } finally {
+            templateBitmap?.recycle()
+        }
     }
 
     private fun executeAction(action: RecordedAction): Boolean {
@@ -491,14 +613,6 @@ class ExecutionEngine(
         return result.get()
     }
 
-    private fun startWatchdog() {
-        // No-op: replaced by global watchdog
-    }
-
-    private fun stopWatchdog() {
-        // No-op: replaced by global watchdog
-    }
-
     /** Show visual feedback for executed action. Uses different colors than recording feedback. */
     private fun showExecutionFeedback(action: RecordedAction) {
         val color =
@@ -587,18 +701,17 @@ class ExecutionEngine(
 
     fun buildSummary(): ExecutionSummary {
         val total = actions.size
-        // During execution, currentActionIndex is the one we are WORKING ON.
-        // After execution, it should be total or -1.
-        val completed = if (isExecuting.get()) currentActionIndex else total
+        val completed = completedActionsCount.coerceAtLeast(0).coerceAtMost(total)
+        val failed = failedActionsCount.coerceAtLeast(0).coerceAtMost(total)
 
         return ExecutionSummary(
                 isExecuting = isExecuting.get(),
                 isPaused = isPaused.get(),
                 totalActions = total,
-                completedActions = completed.coerceAtLeast(0).coerceAtMost(total),
-                failedActions = 0, // In V1 we don't track persistent failure count in summary yet
+                completedActions = completed,
+                failedActions = failed,
                 currentActionIndex = if (isExecuting.get()) currentActionIndex else -1,
-                error = if (shouldStop.get() && isExecuting.get()) "Stopped" else null,
+                error = executionError,
         )
     }
 }

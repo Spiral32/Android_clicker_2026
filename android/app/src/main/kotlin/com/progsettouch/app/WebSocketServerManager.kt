@@ -23,7 +23,8 @@ class WebSocketServerManager private constructor(
     private val appContext = context.applicationContext
     private val logger = LogManager.getInstance(appContext)
     private val prefs = appContext.getSharedPreferences(flutterPrefsName, Context.MODE_PRIVATE)
-    private val scenarioActionStore = ScenarioActionStore(appContext)
+    private val screenshotStorageManager = ScreenshotStorageManager(appContext)
+    private val scenarioActionStore = ScenarioActionStore(appContext, screenshotStorageManager)
     private val running = AtomicBoolean(false)
     private val scenarioBatchRunning = AtomicBoolean(false)
     private val stopBatchRequested = AtomicBoolean(false)

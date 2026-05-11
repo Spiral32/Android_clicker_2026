@@ -1,11 +1,12 @@
-[2026-04-27]
+[2026-05-10]
 Task:
-Officially close Stage 10 and move project memory to Stage 11 after Scenario Storage validation, including working real-device JSON export/import flow.
+Officially close Stage 12 and move project memory to Stage 13 - Action → Result Logic.
 
 Program essence:
 - Android automation engine with Flutter UI and Kotlin platform layer
 - Records touch gestures and executes action scenarios
 - Works through Accessibility, overlay windows, and MediaProjection-dependent flows
+- Visual verification: "Action → Result" logic with template screenshots
 
 Stage policy:
 - Only one stage can be active at a time
@@ -14,7 +15,7 @@ Stage policy:
 - Official status is defined by project memory docs
 
 Official current stage:
-- Stage 11 - Settings Persistence and Advanced Configuration
+- Stage 13 - Action → Result Logic
 
 Completed stages:
 - Stage 1: Application shell
@@ -27,39 +28,44 @@ Completed stages:
 - Stage 8: Autostart
 - Stage 9: WebSocket Server
 - Stage 10: Scenario Storage
+- Stage 11: Settings Persistence and Advanced Configuration
+- Stage 12: Screenshot Verifier Integration (Visual Verification)
 
 Active stage details:
-- Stage 11: Settings Persistence and Advanced Configuration
+- Stage 13: Action → Result Logic
   - Scope:
-    - persist user-facing settings across restart
-    - harden advanced configuration flows and storage contracts
-    - consolidate Flutter/native settings integration paths
-    - keep settings UI localized and stable for production use
+    - Document and finalize the "Action → Result" visual verification flow
+    - Confirm all components (recorder, execution, storage, UI) work together
+    - Verify error handling (timeout, FLAG_SECURE, continueOnFailure)
   - Entry criteria:
-    - Stage 10 completed
+    - Stage 12 completed
   - Exit criteria:
-    - settings data is persistently stored and restored after app restart
-    - advanced configuration contract is documented
-    - UI provides stable settings management flow
-    - integration with native settings/runtime path is validated
-    - stage results are documented in memory docs/changelog
+    - "Action → Result" flow is documented
+    - All tests pass
+    - Project memory is updated to Stage 13
 
-Stage 11 implementation progress:
-- [x] Locale persistence added through shared settings repository
-- [x] Execution delay persistence added through shared settings repository
-- [x] Native logging toggles now persist across restart
-- [x] Legacy diagnostics settings flow collapsed into the main Settings page
-- [x] Recorder clear action now uses typed platform bridge contract instead of dynamic access
-- [x] Autostart and logging toggles are now driven through the shared SettingsBloc
-- [x] Removed unused WebSocket host/port fields from Flutter settings model to simplify the Stage 11 contract
-- [x] WebSocket advanced settings flow is now driven through SettingsBloc instead of local widget state
-- [x] WebSocket advanced settings contract is now type-safe in Flutter (`WebSocketStatus` model instead of raw maps)
-- [x] Settings storage contract finalized
-- [x] Persistent settings backend audited and hardened
-- [x] Shared Flutter settings repository now normalizes corrupted/out-of-range persisted execution delay values
-- [x] Advanced configuration flows prioritized
-- [x] Exact alarm settings flow restored in the main Settings page and grouped with scheduler/runtime controls
-- [x] Real-device restart persistence verification recorded in AI memory
+Stage 13 implementation progress:
+- [x] "Action → Result" logic documented in `ai/STAGE13_ACTION_RESULT_LOGIC.md`
+- [x] RecorderManager has "Screenshot" button for Step-by-step capture
+- [x] ExecutionEngine has verification loop (1s poll interval)
+- [x] ScreenshotVerifier with histogram comparison and FLAG_SECURE handling
+- [x] ScenarioStepEditor with verification settings UI
+- [x] All 11 tests pass (including fixed ScenarioService test)
+
+Stage 13 completion note (2026-05-10):
+- [x] Stage 12 files removed
+- [x] Stage 13 plan created
+- [x] All tests pass
+- [x] Stage 13 officially closed in AI memory
+
+Stage 12 completion note (2026-05-10):
+- [x] Global visual verification toggle implemented
+- [x] Per-step verification config (verificationEnabled, thresholdPercent, timeoutMs)
+- [x] Recorder "Screenshot" button in Step-by-step capture
+- [x] Execution verification loop (1s poll, 1s-5min timeout)
+- [x] FLAG_SECURE handling
+- [x] continueOnFailure error policy
+- [x] Stage 12 officially closed in AI memory
 
 Stage 11 completion note (2026-04-27):
 - [x] User confirmed settings flow works after implementation pass
@@ -112,5 +118,5 @@ Stage 8 completion evidence:
 - [x] Stage 8 completion progress entry added to `CHANGELOG_AI.md`
 
 Next stages:
-- Stage 11: Settings Persistence and Advanced Configuration
-- Stage 12: Screenshot Verifier Integration
+- Stage 13: Action → Result Logic (current)
+

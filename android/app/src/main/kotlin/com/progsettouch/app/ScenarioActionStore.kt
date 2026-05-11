@@ -4,15 +4,36 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 
-class ScenarioActionStore(context: Context) {
+class ScenarioActionStore(
+        context: Context,
+        private val screenshotStorageManager: ScreenshotStorageManager
+) {
     private val prefs = context.getSharedPreferences("scenario_actions_store", Context.MODE_PRIVATE)
 
     fun saveScenarioActions(scenarioId: String, actions: List<RecordedAction>) {
+        val oldActions = getScenarioActions(scenarioId)
+        val oldFiles = oldActions.mapNotNull { it.resultImageFileName }.toSet()
+        val newFiles = actions.mapNotNull { it.resultImageFileName }.toSet()
+        val toDelete = oldFiles.filter { it !in newFiles }
+        
+        if (toDelete.isNotEmpty()) {
+            screenshotStorageManager.deleteScreenshots(toDelete)
+        }
+        
         prefs.edit().putString(scenarioKey(scenarioId), actionsToJson(actions).toString()).apply()
     }
 
     fun exportScenarioActions(scenarioId: String): List<Map<String, Any>> {
-        return getScenarioActions(scenarioId).map { it.toMap() }
+        return getScenarioActions(scenarioId).map { action -> 
+            val map = action.toMap().toMutableMap()
+            action.resultImageFileName?.let { fileName ->
+                val base64 = screenshotStorageManager.getBase64(fileName)
+                if (base64 != null) {
+                    map["resultImageBase64"] = base64
+                }
+            }
+            map
+        }
     }
 
     fun importScenarioActions(scenarioId: String, rawActions: List<Map<String, Any?>>): Boolean {
@@ -26,6 +47,8 @@ class ScenarioActionStore(context: Context) {
     }
 
     fun deleteScenarioActions(scenarioId: String): Boolean {
+        val actions = getScenarioActions(scenarioId)
+        screenshotStorageManager.deleteScreenshots(actions.mapNotNull { it.resultImageFileName })
         return prefs.edit().remove(scenarioKey(scenarioId)).commit()
     }
 
@@ -48,6 +71,9 @@ class ScenarioActionStore(context: Context) {
                         put("stepDelayMs", action.stepDelayMs)
                         put("verificationEnabled", action.verificationEnabled)
                         put("thresholdPercent", action.thresholdPercent)
+                        put("timeoutMs", action.timeoutMs)
+                        put("continueOnFailure", action.continueOnFailure)
+                        action.resultImageFileName?.let { put("resultImageFileName", it) }
                     },
             )
         }
@@ -72,8 +98,11 @@ class ScenarioActionStore(context: Context) {
                                     durationMs = obj.optLong("durationMs", 50L),
                                     stepDelayMs = obj.optLong("stepDelayMs", 1000L),
                                     verificationEnabled =
-                                            obj.optBoolean("verificationEnabled", false),
-                                    thresholdPercent = obj.optDouble("thresholdPercent", 1.0),
+                                            obj.optBoolean("verificationEnabled", true),
+                                    thresholdPercent = obj.optDouble("thresholdPercent", 90.0),
+                                    timeoutMs = obj.optLong("timeoutMs", 10000L),
+                                    continueOnFailure = obj.optBoolean("continueOnFailure", false),
+                                    resultImageFileName = if (obj.has("resultImageFileName")) obj.optString("resultImageFileName") else null,
                             ),
                     )
                 }
@@ -100,6 +129,12 @@ class ScenarioActionStore(context: Context) {
             return null
         }
 
+        var resultImageFileName = raw["resultImageFileName"]?.toString()
+        val base64 = raw["resultImageBase64"]?.toString()
+        if (!base64.isNullOrEmpty()) {
+            resultImageFileName = screenshotStorageManager.saveBase64(base64)
+        }
+
         return RecordedAction(
                 type = type,
                 pointerCount = raw["pointerCount"].toIntValue(default = 1),
@@ -109,8 +144,11 @@ class ScenarioActionStore(context: Context) {
                 endY = raw["endY"].toDoubleValue(),
                 durationMs = raw["durationMs"].toLongValue(default = 50L),
                 stepDelayMs = raw["stepDelayMs"].toLongValue(default = 1000L),
-                verificationEnabled = raw["verificationEnabled"].toBoolValue(default = false),
-                thresholdPercent = raw["thresholdPercent"].toDoubleValue(default = 1.0),
+                verificationEnabled = raw["verificationEnabled"].toBoolValue(default = true),
+                thresholdPercent = raw["thresholdPercent"].toDoubleValue(default = 90.0),
+                timeoutMs = raw["timeoutMs"].toLongValue(default = 10000L),
+                continueOnFailure = raw["continueOnFailure"].toBoolValue(default = false),
+                resultImageFileName = resultImageFileName,
         )
     }
 

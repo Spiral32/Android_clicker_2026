@@ -49,6 +49,7 @@ class ScreenshotVerifier(
 
     // CPU throttling
     private val captureLock = Any()
+    @Volatile private var lastCaptureFlagSecure = false
 
     /**
      * Initialize with MediaProjection (must be obtained from user consent).
@@ -57,6 +58,11 @@ class ScreenshotVerifier(
         this.mediaProjection = mediaProjection
         logger.i("ScreenshotVerifier", "Initialized with MediaProjection")
     }
+
+    /**
+     * Check if MediaProjection is available.
+     */
+    fun hasMediaProjection(): Boolean = mediaProjection != null
 
     /**
      * Release resources.
@@ -87,6 +93,7 @@ class ScreenshotVerifier(
         }
 
         synchronized(captureLock) {
+            lastCaptureFlagSecure = false
             val projection = mediaProjection ?: run {
                 logger.w("ScreenshotVerifier", "MediaProjection not available")
                 return null
@@ -161,6 +168,7 @@ class ScreenshotVerifier(
                 }
 
                 if (flagSecureDetected) {
+                    lastCaptureFlagSecure = true
                     logger.w("ScreenshotVerifier", "FLAG_SECURE detected, considering as success")
                     return null // Will be treated as success by caller
                 }
@@ -173,6 +181,8 @@ class ScreenshotVerifier(
         }
     }
 
+    fun wasLastCaptureFlagSecure(): Boolean = lastCaptureFlagSecure
+
     /**
      * Compare two screenshots and return similarity score (0.0 - 1.0).
      * 1.0 = identical, 0.0 = completely different
@@ -180,14 +190,19 @@ class ScreenshotVerifier(
     fun compareScreenshots(
         before: Bitmap,
         after: Bitmap,
-        method: ComparisonMethod = ComparisonMethod.DOWNSCALED_PIXEL_DIFF,
+        method: ComparisonMethod = ComparisonMethod.PHASH, // Change default to PHASH
         config: VerifierConfig = defaultConfig,
     ): Float {
         return when (method) {
             ComparisonMethod.DOWNSCALED_PIXEL_DIFF -> downscaledPixelDiff(before, after, config.downscaleSize)
             ComparisonMethod.REGION_BASED -> regionBasedDiff(before, after, config.regionSize)
             ComparisonMethod.HISTOGRAM -> histogramDiff(before, after)
-            ComparisonMethod.PHASH -> phashDiff(before, after)
+            ComparisonMethod.PHASH -> {
+                // For PHASH, we use a combination of structural diff and histogram to be both precise and robust
+                val structural = phashDiff(before, after)
+                val color = histogramDiff(before, after)
+                (structural * 0.7f) + (color * 0.3f)
+            }
         }
     }
 
@@ -273,62 +288,71 @@ class ScreenshotVerifier(
      */
     private fun histogramDiff(before: Bitmap, after: Bitmap): Float {
         try {
-            val beforeHistogram = calculateHistogram(before)
-            val afterHistogram = calculateHistogram(after)
+            // We'll calculate histograms for R, G, B channels separately for better color sensitivity
+            val bHist = calculateRGBHistogram(before)
+            val aHist = calculateRGBHistogram(after)
 
-            // Calculate correlation
-            var correlation = 0.0
-            var beforeSum = 0.0
-            var afterSum = 0.0
-
-            for (i in 0..255) {
-                correlation += beforeHistogram[i] * afterHistogram[i]
-                beforeSum += beforeHistogram[i] * beforeHistogram[i]
-                afterSum += afterHistogram[i] * afterHistogram[i]
+            var totalCorrelation = 0.0
+            
+            // Channels: Red, Green, Blue
+            for (c in 0..2) {
+                var correlation = 0.0
+                var bSum = 0.0
+                var aSum = 0.0
+                
+                val offset = c * 256
+                for (i in 0..255) {
+                    val bv = bHist[offset + i]
+                    val av = aHist[offset + i]
+                    correlation += bv * av
+                    bSum += bv * bv
+                    aSum += av * av
+                }
+                
+                val denominator = kotlin.math.sqrt(bSum) * kotlin.math.sqrt(aSum)
+                if (denominator > 0) {
+                    totalCorrelation += correlation / denominator
+                }
             }
 
-            val denominator = kotlin.math.sqrt(beforeSum) * kotlin.math.sqrt(afterSum)
-            return if (denominator > 0) {
-                (correlation / denominator).toFloat().coerceIn(0f, 1f)
-            } else {
-                0.0f
-            }
+            return (totalCorrelation / 3.0).toFloat().coerceIn(0f, 1f)
         } catch (e: Exception) {
             logger.e("ScreenshotVerifier", "Histogram diff failed", e)
             return 0.0f
         }
     }
 
-    private fun calculateHistogram(bitmap: Bitmap): DoubleArray {
-        val histogram = DoubleArray(256) { 0.0 }
+    private fun calculateRGBHistogram(bitmap: Bitmap): DoubleArray {
+        val histogram = DoubleArray(256 * 3) { 0.0 } // R, G, B
         val width = bitmap.width
         val height = bitmap.height
 
-        for (y in 0 until height step 4) { // Sample every 4th pixel for performance
+        for (y in 0 until height step 4) {
             for (x in 0 until width step 4) {
                 val pixel = bitmap.getPixel(x, y)
-                val gray = (((pixel shr 16) and 0xFF) +
-                        ((pixel shr 8) and 0xFF) +
-                        (pixel and 0xFF)) / 3
-                histogram[gray]++
+                val r = (pixel shr 16) and 0xFF
+                val g = (pixel shr 8) and 0xFF
+                val b = pixel and 0xFF
+                
+                histogram[r]++
+                histogram[256 + g]++
+                histogram[512 + b]++
             }
         }
 
-        // Normalize
-        val total = histogram.sum()
-        if (total > 0) {
-            for (i in histogram.indices) {
-                histogram[i] /= total
+        // Normalize each channel
+        for (c in 0..2) {
+            val offset = c * 256
+            var sum = 0.0
+            for (i in 0..255) sum += histogram[offset + i]
+            if (sum > 0) {
+                for (i in 0..255) histogram[offset + i] /= sum
             }
         }
 
         return histogram
     }
 
-    /**
-     * Perceptual hash (pHash) diff.
-     * Simplified implementation.
-     */
     private fun phashDiff(before: Bitmap, after: Bitmap): Float {
         // Simplified pHash - downscale and compare
         return downscaledPixelDiff(before, after, 32)

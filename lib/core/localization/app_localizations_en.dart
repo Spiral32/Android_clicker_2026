@@ -577,31 +577,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAboutSectionBasics => 'Basics';
 
   @override
-  String get settingsAboutBasicsContent => 'Prog Set Touch is a powerful tool for automating on-screen actions. The core concept is recording a sequence of actions (taps, swipes) and then playing them back on demand or by schedule.';
+  String get settingsAboutBasicsContent => 'Prog Set Touch is a smart auto-clicker endowed with \"vision\". Unlike regular clickers, it can verify screen changes using visual verification (screenshots).';
 
   @override
-  String get settingsAboutSectionRecording => 'Recording a Scenario';
+  String get settingsAboutSectionRecording => 'Recording and Editor';
 
   @override
-  String get settingsAboutRecordingContent => '1. Press \'+\' in the top bar.\n2. Use the floating control panel on the screen to add actions.\n3. Once recording is finished, save the scenario with a unique name.';
+  String get settingsAboutRecordingContent => 'Record gestures (taps, swipes) using the floating widget over other apps. The built-in step editor allows you to change coordinates, delays, and configure verification thresholds.';
 
   @override
-  String get settingsAboutSectionExecution => 'Execution';
+  String get settingsAboutSectionExecution => 'Visual Control';
 
   @override
-  String get settingsAboutExecutionContent => 'You can run a scenario with the \'Play\' button in the list or use \'Quick Launch\' (lightning icon) to run a group of selected scenarios. You can set the delay between actions in the settings.';
+  String get settingsAboutExecutionContent => 'If screen verification is enabled for a step, the clicker takes a screenshot before and after the gesture. By tuning Timeout, Sensitivity Threshold (%), and \'Continue on Failure\', you can create reliable macros resistant to lag.';
 
   @override
-  String get settingsAboutSectionOverlay => 'Floating Button';
+  String get settingsAboutSectionOverlay => 'Execution & Management';
 
   @override
-  String get settingsAboutOverlayContent => 'The \'eye\' icon in the top bar enables/disables the floating button. It is required for quick recording and managing the automation process over other apps.';
+  String get settingsAboutOverlayContent => 'Run scenarios in batches via Quick Launch. For stable operation, we recommend setting a global delay between steps in Settings.';
 
   @override
-  String get settingsAboutSectionPermissions => 'Permissions';
+  String get settingsAboutSectionPermissions => 'Permissions & Security';
 
   @override
-  String get settingsAboutPermissionsContent => 'Accessibility service (for simulating touches) and Display over apps (for the floating button) permissions are required.';
+  String get settingsAboutPermissionsContent => 'Requires Accessibility service (simulating touches), Display over apps (floating recorder), and MediaProjection (only for visual verification) permissions.';
 
   @override
   String get scenarioEditWhileExecutingRejected => 'Cannot edit steps while execution is active';
@@ -616,7 +616,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scenarioStepEditorVerificationSubtitle => 'Verify if the screen content changed after executing this step';
 
   @override
-  String get scenarioStepEditorThresholdLabel => 'Change Threshold (%)';
+  String get scenarioStepEditorThresholdLabel => 'Sensitivity threshold (%)';
+
+  @override
+  String scenarioStepEditorThresholdCurrent(Object value) {
+    return 'Current: $value%';
+  }
+
+  @override
+  String get scenarioStepEditorTimeoutLabel => 'Timeout (sec)';
+
+  @override
+  String get scenarioStepEditorTimeoutHelper => 'From 1 to 300 seconds (5 min)';
+
+  @override
+  String get scenarioStepEditorContinueOnFailure => 'Stop current and continue next scenario on failure';
 
   @override
   String get scenarioScreenTitle => 'Scenarios';

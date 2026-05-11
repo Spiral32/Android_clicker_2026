@@ -22,9 +22,12 @@ class ScenarioStep extends Equatable {
   static const int defaultStepDelayMs = 1000;
   static const int minGestureDurationMs = 50;
   static const int minStepDelayMs = 0;
-  static const double minThresholdPercent = 0.1;
+  static const double minThresholdPercent = 1.0;
   static const double maxThresholdPercent = 100.0;
-  static const double defaultThresholdPercent = 1.0;
+  static const double defaultThresholdPercent = 90.0;
+  static const int minTimeoutMs = 1000; // 1 second
+  static const int maxTimeoutMs = 300000; // 5 minutes
+  static const int defaultTimeoutMs = 10000; // 10 seconds
 
   const ScenarioStep({
     required this.type,
@@ -36,7 +39,10 @@ class ScenarioStep extends Equatable {
     required this.durationMs,
     required this.stepDelayMs,
     this.verificationEnabled = false,
-    this.thresholdPercent = 1.0,
+    this.thresholdPercent = defaultThresholdPercent,
+    this.timeoutMs = defaultTimeoutMs,
+    this.continueOnFailure = false,
+    this.resultImageFileName,
   });
 
   final ScenarioStepType type;
@@ -49,6 +55,9 @@ class ScenarioStep extends Equatable {
   final int stepDelayMs;
   final bool verificationEnabled;
   final double thresholdPercent;
+  final int timeoutMs;
+  final bool continueOnFailure;
+  final String? resultImageFileName;
 
   factory ScenarioStep.initial() {
     return const ScenarioStep(
@@ -62,6 +71,9 @@ class ScenarioStep extends Equatable {
       stepDelayMs: defaultStepDelayMs,
       verificationEnabled: false,
       thresholdPercent: defaultThresholdPercent,
+      timeoutMs: defaultTimeoutMs,
+      continueOnFailure: false,
+      resultImageFileName: null,
     );
   }
 
@@ -72,6 +84,9 @@ class ScenarioStep extends Equatable {
     final rawStepDelayMs = map['stepDelayMs'];
     final rawVerificationEnabled = map['verificationEnabled'];
     final rawThresholdPercent = map['thresholdPercent'];
+    final rawTimeoutMs = map['timeoutMs'];
+    final rawContinueOnFailure = map['continueOnFailure'];
+    final resultImageFileName = map['resultImageFileName'] as String?;
 
     return ScenarioStep(
       type: ScenarioStepType.fromValue(rawType),
@@ -93,6 +108,12 @@ class ScenarioStep extends Equatable {
         rawThresholdPercent,
         fallback: defaultThresholdPercent,
       ).clamp(minThresholdPercent, maxThresholdPercent),
+      timeoutMs: _toInt(
+        rawTimeoutMs,
+        fallback: defaultTimeoutMs,
+      ).clamp(minTimeoutMs, maxTimeoutMs),
+      continueOnFailure: _toBool(rawContinueOnFailure),
+      resultImageFileName: resultImageFileName,
     );
   }
 
@@ -107,6 +128,9 @@ class ScenarioStep extends Equatable {
     int? stepDelayMs,
     bool? verificationEnabled,
     double? thresholdPercent,
+    int? timeoutMs,
+    bool? continueOnFailure,
+    String? resultImageFileName,
   }) {
     return ScenarioStep(
       type: type ?? this.type,
@@ -119,6 +143,9 @@ class ScenarioStep extends Equatable {
       stepDelayMs: stepDelayMs ?? this.stepDelayMs,
       verificationEnabled: verificationEnabled ?? this.verificationEnabled,
       thresholdPercent: thresholdPercent ?? this.thresholdPercent,
+      timeoutMs: timeoutMs ?? this.timeoutMs,
+      continueOnFailure: continueOnFailure ?? this.continueOnFailure,
+      resultImageFileName: resultImageFileName ?? this.resultImageFileName,
     );
   }
 
@@ -134,6 +161,10 @@ class ScenarioStep extends Equatable {
       'stepDelayMs': stepDelayMs,
       'verificationEnabled': verificationEnabled,
       'thresholdPercent': thresholdPercent,
+      'timeoutMs': timeoutMs,
+      'continueOnFailure': continueOnFailure,
+      if (resultImageFileName != null)
+        'resultImageFileName': resultImageFileName,
     };
   }
 
@@ -149,6 +180,9 @@ class ScenarioStep extends Equatable {
         stepDelayMs,
         verificationEnabled,
         thresholdPercent,
+        timeoutMs,
+        continueOnFailure,
+        resultImageFileName,
       ];
 
   static int _toInt(Object? value, {required int fallback}) {

@@ -6,8 +6,10 @@ class ScenarioService {
   bool hasExecutableSteps(int stepCount) => stepCount > 0;
 
   List<ScenarioItem> normalizeOrder(List<ScenarioItem> items) {
+    final sortedList = List<ScenarioItem>.from(items)
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
     return [
-      for (var i = 0; i < items.length; i++) items[i].copyWith(orderIndex: i),
+      for (var i = 0; i < sortedList.length; i++) sortedList[i].copyWith(orderIndex: i),
     ];
   }
 

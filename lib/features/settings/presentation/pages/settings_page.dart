@@ -1398,7 +1398,9 @@ class _ScenarioTransferSection extends StatelessWidget {
                         type: FileType.custom,
                         allowedExtensions: const ['json'],
                       );
-                      await File(path!).writeAsString(payload);
+                      if (path != null) {
+                        await File(path).writeAsString(payload);
+                      }
                     }
 
                     logger.logInfo(

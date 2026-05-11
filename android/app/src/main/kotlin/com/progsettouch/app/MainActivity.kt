@@ -18,6 +18,28 @@ import org.json.JSONObject
 import java.util.Locale
 
 class MainActivity : FlutterActivity() {
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra("requestMediaProjection", false) == true) {
+            android.util.Log.d("MainActivity", "handleIntent: requestMediaProjection=true")
+            if (!isFinishing && !isDestroyed) {
+                // We need to wait for Flutter to be ready, but we don't have pendingResult
+                // For now, just log and let the user press the button in UI
+                // We'll handle it in _requestMediaProjection from Flutter-side
+                android.util.Log.d("MainActivity", "MediaProjection requested from overlay - user should use UI")
+            }
+        }
+    }
     private val channelName = "prog_set_touch/platform"
     private val flutterPrefsName = "FlutterSharedPreferences"
     private val autostartPrefsKey = "flutter.autostart_enabled"
@@ -178,7 +200,8 @@ class MainActivity : FlutterActivity() {
                 }
 
                 val mode = call.argument<String>("mode") ?: "CONTINUOUS"
-                val recorderSummary = accessibilityService.startRecorder(mode)
+                val globalVerificationEnabled = call.argument<Boolean>("globalVerificationEnabled") ?: true
+                val recorderSummary = accessibilityService.startRecorder(mode, globalVerificationEnabled)
                 result.success(recorderSummary.toMap())
                 moveTaskToBack(true)
             }
@@ -264,7 +287,8 @@ class MainActivity : FlutterActivity() {
                     result.error("invalid_argument", "scenarioId parameter is required", null)
                     return
                 }
-                val actionStore = ScenarioActionStore(this)
+                val screenshotStorageManager = ScreenshotStorageManager(this)
+                val actionStore = ScenarioActionStore(this, screenshotStorageManager)
                 result.success(actionStore.exportScenarioActions(scenarioId))
             }
 
@@ -286,7 +310,8 @@ class MainActivity : FlutterActivity() {
                             stringKey to value
                         }?.toMap()
                     }
-                val actionStore = ScenarioActionStore(this)
+                val screenshotStorageManager = ScreenshotStorageManager(this)
+                val actionStore = ScenarioActionStore(this, screenshotStorageManager)
                 val success = actionStore.importScenarioActions(scenarioId, normalizedActions)
                 result.success(mapOf("success" to success))
             }
@@ -297,7 +322,8 @@ class MainActivity : FlutterActivity() {
                     result.error("invalid_argument", "scenarioId parameter is required", null)
                     return
                 }
-                val actionStore = ScenarioActionStore(this)
+                val screenshotStorageManager = ScreenshotStorageManager(this)
+                val actionStore = ScenarioActionStore(this, screenshotStorageManager)
                 result.success(mapOf("success" to actionStore.deleteScenarioActions(scenarioId)))
             }
 

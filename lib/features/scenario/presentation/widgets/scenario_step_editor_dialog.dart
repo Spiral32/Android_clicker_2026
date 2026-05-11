@@ -477,7 +477,9 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
   late final TextEditingController _durationController;
   late final TextEditingController _delayController;
   late bool _verificationEnabled;
-  late final TextEditingController _thresholdController;
+  double _thresholdPercent = 0.0;
+  late final TextEditingController _timeoutController;
+  late bool _continueOnFailure;
 
   @override
   void initState() {
@@ -494,8 +496,9 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
         TextEditingController(text: step.durationMs.toString());
     _delayController = TextEditingController(text: step.stepDelayMs.toString());
     _verificationEnabled = step.verificationEnabled;
-    _thresholdController =
-        TextEditingController(text: step.thresholdPercent.toString());
+    _thresholdPercent = step.thresholdPercent.toDouble();
+    _timeoutController = TextEditingController(text: (step.timeoutMs ~/ 1000).toString());
+    _continueOnFailure = step.continueOnFailure;
   }
 
   @override
@@ -507,7 +510,7 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
     _endYController.dispose();
     _durationController.dispose();
     _delayController.dispose();
-    _thresholdController.dispose();
+    _timeoutController.dispose();
     super.dispose();
   }
 
@@ -520,7 +523,9 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
     final startY = double.tryParse(_startYController.text.trim());
     final endX = double.tryParse(_endXController.text.trim());
     final endY = double.tryParse(_endYController.text.trim());
-    final threshold = double.tryParse(_thresholdController.text.trim());
+    final double threshold = _thresholdPercent;
+    final timeoutSec = int.tryParse(_timeoutController.text.trim()) ?? 5;
+    final timeoutMs = timeoutSec * 1000;
 
     if (pointerCount == null ||
         durationMs == null ||
@@ -528,8 +533,7 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
         startX == null ||
         startY == null ||
         endX == null ||
-        endY == null ||
-        threshold == null) {
+        endY == null) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -553,6 +557,11 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
           ScenarioStep.minThresholdPercent,
           ScenarioStep.maxThresholdPercent,
         ),
+        timeoutMs: timeoutMs.clamp(
+          ScenarioStep.minTimeoutMs,
+          ScenarioStep.maxTimeoutMs,
+        ),
+        continueOnFailure: _continueOnFailure,
       ),
     );
   }
@@ -663,13 +672,38 @@ class _ScenarioStepEditDialogState extends State<_ScenarioStepEditDialog> {
               ),
               if (_verificationEnabled) ...[
                 const SizedBox(height: 8),
+                Text(l10n.scenarioStepEditorThresholdLabel),
+                Slider(
+                  min: 1.0,
+                  max: 100.0,
+                  divisions: 99,
+                  value: _thresholdPercent.clamp(1.0, 100.0),
+                  label: "${_thresholdPercent.round()}%",
+                  onChanged: (value) => setState(() => _thresholdPercent = value),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text(
+                    l10n.scenarioStepEditorThresholdCurrent(_thresholdPercent.toStringAsFixed(1)),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 _NumberField(
-                  controller: _thresholdController,
-                  label: l10n.scenarioStepEditorThresholdLabel,
-                  helperText:
-                      'Min: ${ScenarioStep.minThresholdPercent}% | Max: ${ScenarioStep.maxThresholdPercent}%',
+                  controller: _timeoutController,
+                  label: l10n.scenarioStepEditorTimeoutLabel,
+                  helperText: l10n.scenarioStepEditorTimeoutHelper,
+                ),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(l10n.scenarioStepEditorContinueOnFailure),
+                  value: _continueOnFailure,
+                  onChanged: (value) => setState(() => _continueOnFailure = value ?? false),
                 ),
               ],
+
             ],
           ),
         ),

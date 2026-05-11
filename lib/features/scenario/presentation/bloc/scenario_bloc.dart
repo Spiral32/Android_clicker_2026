@@ -735,7 +735,12 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
                   'thresholdPercent'
                 ].contains(stringKey)) {
                   val = double.tryParse(val) ?? 0.0;
-                } else if (['pointerCount', 'durationMs', 'stepDelayMs']
+                } else if ([
+                  'pointerCount',
+                  'durationMs',
+                  'stepDelayMs',
+                  'timeoutMs'
+                ]
                     .contains(stringKey)) {
                   val = int.tryParse(val) ?? 0;
                 }
@@ -766,6 +771,24 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
       final settings = _settingsRepository.load();
       final delayMs = settings.executionDelayMs;
       final globalVerificationEnabled = settings.globalVerificationEnabled;
+      
+      if (globalVerificationEnabled) {
+        var permStatus = await _platformBridgeRepository.getPermissionStatus();
+        if (!permStatus.mediaProjectionGranted) {
+          permStatus = await _platformBridgeRepository.requestMediaProjectionPermission();
+          if (!permStatus.mediaProjectionGranted) {
+            _logScenarioError(
+              'batch_rejected_permission',
+              StateError('MediaProjection permission denied'),
+              null,
+              context: 'Scenario batch rejected due to missing MediaProjection',
+            );
+            emit(state.copyWith(messageKey: 'scenarioBatchStoppedOnVerificationFailure'));
+            return;
+          }
+        }
+      }
+
       final appState = await _platformBridgeRepository.getCurrentState();
       if (appState.isExecuting) {
         _logScenarioError(
@@ -822,7 +845,34 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
           continue;
         }
 
-        await _waitUntilExecutionStops(emit);
+        final finished = await _waitUntilExecutionStops(emit);
+        if (finished.error == 'verification_failed_stop_batch') {
+          completed += 1;
+          emit(
+            state.copyWith(
+              isExecuting: false,
+              clearActiveScenario: true,
+              completedInBatch: completed,
+              totalInBatch: snapshot.length,
+              messageKey: 'scenarioBatchStoppedOnVerificationFailure',
+            ),
+          );
+          _logScenarioAction(
+            'batch_stopped_verification',
+            'Scenario batch stopped due to verification failure policy',
+            payload: {'scenarioId': scenario.id},
+          );
+          return;
+        }
+
+        if (finished.error == 'verification_failed_continue_next_scenario') {
+          _logScenarioAction(
+            'batch_continue_after_verification_failure',
+            'Scenario failed but batch continues with next scenario',
+            payload: {'scenarioId': scenario.id},
+          );
+        }
+
         completed += 1;
       }
 
@@ -856,11 +906,13 @@ class ScenarioBloc extends Bloc<ScenarioEvent, ScenarioState> {
     }
   }
 
-  Future<void> _waitUntilExecutionStops(Emitter<ScenarioState> emit) async {
+  Future<ExecutionSummary> _waitUntilExecutionStops(
+    Emitter<ScenarioState> emit,
+  ) async {
     while (true) {
       final status = await _platformBridgeRepository.getExecutionStatus();
       if (!status.isExecuting) {
-        return;
+        return status;
       }
       emit(state.copyWith(executionSummary: status));
       await Future<void>.delayed(const Duration(milliseconds: 500));

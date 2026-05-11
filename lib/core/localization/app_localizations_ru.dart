@@ -577,31 +577,31 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsAboutSectionBasics => 'Основы работы';
 
   @override
-  String get settingsAboutBasicsContent => 'Prog Set Touch — это мощный инструмент автоматизации действий на экране. Основная концепция заключается в записи последовательности действий (тапов, свайпов) и их последующем воспроизведении по требованию или расписанию.';
+  String get settingsAboutBasicsContent => 'Prog Set Touch — это умный автокликер, наделенный «зрением». В отличие от обычных кликеров, он может проверять изменения на экране с помощью визуальной верификации (скриншотов).';
 
   @override
-  String get settingsAboutSectionRecording => 'Запись сценария';
+  String get settingsAboutSectionRecording => 'Запись и редактор';
 
   @override
-  String get settingsAboutRecordingContent => '1. Нажмите \'+\' в верхней панели.\n2. Используйте плавающую панель управления на экране для добавления действий.\n3. После завершения записи сохраните сценарий под уникальным именем.';
+  String get settingsAboutRecordingContent => 'Записывайте жесты (тапы, свайпы) с помощью плавающего виджета поверх других окон. Встроенный пошаговый редактор позволяет менять координаты, задержки и настраивать пороги проверок.';
 
   @override
-  String get settingsAboutSectionExecution => 'Выполнение';
+  String get settingsAboutSectionExecution => 'Визуальный контроль';
 
   @override
-  String get settingsAboutExecutionContent => 'Вы можете запустить сценарий кнопкой \'Play\' в списке или использовать \'Quick Launch\' (молния) для запуска группы выбранных сценариев. В настройках можно установить задержку между действиями.';
+  String get settingsAboutExecutionContent => 'Если для шага включена проверка экрана, кликер сделает снимок до и после жеста. Настраивая Таймаут, Порог чувствительности (%) и опцию «Продолжить при ошибке», вы можете создавать надежные макросы, устойчивые к лагам и долгой загрузке.';
 
   @override
-  String get settingsAboutSectionOverlay => 'Плавающая кнопка';
+  String get settingsAboutSectionOverlay => 'Запуск и управление';
 
   @override
-  String get settingsAboutOverlayContent => 'Иконка \'глаза\' в верхней панели включает/выключает плавающую кнопку. Она необходима для быстрой записи и управления процессом автоматизации поверх других приложений.';
+  String get settingsAboutOverlayContent => 'Запускайте сценарии пакетами через Быстрый Запуск. Для стабильной работы рекомендуем настроить глобальную задержку между шагами в Настройках.';
 
   @override
-  String get settingsAboutSectionPermissions => 'Разрешения';
+  String get settingsAboutSectionPermissions => 'Безопасность и разрешения';
 
   @override
-  String get settingsAboutPermissionsContent => 'Для работы требуются разрешения на \'Спец. возможности\' (для имитации нажатий) и \'Отображение поверх окон\' (для плавающей кнопки).';
+  String get settingsAboutPermissionsContent => 'Для работы требуются разрешения на Спец. возможности (имитация нажатий), Отображение поверх окон (запись) и MediaProjection (только для визуальной верификации).';
 
   @override
   String get scenarioEditWhileExecutingRejected => 'Нельзя редактировать шаги во время выполнения';
@@ -617,6 +617,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get scenarioStepEditorThresholdLabel => 'Порог чувствительности (%)';
+
+  @override
+  String scenarioStepEditorThresholdCurrent(Object value) {
+    return 'Текущее: $value%';
+  }
+
+  @override
+  String get scenarioStepEditorTimeoutLabel => 'Время ожидания (сек)';
+
+  @override
+  String get scenarioStepEditorTimeoutHelper => 'От 1 до 300 секунд (5 мин)';
+
+  @override
+  String get scenarioStepEditorContinueOnFailure => 'Остановить текущий и продолжить следующий сценарий при ошибке';
 
   @override
   String get scenarioScreenTitle => 'Сценарии';

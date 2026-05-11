@@ -28,7 +28,10 @@ abstract class PlatformBridgeRepository {
 
   Future<RecorderSummary> getRecorderStatus();
 
-  Future<RecorderSummary> startRecorder({RecorderMode mode});
+  Future<RecorderSummary> startRecorder({
+    RecorderMode mode = RecorderMode.continuous,
+    bool globalVerificationEnabled = true,
+  });
 
   Future<RecorderSummary> stopRecorder();
 

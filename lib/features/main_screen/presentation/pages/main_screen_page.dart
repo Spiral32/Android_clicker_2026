@@ -458,6 +458,8 @@ class _MainScreenViewState extends State<_MainScreenView>
         l10n.scenarioImportBlockedWhileExecuting,
       'scenarioReorderBlockedWhileExecuting' =>
         l10n.scenarioReorderBlockedWhileExecuting,
+      'scenarioBatchStoppedOnVerificationFailure' =>
+        l10n.errorExecutionAction,
       _ => null,
     };
   }
@@ -517,7 +519,9 @@ class _MainScreenViewState extends State<_MainScreenView>
           type: FileType.custom,
           allowedExtensions: const ['json'],
         );
-        await File(path!).writeAsString(payload);
+        if (path != null) {
+          await File(path).writeAsString(payload);
+        }
       }
 
       _logger(context).logInfo(

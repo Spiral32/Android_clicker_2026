@@ -1226,55 +1226,55 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAboutBasicsContent.
   ///
   /// In ru, this message translates to:
-  /// **'Prog Set Touch — это мощный инструмент автоматизации действий на экране. Основная концепция заключается в записи последовательности действий (тапов, свайпов) и их последующем воспроизведении по требованию или расписанию.'**
+  /// **'Prog Set Touch — это умный автокликер, наделенный «зрением». В отличие от обычных кликеров, он может проверять изменения на экране с помощью визуальной верификации (скриншотов).'**
   String get settingsAboutBasicsContent;
 
   /// No description provided for @settingsAboutSectionRecording.
   ///
   /// In ru, this message translates to:
-  /// **'Запись сценария'**
+  /// **'Запись и редактор'**
   String get settingsAboutSectionRecording;
 
   /// No description provided for @settingsAboutRecordingContent.
   ///
   /// In ru, this message translates to:
-  /// **'1. Нажмите \'+\' в верхней панели.\n2. Используйте плавающую панель управления на экране для добавления действий.\n3. После завершения записи сохраните сценарий под уникальным именем.'**
+  /// **'Записывайте жесты (тапы, свайпы) с помощью плавающего виджета поверх других окон. Встроенный пошаговый редактор позволяет менять координаты, задержки и настраивать пороги проверок.'**
   String get settingsAboutRecordingContent;
 
   /// No description provided for @settingsAboutSectionExecution.
   ///
   /// In ru, this message translates to:
-  /// **'Выполнение'**
+  /// **'Визуальный контроль'**
   String get settingsAboutSectionExecution;
 
   /// No description provided for @settingsAboutExecutionContent.
   ///
   /// In ru, this message translates to:
-  /// **'Вы можете запустить сценарий кнопкой \'Play\' в списке или использовать \'Quick Launch\' (молния) для запуска группы выбранных сценариев. В настройках можно установить задержку между действиями.'**
+  /// **'Если для шага включена проверка экрана, кликер сделает снимок до и после жеста. Настраивая Таймаут, Порог чувствительности (%) и опцию «Продолжить при ошибке», вы можете создавать надежные макросы, устойчивые к лагам и долгой загрузке.'**
   String get settingsAboutExecutionContent;
 
   /// No description provided for @settingsAboutSectionOverlay.
   ///
   /// In ru, this message translates to:
-  /// **'Плавающая кнопка'**
+  /// **'Запуск и управление'**
   String get settingsAboutSectionOverlay;
 
   /// No description provided for @settingsAboutOverlayContent.
   ///
   /// In ru, this message translates to:
-  /// **'Иконка \'глаза\' в верхней панели включает/выключает плавающую кнопку. Она необходима для быстрой записи и управления процессом автоматизации поверх других приложений.'**
+  /// **'Запускайте сценарии пакетами через Быстрый Запуск. Для стабильной работы рекомендуем настроить глобальную задержку между шагами в Настройках.'**
   String get settingsAboutOverlayContent;
 
   /// No description provided for @settingsAboutSectionPermissions.
   ///
   /// In ru, this message translates to:
-  /// **'Разрешения'**
+  /// **'Безопасность и разрешения'**
   String get settingsAboutSectionPermissions;
 
   /// No description provided for @settingsAboutPermissionsContent.
   ///
   /// In ru, this message translates to:
-  /// **'Для работы требуются разрешения на \'Спец. возможности\' (для имитации нажатий) и \'Отображение поверх окон\' (для плавающей кнопки).'**
+  /// **'Для работы требуются разрешения на Спец. возможности (имитация нажатий), Отображение поверх окон (запись) и MediaProjection (только для визуальной верификации).'**
   String get settingsAboutPermissionsContent;
 
   /// No description provided for @scenarioEditWhileExecutingRejected.
@@ -1306,6 +1306,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Порог чувствительности (%)'**
   String get scenarioStepEditorThresholdLabel;
+
+  /// No description provided for @scenarioStepEditorThresholdCurrent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текущее: {value}%'**
+  String scenarioStepEditorThresholdCurrent(Object value);
+
+  /// No description provided for @scenarioStepEditorTimeoutLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Время ожидания (сек)'**
+  String get scenarioStepEditorTimeoutLabel;
+
+  /// No description provided for @scenarioStepEditorTimeoutHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'От 1 до 300 секунд (5 мин)'**
+  String get scenarioStepEditorTimeoutHelper;
+
+  /// No description provided for @scenarioStepEditorContinueOnFailure.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остановить текущий и продолжить следующий сценарий при ошибке'**
+  String get scenarioStepEditorContinueOnFailure;
 
   /// No description provided for @scenarioScreenTitle.
   ///

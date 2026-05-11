@@ -29,6 +29,8 @@ enum class RecorderMode {
 
 class RecorderManager(
         private val context: Context,
+        private val screenshotVerifier: ScreenshotVerifier,
+        private val screenshotStorageManager: ScreenshotStorageManager,
 ) {
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
@@ -57,6 +59,105 @@ class RecorderManager(
     private val prefs = context.getSharedPreferences("recorder_prefs", Context.MODE_PRIVATE)
     private var previousActionsBackup: List<RecordedAction>? = null
 
+    private fun captureScreenshotForPreviousAction() {
+        logger.d("RecorderManager", "captureScreenshotForPreviousAction() called")
+        logger.d("RecorderManager", "recordedActions.size=${recordedActions.size}")
+        logger.d(
+                "RecorderManager",
+                "screenshotVerifier.hasMediaProjection()=${screenshotVerifier.hasMediaProjection()}"
+        )
+
+        if (recordedActions.isEmpty()) {
+            logger.w("RecorderManager", "No recorded actions - showing toast")
+            mainHandler.post {
+                android.widget.Toast.makeText(
+                                context,
+                                "Сначала запишите действие!",
+                                android.widget.Toast.LENGTH_SHORT
+                        )
+                        .show()
+            }
+            return
+        }
+
+        if (!screenshotVerifier.hasMediaProjection()) {
+            logger.w("RecorderManager", "No MediaProjection - opening MainActivity")
+            mainHandler.post {
+                android.widget.Toast.makeText(
+                                context,
+                                "Требуется разрешение на захват экрана!",
+                                android.widget.Toast.LENGTH_SHORT
+                        )
+                        .show()
+            }
+            val service = context as? ProgSetAccessibilityService
+            if (service != null) {
+                logger.d("RecorderManager", "Calling service.openMainActivityForMediaProjection()")
+                service.openMainActivityForMediaProjection()
+            }
+            return
+        }
+
+        val actionToUpdate = recordedActions.last()
+
+        try {
+            logger.d("RecorderManager", "Capturing screenshot for target matching (Sync)...")
+            val bitmap = screenshotVerifier.captureScreenshot()
+            if (bitmap != null) {
+                val fileName = screenshotStorageManager.saveScreenshot(bitmap)
+                if (fileName != null) {
+                    actionToUpdate.resultImageFileName = fileName
+                    logger.i(
+                            "RecorderManager",
+                            "Screenshot saved: $fileName for action ${actionToUpdate.type}"
+                    )
+                    mainHandler.post {
+                        android.widget.Toast.makeText(
+                                        context,
+                                        "Screenshot attached to ${actionToUpdate.type}",
+                                        android.widget.Toast.LENGTH_SHORT
+                                )
+                                .show()
+                    }
+                    bitmap.recycle()
+                } else {
+                    logger.w("RecorderManager", "Failed to save screenshot")
+                    mainHandler.post {
+                        android.widget.Toast.makeText(
+                                        context,
+                                        "Failed to save screenshot",
+                                        android.widget.Toast.LENGTH_SHORT
+                                )
+                                .show()
+                    }
+                }
+            } else {
+                logger.w(
+                        "RecorderManager",
+                        "captureScreenshot returned null - check MediaProjection"
+                )
+                mainHandler.post {
+                    android.widget.Toast.makeText(
+                                    context,
+                                    "Failed to capture screenshot",
+                                    android.widget.Toast.LENGTH_SHORT
+                            )
+                            .show()
+                }
+            }
+        } catch (e: Exception) {
+            logger.e("RecorderManager", "Error capturing screenshot", e)
+            mainHandler.post {
+                android.widget.Toast.makeText(
+                                context,
+                                "Error: ${e.message}",
+                                android.widget.Toast.LENGTH_SHORT
+                        )
+                        .show()
+            }
+        }
+    }
+
     init {
         loadActions()
     }
@@ -75,7 +176,16 @@ class RecorderManager(
                                 startY = obj.getDouble("startY"),
                                 endX = obj.getDouble("endX"),
                                 endY = obj.getDouble("endY"),
-                                durationMs = obj.getLong("durationMs")
+                                durationMs = obj.getLong("durationMs"),
+                                stepDelayMs = obj.optLong("stepDelayMs", 1000L),
+                                verificationEnabled = obj.optBoolean("verificationEnabled", false),
+                                thresholdPercent = obj.optDouble("thresholdPercent", 90.0),
+                                timeoutMs = obj.optLong("timeoutMs", 10000L),
+                                continueOnFailure = obj.optBoolean("continueOnFailure", false),
+                                resultImageFileName =
+                                        if (obj.has("resultImageFileName"))
+                                                obj.getString("resultImageFileName")
+                                        else null
                         )
                 )
             }
@@ -98,6 +208,12 @@ class RecorderManager(
                             put("endX", action.endX)
                             put("endY", action.endY)
                             put("durationMs", action.durationMs)
+                            put("stepDelayMs", action.stepDelayMs)
+                            put("verificationEnabled", action.verificationEnabled)
+                            put("thresholdPercent", action.thresholdPercent)
+                            put("timeoutMs", action.timeoutMs)
+                            put("continueOnFailure", action.continueOnFailure)
+                            action.resultImageFileName?.let { put("resultImageFileName", it) }
                         }
                 array.put(obj)
             }
@@ -112,7 +228,13 @@ class RecorderManager(
         onStopRequested = listener
     }
 
-    fun start(mode: RecorderMode = RecorderMode.CONTINUOUS): RecorderSummary {
+    private var globalVerificationEnabled: Boolean = true
+
+    fun start(
+            mode: RecorderMode = RecorderMode.CONTINUOUS,
+            globalVerificationEnabled: Boolean = true
+    ): RecorderSummary {
+        this.globalVerificationEnabled = globalVerificationEnabled
         logger.d("RecorderManager", "start() called with mode=$mode, isRecording=${isRecording()}")
 
         if (isRecording()) {
@@ -294,6 +416,10 @@ class RecorderManager(
                 "RecorderManager",
                 "stop() called, recordedActions=${recordedActions.size}, currentMode=$currentMode, isRecording=${isRecording()}"
         )
+
+        // Capture final screenshot for the last action
+        captureScreenshotForPreviousAction()
+
         val view = recorderView
         val controlView = recorderControlView
 
@@ -653,6 +779,13 @@ class RecorderManager(
         container.addView(swipeBtn)
         container.addView(longPressBtn)
         container.addView(doubleTapBtn)
+
+        val screenshotBtn =
+                createActionButton(android.R.drawable.ic_menu_camera, "Screenshot") {
+                    captureScreenshotForPreviousAction()
+                }
+        container.addView(screenshotBtn)
+
         container.addView(stopBtn)
         return container
     }
@@ -868,6 +1001,7 @@ class RecorderManager(
                 "classifyAndStore called with gesture: distance=${gesture.distance()}, duration=${gesture.durationMs()}ms"
         )
         val candidate = actionClassifier.classify(gesture, lastTapSnapshot)
+
         recordedActions += candidate.action
         lastTapSnapshot = candidate.updatedTapSnapshot
         logger.i(
@@ -1136,21 +1270,29 @@ data class RecordedAction(
         val durationMs: Long,
         val stepDelayMs: Long = 1000L,
         val verificationEnabled: Boolean = false,
-        val thresholdPercent: Double = 1.0,
+        val thresholdPercent: Double = 90.0,
+        val timeoutMs: Long = 10000L,
+        val continueOnFailure: Boolean = false,
+        var resultImageFileName: String? = null,
 ) {
     fun toMap(): Map<String, Any> {
-        return mapOf(
-                "type" to type,
-                "pointerCount" to pointerCount,
-                "startX" to startX,
-                "startY" to startY,
-                "endX" to endX,
-                "endY" to endY,
-                "durationMs" to durationMs,
-                "stepDelayMs" to stepDelayMs,
-                "verificationEnabled" to verificationEnabled,
-                "thresholdPercent" to thresholdPercent,
-        )
+        val map =
+                mutableMapOf<String, Any>(
+                        "type" to type,
+                        "pointerCount" to pointerCount,
+                        "startX" to startX,
+                        "startY" to startY,
+                        "endX" to endX,
+                        "endY" to endY,
+                        "durationMs" to durationMs,
+                        "stepDelayMs" to stepDelayMs,
+                        "verificationEnabled" to verificationEnabled,
+                        "thresholdPercent" to thresholdPercent,
+                        "timeoutMs" to timeoutMs,
+                        "continueOnFailure" to continueOnFailure,
+                )
+        resultImageFileName?.let { map["resultImageFileName"] = it }
+        return map
     }
 }
 

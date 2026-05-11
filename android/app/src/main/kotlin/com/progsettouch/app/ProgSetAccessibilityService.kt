@@ -26,12 +26,14 @@ class ProgSetAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         instance = this
         logger = LogManager.getInstance(this)
-        scenarioActionStore = ScenarioActionStore(this)
+        logger.d("ProgSetAccessibilityService", "onServiceConnected() called")
+        val screenshotStorageManager = ScreenshotStorageManager(this)
+        scenarioActionStore = ScenarioActionStore(this, screenshotStorageManager)
         stateMachine = StateMachine(this)
         overlayManager = OverlayManager(this)
-        recorderManager = RecorderManager(this)
         screenshotVerifier = ScreenshotVerifier(this)
-        executionEngine = ExecutionEngine(this, this, screenshotVerifier)
+        recorderManager = RecorderManager(this, screenshotVerifier, screenshotStorageManager)
+        executionEngine = ExecutionEngine(this, this, screenshotVerifier, screenshotStorageManager)
         recorderManager.setOnStopRequested {
             logger.d("ProgSetAccessibilityService", "Recorder stop requested from overlay control")
             overlayStopInProgress = true
@@ -51,7 +53,18 @@ class ProgSetAccessibilityService : AccessibilityService() {
         }
 
         // Try to get cached MediaProjection if available
-        MainActivity.cachedMediaProjection?.let { projection -> setMediaProjection(projection) }
+        val cached = MainActivity.cachedMediaProjection
+        logger.d(
+                "ProgSetAccessibilityService",
+                "MainActivity.cachedMediaProjection=${cached != null}"
+        )
+        cached?.let { projection ->
+            logger.d(
+                    "ProgSetAccessibilityService",
+                    "Calling setMediaProjection() with cached projection"
+            )
+            setMediaProjection(projection)
+        }
 
         // Listen for state changes to auto-stop recorder when leaving RECORDING
         stateMachine.addOnStateChangedListener { from, to ->
@@ -142,12 +155,18 @@ class ProgSetAccessibilityService : AccessibilityService() {
      * permission.
      */
     fun setMediaProjection(projection: android.media.projection.MediaProjection) {
+        logger.d("ProgSetAccessibilityService", "setMediaProjection() called")
         try {
             mediaProjection = projection
+            logger.d("ProgSetAccessibilityService", "Calling screenshotVerifier.initialize()")
             screenshotVerifier.initialize(projection)
             logger.i(
                     "ProgSetAccessibilityService",
                     "MediaProjection set for screenshot verification"
+            )
+            logger.d(
+                    "ProgSetAccessibilityService",
+                    "screenshotVerifier.hasMediaProjection()=${screenshotVerifier.hasMediaProjection()}"
             )
         } catch (e: Exception) {
             logger.e("ProgSetAccessibilityService", "Failed to set MediaProjection", e)
@@ -155,6 +174,15 @@ class ProgSetAccessibilityService : AccessibilityService() {
     }
 
     fun hasMediaProjection(): Boolean = mediaProjection != null
+
+    fun openMainActivityForMediaProjection() {
+        logger.d("ProgSetAccessibilityService", "openMainActivityForMediaProjection() called")
+        val intent = Intent(context, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            putExtra("requestMediaProjection", true)
+        }
+        context.startActivity(intent)
+    }
 
     fun showOverlay(): Boolean = overlayManager.show()
 
@@ -166,7 +194,10 @@ class ProgSetAccessibilityService : AccessibilityService() {
         shouldRestoreApp = enabled
     }
 
-    fun startRecorder(mode: String = "CONTINUOUS"): RecorderSummary {
+    fun startRecorder(
+            mode: String = "CONTINUOUS",
+            globalVerificationEnabled: Boolean = true
+    ): RecorderSummary {
         // Validate state before starting
         if (!stateMachine.canStartRecording()) {
             val currentState = stateMachine.getCurrentState()
@@ -206,7 +237,7 @@ class ProgSetAccessibilityService : AccessibilityService() {
             )
         }
 
-        return recorderManager.start(recorderMode)
+        return recorderManager.start(recorderMode, globalVerificationEnabled)
     }
 
     fun stopRecorder(): RecorderSummary {

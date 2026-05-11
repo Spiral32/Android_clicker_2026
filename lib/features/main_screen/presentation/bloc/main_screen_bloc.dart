@@ -233,8 +233,22 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     emit(state.copyWith(isRecorderActionInProgress: true, clearError: true));
 
     try {
+      if (!state.permissionStatus.mediaProjectionGranted) {
+        final newStatus =
+            await _platformBridgeRepository.requestMediaProjectionPermission();
+        if (!newStatus.mediaProjectionGranted) {
+          emit(state.copyWith(
+            isRecorderActionInProgress: false,
+            errorKey: 'errorPermissionAction',
+          ));
+          return;
+        }
+      }
+
+      final settings = _settingsRepository.load();
       final recorderSummary = await _platformBridgeRepository.startRecorder(
         mode: event.mode,
+        globalVerificationEnabled: settings.globalVerificationEnabled,
       );
       final appState = await _platformBridgeRepository.getCurrentState();
       if (!_isRequestCurrent(requestVersion)) {
@@ -444,8 +458,22 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     emit(state.copyWith(isExecutionActionInProgress: true, clearError: true));
 
     try {
+      if (!state.permissionStatus.mediaProjectionGranted) {
+        final newStatus =
+            await _platformBridgeRepository.requestMediaProjectionPermission();
+        if (!newStatus.mediaProjectionGranted) {
+          emit(state.copyWith(
+            isExecutionActionInProgress: false,
+            errorKey: 'errorPermissionAction',
+          ));
+          return;
+        }
+      }
+
+      final settings = _settingsRepository.load();
       final executionSummary = await _platformBridgeRepository.startExecution(
         delayMs: state.executionDelayMs,
+        globalVerificationEnabled: settings.globalVerificationEnabled,
       );
       final appState = await _platformBridgeRepository.getCurrentState();
       if (!_isRequestCurrent(requestVersion)) {
@@ -615,7 +643,8 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     Emitter<MainScreenState> emit,
   ) async {
     try {
-      final settings = await _settingsRepository.saveExecutionDelayMs(event.delayMs);
+      final settings =
+          await _settingsRepository.saveExecutionDelayMs(event.delayMs);
       emit(state.copyWith(executionDelayMs: settings.executionDelayMs));
     } catch (error, stackTrace) {
       _logger.logError('main_screen_bloc_execution_delay', error, stackTrace);
