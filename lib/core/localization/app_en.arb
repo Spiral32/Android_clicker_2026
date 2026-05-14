@@ -184,6 +184,7 @@
   "scheduleScenarioRequiredToCreate": "Create at least one scenario first",
   "scheduleScenarioMissing": "Missing scenario",
   "save": "Save",
+  "scenarioStartRecording": "Start recording",
   "settingsAboutTitle": "About",
   "settingsAboutSubtitle": "How to use Prog Set Touch",
   "settingsAboutDescriptionTitle": "App Description",

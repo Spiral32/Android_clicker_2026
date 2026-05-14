@@ -1,6 +1,7 @@
 package com.progsettouch.app
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 
 class ProgSetAccessibilityService : AccessibilityService() {
@@ -135,7 +136,7 @@ class ProgSetAccessibilityService : AccessibilityService() {
         // recreation
         if (instance === this) {
             instance = null
-            MainActivity.clearCachedMediaProjection()
+            MainActivity.clearCachedMediaProjection(this)
         }
         super.onDestroy()
     }
@@ -170,18 +171,35 @@ class ProgSetAccessibilityService : AccessibilityService() {
             )
         } catch (e: Exception) {
             logger.e("ProgSetAccessibilityService", "Failed to set MediaProjection", e)
+            mediaProjection = null
         }
     }
 
     fun hasMediaProjection(): Boolean = mediaProjection != null
 
+    /** Use this for capture UX: service field can be set while verifier init failed. */
+    fun isScreenCaptureProjectionReady(): Boolean = screenshotVerifier.hasMediaProjection()
+
     fun openMainActivityForMediaProjection() {
         logger.d("ProgSetAccessibilityService", "openMainActivityForMediaProjection() called")
-        val intent = Intent(context, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            putExtra("requestMediaProjection", true)
+        try {
+            // NEW_TASK is required from a Service context. Do not use NO_HISTORY here: when the
+            // system screen-capture consent activity opens, the activity would be finished before
+            // onActivityResult runs, so permission is never applied.
+            val intent = Intent(this, MainActivity::class.java).apply {
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                )
+                putExtra("requestMediaProjection", true)
+            }
+            logger.d("ProgSetAccessibilityService", "Starting MainActivity with intent: $intent")
+            startActivity(intent)
+            logger.d("ProgSetAccessibilityService", "MainActivity startActivity called successfully")
+        } catch (e: Exception) {
+            logger.e("ProgSetAccessibilityService", "Failed to start MainActivity", e)
         }
-        context.startActivity(intent)
     }
 
     fun showOverlay(): Boolean = overlayManager.show()

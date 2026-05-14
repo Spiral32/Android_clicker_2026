@@ -18,7 +18,9 @@ class PermissionGateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
+    // All required and optional permissions granted
     if (permissionStatus.areAllGranted) {
       return Card(
         child: Padding(
@@ -28,7 +30,8 @@ class PermissionGateCard extends StatelessWidget {
       );
     }
 
-    final nextPermission = permissionStatus.nextRequiredPermission!;
+    final nextRequired = permissionStatus.nextRequiredPermission;
+    final nextOptional = permissionStatus.nextOptionalPermission;
 
     return Card(
       child: Padding(
@@ -38,15 +41,45 @@ class PermissionGateCard extends StatelessWidget {
           children: [
             Text(
               l10n.permissionsTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            Text(_description(context, nextPermission)),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: isLoading ? null : () => onActionPressed(nextPermission),
-              child: Text(_actionLabel(context, nextPermission)),
-            ),
+            
+            // Required permissions section
+            if (nextRequired != null) ...[
+              Text(
+                _description(context, nextRequired),
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: isLoading ? null : () => onActionPressed(nextRequired),
+                child: Text(_actionLabel(context, nextRequired)),
+              ),
+            ],
+            
+            // Optional permissions section (shown only when required are done)
+            if (nextRequired == null && nextOptional != null) ...[
+              const Divider(height: 24),
+              Text(
+                'Optional: ${_description(context, nextOptional)}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: isLoading ? null : () => onActionPressed(nextOptional),
+                child: Text(_actionLabel(context, nextOptional)),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'You can skip this and use the app without screen verification.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ],
         ),
       ),

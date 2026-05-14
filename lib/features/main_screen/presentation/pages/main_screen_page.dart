@@ -157,7 +157,7 @@ class _MainScreenViewState extends State<_MainScreenView>
         builder: (context, mainState) {
           return BlocBuilder<ScenarioBloc, ScenarioState>(
             builder: (context, scenarioState) {
-              final actionsEnabled = mainState.permissionStatus.areAllGranted;
+              final actionsEnabled = mainState.permissionStatus.areExecutionPermissionsGranted;
 
               return Scaffold(
                 appBar: AppBar(
@@ -229,7 +229,7 @@ class _MainScreenViewState extends State<_MainScreenView>
                                     ? l10n.mainAutostartActionDisable
                                     : l10n.mainAutostartActionEnable,
                                 onPressed: (mainState
-                                            .permissionStatus.areAllGranted &&
+                                            .permissionStatus.areExecutionPermissionsGranted &&
                                         !mainState
                                             .recorderSummary.isRecording &&
                                         !mainState.isOverlayActionInProgress)
@@ -274,7 +274,7 @@ class _MainScreenViewState extends State<_MainScreenView>
                           ),
                         ),
                       ),
-                      if (!mainState.permissionStatus.areAllGranted)
+                      if (!mainState.permissionStatus.areExecutionPermissionsGranted)
                         Padding(
                           padding: const EdgeInsets.all(16),
                           child: PermissionGateCard(
@@ -626,7 +626,7 @@ class _MainScreenViewState extends State<_MainScreenView>
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-              child: Text(l10n.save),
+              child: Text(l10n.scenarioStartRecording),
             ),
           ],
         );

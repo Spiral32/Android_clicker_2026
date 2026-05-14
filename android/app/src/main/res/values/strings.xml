@@ -9,4 +9,7 @@
     <string name="recorder_long_press_btn">Long Press</string>
     <string name="recorder_double_tap_btn">Double Tap</string>
     <string name="point_capture_hint">Touch the screen to record coordinates</string>
+    <string name="media_projection_notification_channel_name">Screen capture</string>
+    <string name="media_projection_notification_title">Screen capture active</string>
+    <string name="media_projection_notification_text">Used for screenshot verification while recording or executing.</string>
 </resources>

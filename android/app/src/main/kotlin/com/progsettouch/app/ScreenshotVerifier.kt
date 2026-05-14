@@ -8,7 +8,7 @@ import android.hardware.display.VirtualDisplay
 import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
-import android.media.projection.MediaProjectionManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -40,6 +40,7 @@ class ScreenshotVerifier(
 
     // MediaProjection
     private var mediaProjection: MediaProjection? = null
+    private var mediaProjectionCallback: MediaProjection.Callback? = null
     private var virtualDisplay: VirtualDisplay? = null
     private var imageReader: ImageReader? = null
 
@@ -54,9 +55,50 @@ class ScreenshotVerifier(
     /**
      * Initialize with MediaProjection (must be obtained from user consent).
      */
-    fun initialize(mediaProjection: MediaProjection) {
-        this.mediaProjection = mediaProjection
+    fun initialize(newProjection: MediaProjection) {
+        synchronized(captureLock) {
+            unregisterMediaProjectionCallback()
+            virtualDisplay?.release()
+            imageReader?.close()
+            virtualDisplay = null
+            imageReader = null
+            mediaProjection?.stop()
+            mediaProjection = newProjection
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                val cb =
+                    object : MediaProjection.Callback() {
+                        override fun onStop() {
+                            logger.w("ScreenshotVerifier", "MediaProjection onStop")
+                            mainHandler.post {
+                                MediaProjectionForegroundService.stop(context.applicationContext)
+                                synchronized(captureLock) {
+                                    unregisterMediaProjectionCallback()
+                                    virtualDisplay?.release()
+                                    imageReader?.close()
+                                    virtualDisplay = null
+                                    imageReader = null
+                                    mediaProjection = null
+                                }
+                            }
+                        }
+                    }
+                mediaProjectionCallback = cb
+                newProjection.registerCallback(cb, mainHandler)
+            }
+        }
         logger.i("ScreenshotVerifier", "Initialized with MediaProjection")
+    }
+
+    private fun unregisterMediaProjectionCallback() {
+        val proj = mediaProjection
+        val cb = mediaProjectionCallback
+        if (proj != null && cb != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
+                proj.unregisterCallback(cb)
+            } catch (_: Exception) {
+            }
+        }
+        mediaProjectionCallback = null
     }
 
     /**
@@ -69,6 +111,7 @@ class ScreenshotVerifier(
      */
     fun release() {
         synchronized(captureLock) {
+            unregisterMediaProjectionCallback()
             virtualDisplay?.release()
             imageReader?.close()
             mediaProjection?.stop()
@@ -77,6 +120,7 @@ class ScreenshotVerifier(
             imageReader = null
             mediaProjection = null
         }
+        MediaProjectionForegroundService.stop(context.applicationContext)
         logger.i("ScreenshotVerifier", "Released resources")
     }
 

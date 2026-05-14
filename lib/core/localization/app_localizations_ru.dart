@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -40,7 +42,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mainOpenSettings => 'Настройки';
 
   @override
-  String get mainRecorderTip => 'Запись работает в пошаговом неблокирующем режиме. После старта используйте панель записи поверх экрана, чтобы добавлять тапы, двойные тапы, долгие нажатия и свайпы.';
+  String get mainRecorderTip =>
+      'Запись работает в пошаговом неблокирующем режиме. После старта используйте панель записи поверх экрана, чтобы добавлять тапы, двойные тапы, долгие нажатия и свайпы.';
 
   @override
   String get mainRecorderOpenPanel => 'Открыть панель записи';
@@ -88,19 +91,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsAutostartTitle => 'Автозапуск';
 
   @override
-  String get settingsAutostartSubtitle => 'Управляйте восстановлением расписаний после перезагрузки устройства.';
+  String get settingsAutostartSubtitle =>
+      'Управляйте восстановлением расписаний после перезагрузки устройства.';
 
   @override
-  String get settingsAutostartToggleTitle => 'Включить автозапуск после перезагрузки';
+  String get settingsAutostartToggleTitle =>
+      'Включить автозапуск после перезагрузки';
 
   @override
-  String get settingsAutostartToggleSubtitle => 'Если выключено, BOOT_COMPLETED не восстанавливает расписания автоматически.';
+  String get settingsAutostartToggleSubtitle =>
+      'Если выключено, BOOT_COMPLETED не восстанавливает расписания автоматически.';
 
   @override
-  String get settingsAutostartEnabledMessage => 'Автозапуск после перезагрузки включен.';
+  String get settingsAutostartEnabledMessage =>
+      'Автозапуск после перезагрузки включен.';
 
   @override
-  String get settingsAutostartDisabledMessage => 'Автозапуск после перезагрузки отключен.';
+  String get settingsAutostartDisabledMessage =>
+      'Автозапуск после перезагрузки отключен.';
 
   @override
   String get settingsAutostartChangeError => 'Не удалось изменить автозапуск.';
@@ -109,55 +117,70 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsMediaProjectionTitle => 'MediaProjection';
 
   @override
-  String get settingsMediaProjectionSubtitle => 'Разрешение нужно только для функций захвата экрана и проверки скриншотов.';
+  String get settingsMediaProjectionSubtitle =>
+      'Разрешение нужно только для функций захвата экрана и проверки скриншотов.';
 
   @override
-  String get settingsMediaProjectionStatusGranted => 'Статус: разрешение выдано';
+  String get settingsMediaProjectionStatusGranted =>
+      'Статус: разрешение выдано';
 
   @override
-  String get settingsMediaProjectionStatusMissing => 'Статус: разрешение не выдано';
+  String get settingsMediaProjectionStatusMissing =>
+      'Статус: разрешение не выдано';
 
   @override
-  String get settingsMediaProjectionRequestAction => 'Запросить MediaProjection вручную';
+  String get settingsMediaProjectionRequestAction =>
+      'Запросить MediaProjection вручную';
 
   @override
-  String get settingsMediaProjectionGrantedMessage => 'MediaProjection разрешение получено.';
+  String get settingsMediaProjectionGrantedMessage =>
+      'MediaProjection разрешение получено.';
 
   @override
-  String get settingsMediaProjectionDeniedMessage => 'MediaProjection разрешение не получено.';
+  String get settingsMediaProjectionDeniedMessage =>
+      'MediaProjection разрешение не получено.';
 
   @override
-  String get settingsMediaProjectionRequestError => 'Не удалось запросить MediaProjection.';
+  String get settingsMediaProjectionRequestError =>
+      'Не удалось запросить MediaProjection.';
 
   @override
   String get settingsExactAlarmTitle => 'Точные будильники';
 
   @override
-  String get settingsExactAlarmSubtitle => 'Для максимально точного срабатывания расписания разрешите точные будильники в системных настройках Android.';
+  String get settingsExactAlarmSubtitle =>
+      'Для максимально точного срабатывания расписания разрешите точные будильники в системных настройках Android.';
 
   @override
-  String get settingsExactAlarmStatusAllowed => 'Статус: точные будильники разрешены';
+  String get settingsExactAlarmStatusAllowed =>
+      'Статус: точные будильники разрешены';
 
   @override
-  String get settingsExactAlarmStatusLimited => 'Статус: точные будильники ограничены, возможна задержка запуска';
+  String get settingsExactAlarmStatusLimited =>
+      'Статус: точные будильники ограничены, возможна задержка запуска';
 
   @override
-  String get settingsExactAlarmOpenAction => 'Открыть настройки точных будильников';
+  String get settingsExactAlarmOpenAction =>
+      'Открыть настройки точных будильников';
 
   @override
-  String get settingsExactAlarmOpenError => 'Не удалось открыть настройки точных будильников.';
+  String get settingsExactAlarmOpenError =>
+      'Не удалось открыть настройки точных будильников.';
 
   @override
-  String get settingsDiagnosticsLoadError => 'Не удалось загрузить диагностику.';
+  String get settingsDiagnosticsLoadError =>
+      'Не удалось загрузить диагностику.';
 
   @override
-  String get settingsLogExportedMessage => 'Лог экспортирован в папку Download.';
+  String get settingsLogExportedMessage =>
+      'Лог экспортирован в папку Download.';
 
   @override
   String get settingsLogExportError => 'Не удалось экспортировать лог.';
 
   @override
-  String get settingsLogOpenLocationError => 'Не удалось открыть расположение лог-файла.';
+  String get settingsLogOpenLocationError =>
+      'Не удалось открыть расположение лог-файла.';
 
   @override
   String get settingsLogClearedMessage => 'Буфер логов очищен.';
@@ -169,13 +192,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsWebSocketTitle => 'WebSocket';
 
   @override
-  String get settingsWebSocketSubtitle => 'Управляйте встроенным сервером для удалённых команд и диагностики.';
+  String get settingsWebSocketSubtitle =>
+      'Управляйте встроенным сервером для удалённых команд и диагностики.';
 
   @override
   String get settingsWebSocketEnableTitle => 'Включить сервер';
 
   @override
-  String get settingsWebSocketEnableSubtitle => 'Запускает WebSocket-сервер с одним клиентом и токен-авторизацией (предпочтительно через Authorization: Bearer).';
+  String get settingsWebSocketEnableSubtitle =>
+      'Запускает WebSocket-сервер с одним клиентом и токен-авторизацией (предпочтительно через Authorization: Bearer).';
 
   @override
   String get settingsWebSocketEnableAction => 'Включить сервер';
@@ -229,28 +254,34 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsWebSocketRefreshAction => 'Обновить';
 
   @override
-  String get settingsWebSocketUnavailableAddress => 'Сейчас нет доступного локального IPv4-адреса.';
+  String get settingsWebSocketUnavailableAddress =>
+      'Сейчас нет доступного локального IPv4-адреса.';
 
   @override
-  String get settingsWebSocketLoadError => 'Не удалось загрузить статус WebSocket';
+  String get settingsWebSocketLoadError =>
+      'Не удалось загрузить статус WebSocket';
 
   @override
-  String get settingsWebSocketTimeoutError => 'Статус WebSocket не ответил вовремя. Попробуйте обновить ещё раз.';
+  String get settingsWebSocketTimeoutError =>
+      'Статус WebSocket не ответил вовремя. Попробуйте обновить ещё раз.';
 
   @override
-  String get settingsWebSocketPortError => 'Порт должен быть в диапазоне 1024-65535.';
+  String get settingsWebSocketPortError =>
+      'Порт должен быть в диапазоне 1024-65535.';
 
   @override
   String get settingsDiagnosticsTitle => 'Диагностика и логи';
 
   @override
-  String get settingsDiagnosticsSubtitle => 'Управляйте режимом логирования и быстро экспортируйте лог-файл.';
+  String get settingsDiagnosticsSubtitle =>
+      'Управляйте режимом логирования и быстро экспортируйте лог-файл.';
 
   @override
   String get settingsEnableLoggingTitle => 'Включить логирование';
 
   @override
-  String get settingsEnableLoggingSubtitle => 'Собирать технические логи для диагностики';
+  String get settingsEnableLoggingSubtitle =>
+      'Собирать технические логи для диагностики';
 
   @override
   String get settingsLogToFileTitle => 'Запись лога в файл';
@@ -292,7 +323,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsErrorExportingLogsPrefix => 'Ошибка экспорта логов';
 
   @override
-  String get settingsNoExportedLogsToShare => 'Нет экспортированных логов для отправки. Сначала выполните экспорт.';
+  String get settingsNoExportedLogsToShare =>
+      'Нет экспортированных логов для отправки. Сначала выполните экспорт.';
 
   @override
   String get settingsGenericErrorPrefix => 'Ошибка';
@@ -301,10 +333,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsPermissionsAllGranted => 'Все ключевые разрешения выданы.';
 
   @override
-  String get settingsPermissionsMissingSummary => 'Не все необходимые права выданы.';
+  String get settingsPermissionsMissingSummary =>
+      'Не все необходимые права выданы.';
 
   @override
-  String get settingsPermissionAccessibilityLabel => 'Служба специальных возможностей';
+  String get settingsPermissionAccessibilityLabel =>
+      'Служба специальных возможностей';
 
   @override
   String get settingsPermissionOverlayLabel => 'Отображение поверх окон';
@@ -319,7 +353,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsPermissionMissing => 'не выдано';
 
   @override
-  String get settingsExecutionPermissionsRequired => 'Для выполнения сценариев сначала выдайте обязательные разрешения. ';
+  String get settingsExecutionPermissionsRequired =>
+      'Для выполнения сценариев сначала выдайте обязательные разрешения. ';
 
   @override
   String get settingsLogSourceLabel => 'Источник';
@@ -337,22 +372,27 @@ class AppLocalizationsRu extends AppLocalizations {
   String get permissionsTitle => 'Разрешения';
 
   @override
-  String get permissionsAllGranted => 'Все обязательные разрешения выданы. Основные действия разблокированы.';
+  String get permissionsAllGranted =>
+      'Все обязательные разрешения выданы. Основные действия разблокированы.';
 
   @override
-  String get permissionsAccessibilityDescription => 'Сначала включите сервис специальных возможностей для Prog Set Touch. Без него автоматизация нажатий не может быть запущена.';
+  String get permissionsAccessibilityDescription =>
+      'Сначала включите сервис специальных возможностей для Prog Set Touch. Без него автоматизация нажатий не может быть запущена.';
 
   @override
-  String get permissionsAccessibilityAction => 'Открыть настройки специальных возможностей';
+  String get permissionsAccessibilityAction =>
+      'Открыть настройки специальных возможностей';
 
   @override
-  String get permissionsOverlayDescription => 'Затем разрешите отображение поверх других окон. Это нужно для фонового интерфейса и последующей overlay-кнопки.';
+  String get permissionsOverlayDescription =>
+      'Затем разрешите отображение поверх других окон. Это нужно для фонового интерфейса и последующей overlay-кнопки.';
 
   @override
   String get permissionsOverlayAction => 'Открыть настройки overlay';
 
   @override
-  String get permissionsMediaProjectionDescription => 'Разрешение на захват экрана запрашивается отдельно, только для функций скриншотов и экранной верификации.';
+  String get permissionsMediaProjectionDescription =>
+      'Разрешение на захват экрана запрашивается отдельно, только для функций скриншотов и экранной верификации.';
 
   @override
   String get permissionsMediaProjectionAction => 'Запросить MediaProjection';
@@ -400,7 +440,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recorderClearConfirmTitle => 'Подтверждение';
 
   @override
-  String get recorderClearConfirmMessage => 'Вы уверены, что хотите стереть текущую запись?';
+  String get recorderClearConfirmMessage =>
+      'Вы уверены, что хотите стереть текущую запись?';
 
   @override
   String get commonConfirm => 'Да';
@@ -446,16 +487,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsRestoreAppTitle => 'Восстановить приложение';
 
   @override
-  String get settingsRestoreAppSubtitle => 'Открыть приложение после завершения выполнения сценария';
+  String get settingsRestoreAppSubtitle =>
+      'Открыть приложение после завершения выполнения сценария';
 
   @override
   String get settingsVisualVerificationTitle => 'Визуальная верификация';
 
   @override
-  String get settingsVisualVerificationSubtitle => 'Глобальный переключатель проверки скриншотов во время выполнения';
+  String get settingsVisualVerificationSubtitle =>
+      'Глобальный переключатель проверки скриншотов во время выполнения';
 
   @override
-  String get settingsRestoreAppChangeError => 'Не удалось изменить настройку восстановления приложения';
+  String get settingsRestoreAppChangeError =>
+      'Не удалось изменить настройку восстановления приложения';
 
   @override
   String get statusUnavailable => 'Недоступно';
@@ -464,7 +508,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorPlatformLoad => 'Не удалось загрузить данные платформы';
 
   @override
-  String get errorPermissionAction => 'Не удалось выполнить действие для разрешения';
+  String get errorPermissionAction =>
+      'Не удалось выполнить действие для разрешения';
 
   @override
   String get errorOverlayAction => 'Не удалось изменить состояние overlay';
@@ -473,13 +518,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorRecorderAction => 'Не удалось изменить состояние рекордера';
 
   @override
-  String get errorRecorderNeedsOverlay => 'Перед началом записи включите плавающую кнопку';
+  String get errorRecorderNeedsOverlay =>
+      'Перед началом записи включите плавающую кнопку';
 
   @override
   String get errorExecutionAction => 'Не удалось выполнить сценарий';
 
   @override
-  String get errorExecutionNotAllowed => 'Выполнение недоступно в текущем состоянии';
+  String get errorExecutionNotAllowed =>
+      'Выполнение недоступно в текущем состоянии';
 
   @override
   String get errorExecutionPauseFailed => 'Не удалось приостановить выполнение';
@@ -494,7 +541,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noSchedulesMessage => 'Расписаний пока нет';
 
   @override
-  String get noSchedulesDescription => 'Создайте первое расписание для автоматизации выполнения сценариев';
+  String get noSchedulesDescription =>
+      'Создайте первое расписание для автоматизации выполнения сценариев';
 
   @override
   String get deleteScheduleTitle => 'Удалить расписание';
@@ -556,13 +604,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scheduleScenarioRequired => 'Выберите сценарий';
 
   @override
-  String get scheduleScenarioRequiredToCreate => 'Сначала создайте хотя бы один сценарий';
+  String get scheduleScenarioRequiredToCreate =>
+      'Сначала создайте хотя бы один сценарий';
 
   @override
   String get scheduleScenarioMissing => 'Сценарий не найден';
 
   @override
   String get save => 'Сохранить';
+
+  @override
+  String get scenarioStartRecording => 'Начать запись';
 
   @override
   String get settingsAboutTitle => 'О программе';
@@ -577,34 +629,40 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsAboutSectionBasics => 'Основы работы';
 
   @override
-  String get settingsAboutBasicsContent => 'Prog Set Touch — это умный автокликер, наделенный «зрением». В отличие от обычных кликеров, он может проверять изменения на экране с помощью визуальной верификации (скриншотов).';
+  String get settingsAboutBasicsContent =>
+      'Prog Set Touch — это умный автокликер, наделенный «зрением». В отличие от обычных кликеров, он может проверять изменения на экране с помощью визуальной верификации (скриншотов).';
 
   @override
   String get settingsAboutSectionRecording => 'Запись и редактор';
 
   @override
-  String get settingsAboutRecordingContent => 'Записывайте жесты (тапы, свайпы) с помощью плавающего виджета поверх других окон. Встроенный пошаговый редактор позволяет менять координаты, задержки и настраивать пороги проверок.';
+  String get settingsAboutRecordingContent =>
+      'Записывайте жесты (тапы, свайпы) с помощью плавающего виджета поверх других окон. Встроенный пошаговый редактор позволяет менять координаты, задержки и настраивать пороги проверок.';
 
   @override
   String get settingsAboutSectionExecution => 'Визуальный контроль';
 
   @override
-  String get settingsAboutExecutionContent => 'Если для шага включена проверка экрана, кликер сделает снимок до и после жеста. Настраивая Таймаут, Порог чувствительности (%) и опцию «Продолжить при ошибке», вы можете создавать надежные макросы, устойчивые к лагам и долгой загрузке.';
+  String get settingsAboutExecutionContent =>
+      'Если для шага включена проверка экрана, кликер сделает снимок до и после жеста. Настраивая Таймаут, Порог чувствительности (%) и опцию «Продолжить при ошибке», вы можете создавать надежные макросы, устойчивые к лагам и долгой загрузке.';
 
   @override
   String get settingsAboutSectionOverlay => 'Запуск и управление';
 
   @override
-  String get settingsAboutOverlayContent => 'Запускайте сценарии пакетами через Быстрый Запуск. Для стабильной работы рекомендуем настроить глобальную задержку между шагами в Настройках.';
+  String get settingsAboutOverlayContent =>
+      'Запускайте сценарии пакетами через Быстрый Запуск. Для стабильной работы рекомендуем настроить глобальную задержку между шагами в Настройках.';
 
   @override
   String get settingsAboutSectionPermissions => 'Безопасность и разрешения';
 
   @override
-  String get settingsAboutPermissionsContent => 'Для работы требуются разрешения на Спец. возможности (имитация нажатий), Отображение поверх окон (запись) и MediaProjection (только для визуальной верификации).';
+  String get settingsAboutPermissionsContent =>
+      'Для работы требуются разрешения на Спец. возможности (имитация нажатий), Отображение поверх окон (запись) и MediaProjection (только для визуальной верификации).';
 
   @override
-  String get scenarioEditWhileExecutingRejected => 'Нельзя редактировать шаги во время выполнения';
+  String get scenarioEditWhileExecutingRejected =>
+      'Нельзя редактировать шаги во время выполнения';
 
   @override
   String get scenarioStepEditorAddStep => 'Добавить шаг';
@@ -613,7 +671,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scenarioStepEditorVerificationLabel => 'Проверка изменений экрана';
 
   @override
-  String get scenarioStepEditorVerificationSubtitle => 'Проверять, изменилось ли содержимое экрана после выполнения этого шага';
+  String get scenarioStepEditorVerificationSubtitle =>
+      'Проверять, изменилось ли содержимое экрана после выполнения этого шага';
 
   @override
   String get scenarioStepEditorThresholdLabel => 'Порог чувствительности (%)';
@@ -630,7 +689,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scenarioStepEditorTimeoutHelper => 'От 1 до 300 секунд (5 мин)';
 
   @override
-  String get scenarioStepEditorContinueOnFailure => 'Остановить текущий и продолжить следующий сценарий при ошибке';
+  String get scenarioStepEditorContinueOnFailure =>
+      'Остановить текущий и продолжить следующий сценарий при ошибке';
 
   @override
   String get scenarioScreenTitle => 'Сценарии';
@@ -660,16 +720,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scenarioColumnSteps => 'Шаги';
 
   @override
-  String get scenarioEmptyNotAllowed => 'Нельзя сохранить пустой сценарий. Сначала запишите хотя бы одно действие.';
+  String get scenarioEmptyNotAllowed =>
+      'Нельзя сохранить пустой сценарий. Сначала запишите хотя бы одно действие.';
 
   @override
   String get scenarioLimitReached => 'Допустимо максимум 50 сценариев.';
 
   @override
-  String get scenarioNameMustBeUnique => 'Название сценария должно быть уникальным.';
+  String get scenarioNameMustBeUnique =>
+      'Название сценария должно быть уникальным.';
 
   @override
-  String get scenarioQuickLaunchEmpty => 'Не выбраны сценарии для быстрого запуска.';
+  String get scenarioQuickLaunchEmpty =>
+      'Не выбраны сценарии для быстрого запуска.';
 
   @override
   String get scenarioRunAllEmpty => 'Нет включенных сценариев для запуска.';
@@ -752,13 +815,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notesLatestChangesTitle => 'Последние изменения';
 
   @override
-  String get notesExportCrashFix => 'Исправлен вылет при экспорте настроек/логов.';
+  String get notesExportCrashFix =>
+      'Исправлен вылет при экспорте настроек/логов.';
 
   @override
-  String get notesMainScreenRedesign => 'Главный экран переработан: улучшена читаемость статусов и блоков действий.';
+  String get notesMainScreenRedesign =>
+      'Главный экран переработан: улучшена читаемость статусов и блоков действий.';
 
   @override
-  String get notesSchedulerScenarioVisible => 'В карточке планировщика теперь видно выбранный сценарий.';
+  String get notesSchedulerScenarioVisible =>
+      'В карточке планировщика теперь видно выбранный сценарий.';
 
   @override
   String get scenarioStepEditorOpen => 'Редактировать шаги';
@@ -767,10 +833,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scenarioStepEditorSaved => 'Шаги сценария сохранены.';
 
   @override
-  String get scenarioStepEditorSaveFailed => 'Не удалось сохранить шаги сценария.';
+  String get scenarioStepEditorSaveFailed =>
+      'Не удалось сохранить шаги сценария.';
 
   @override
-  String get scenarioStepEditorLoadFailed => 'Не удалось загрузить шаги сценария';
+  String get scenarioStepEditorLoadFailed =>
+      'Не удалось загрузить шаги сценария';
 
   @override
   String scenarioStepEditorTitle(Object name) {
@@ -778,7 +846,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get scenarioStepEditorSubtitle => 'Изменяйте порядок шагов, параметры жестов и задержку после каждого шага.';
+  String get scenarioStepEditorSubtitle =>
+      'Изменяйте порядок шагов, параметры жестов и задержку после каждого шага.';
 
   @override
   String scenarioStepEditorCount(Object count) {
@@ -818,7 +887,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scenarioStepEditorEndYLabel => 'End Y';
 
   @override
-  String get scenarioStepEditorInvalidValues => 'Введите корректные числовые значения для шага.';
+  String get scenarioStepEditorInvalidValues =>
+      'Введите корректные числовые значения для шага.';
 
   @override
   String scenarioStepEditorPointerCount(Object count) {
@@ -858,14 +928,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scenarioStepTypeSwipe => 'Свайп';
 
   @override
-  String get scenarioEditBlockedWhileExecuting => 'Нельзя редактировать шаги сценария во время выполнения.';
+  String get scenarioEditBlockedWhileExecuting =>
+      'Нельзя редактировать шаги сценария во время выполнения.';
 
   @override
-  String get scenarioDeleteBlockedWhileExecuting => 'Нельзя удалить сценарий во время выполнения.';
+  String get scenarioDeleteBlockedWhileExecuting =>
+      'Нельзя удалить сценарий во время выполнения.';
 
   @override
-  String get scenarioImportBlockedWhileExecuting => 'Нельзя импортировать сценарии во время выполнения.';
+  String get scenarioImportBlockedWhileExecuting =>
+      'Нельзя импортировать сценарии во время выполнения.';
 
   @override
-  String get scenarioReorderBlockedWhileExecuting => 'Нельзя менять порядок сценариев во время выполнения.';
+  String get scenarioReorderBlockedWhileExecuting =>
+      'Нельзя менять порядок сценариев во время выполнения.';
 }

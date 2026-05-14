@@ -67,6 +67,8 @@ class RecorderManager(
                 "screenshotVerifier.hasMediaProjection()=${screenshotVerifier.hasMediaProjection()}"
         )
 
+        tryAttachCachedMediaProjectionToService()
+
         if (recordedActions.isEmpty()) {
             logger.w("RecorderManager", "No recorded actions - showing toast")
             mainHandler.post {
@@ -156,6 +158,22 @@ class RecorderManager(
                         .show()
             }
         }
+    }
+
+    /**
+     * If MainActivity already holds a token (user granted consent) but the accessibility pipeline
+     * was not wired yet, attach it before treating projection as missing.
+     */
+    private fun tryAttachCachedMediaProjectionToService() {
+        if (screenshotVerifier.hasMediaProjection()) return
+        val projection = MainActivity.peekCachedMediaProjection() ?: return
+        val service = context as? ProgSetAccessibilityService ?: return
+        logger.i(
+                "RecorderManager",
+                "Applying MainActivity cached MediaProjection to accessibility service / verifier",
+        )
+        service.setMediaProjection(projection)
+        MediaProjectionForegroundService.start(context)
     }
 
     init {
@@ -780,11 +798,13 @@ class RecorderManager(
         container.addView(longPressBtn)
         container.addView(doubleTapBtn)
 
-        val screenshotBtn =
-                createActionButton(android.R.drawable.ic_menu_camera, "Screenshot") {
-                    captureScreenshotForPreviousAction()
-                }
-        container.addView(screenshotBtn)
+        if (globalVerificationEnabled) {
+            val screenshotBtn =
+                    createActionButton(android.R.drawable.ic_menu_camera, "Screenshot") {
+                        captureScreenshotForPreviousAction()
+                    }
+            container.addView(screenshotBtn)
+        }
 
         container.addView(stopBtn)
         return container

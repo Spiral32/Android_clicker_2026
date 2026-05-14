@@ -16,7 +16,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         centerTitle: false,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,
         margin: const EdgeInsets.only(bottom: 12),

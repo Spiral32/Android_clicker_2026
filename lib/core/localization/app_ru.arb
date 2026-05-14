@@ -184,6 +184,7 @@
   "scheduleScenarioRequiredToCreate": "Сначала создайте хотя бы один сценарий",
   "scheduleScenarioMissing": "Сценарий не найден",
   "save": "Сохранить",
+  "scenarioStartRecording": "Начать запись",
   "settingsAboutTitle": "О программе",
   "settingsAboutSubtitle": "Как пользоваться Prog Set Touch",
   "settingsAboutDescriptionTitle": "Описание работы",

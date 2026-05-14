@@ -83,7 +83,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
 
       var overlayStatus = snapshot.overlayStatus;
 
-      if (snapshot.permissionStatus.areAllGranted &&
+      if (snapshot.permissionStatus.areExecutionPermissionsGranted &&
           !overlayStatus.visible &&
           !snapshot.recorderSummary.isRecording) {
         overlayStatus = await _platformBridgeRepository.showOverlay();
@@ -180,7 +180,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     MainScreenOverlayToggleRequested event,
     Emitter<MainScreenState> emit,
   ) async {
-    if (!state.permissionStatus.areAllGranted) {
+    if (!state.permissionStatus.areExecutionPermissionsGranted) {
       return;
     }
 
@@ -220,7 +220,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     MainScreenRecorderStartRequested event,
     Emitter<MainScreenState> emit,
   ) async {
-    if (!state.permissionStatus.areAllGranted) {
+    if (!state.permissionStatus.areExecutionPermissionsGranted) {
       return;
     }
 
@@ -445,7 +445,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     MainScreenExecutionStartRequested event,
     Emitter<MainScreenState> emit,
   ) async {
-    if (!state.permissionStatus.areAllGranted) {
+    if (!state.permissionStatus.areExecutionPermissionsGranted) {
       return;
     }
 

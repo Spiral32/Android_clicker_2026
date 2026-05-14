@@ -10,45 +10,120 @@ import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.provider.Settings
 import android.text.TextUtils
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
 import java.util.Locale
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
+
+    /** Must match [onActivityResult] handling for screen capture consent. */
+    private val mediaProjectionRequestCode = 0x4d50 // "MP"
+
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
+        android.util.Log.d("MainActivity", "onCreate called")
         handleIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        android.util.Log.d("MainActivity", "onNewIntent called")
         setIntent(intent)
         handleIntent(intent)
+        scheduleMediaProjectionAutoRequestIfPending("onNewIntent")
+    }
+
+    /** Single post for onNewIntent + onResume so we do not queue two triggers in one frame. */
+    private fun scheduleMediaProjectionAutoRequestIfPending(source: String) {
+        if (!shouldAutoRequestMediaProjection) return
+        if (mediaProjectionAutoPostScheduled) return
+        mediaProjectionAutoPostScheduled = true
+        LogManager.getInstance(this).i(
+            "MainActivity",
+            "$source: scheduling auto MediaProjection consent (single queued post)",
+        )
+        window.decorView.post {
+            mediaProjectionAutoPostScheduled = false
+            triggerMediaProjectionRequest()
+        }
     }
 
     private fun handleIntent(intent: Intent?) {
-        if (intent?.getBooleanExtra("requestMediaProjection", false) == true) {
-            android.util.Log.d("MainActivity", "handleIntent: requestMediaProjection=true")
-            if (!isFinishing && !isDestroyed) {
-                // We need to wait for Flutter to be ready, but we don't have pendingResult
-                // For now, just log and let the user press the button in UI
-                // We'll handle it in _requestMediaProjection from Flutter-side
-                android.util.Log.d("MainActivity", "MediaProjection requested from overlay - user should use UI")
+        val hasExtra = intent?.hasExtra("requestMediaProjection") == true
+        val value = intent?.getBooleanExtra("requestMediaProjection", false) == true
+        android.util.Log.d("MainActivity", "handleIntent: hasExtra=$hasExtra, value=$value")
+        if (value) {
+            android.util.Log.d("MainActivity", "handleIntent: scheduling auto-request")
+            shouldAutoRequestMediaProjection = true
+            intent.removeExtra("requestMediaProjection")
+        }
+    }
+    
+    private fun triggerMediaProjectionRequest() {
+        val log = LogManager.getInstance(this)
+        log.i("MainActivity", "triggerMediaProjectionRequest: entered")
+        shouldAutoRequestMediaProjection = false
+
+        val service = ProgSetAccessibilityService.instance
+        if (service?.isScreenCaptureProjectionReady() == true) {
+            log.i("MainActivity", "triggerMediaProjectionRequest: verifier already ready, skip")
+            return
+        }
+
+        val cached = peekCachedMediaProjection()
+        if (cached != null && service != null) {
+            log.i("MainActivity", "triggerMediaProjectionRequest: attaching cached token to service")
+            service.setMediaProjection(cached)
+            try {
+                MediaProjectionForegroundService.start(this)
+            } catch (e: Exception) {
+                log.e("MainActivity", "MediaProjectionForegroundService.start failed", e)
             }
+            return
+        }
+
+        if (isMediaProjectionRequestInFlight) {
+            log.w("MainActivity", "triggerMediaProjectionRequest: request already in flight")
+            return
+        }
+
+        val projectionManager =
+            getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
+        if (projectionManager == null) {
+            log.e("MainActivity", "triggerMediaProjectionRequest: MediaProjectionManager null", null)
+            return
+        }
+        if (isFinishing || isDestroyed) {
+            log.w("MainActivity", "triggerMediaProjectionRequest: activity finishing/destroyed")
+            return
+        }
+
+        try {
+            isMediaProjectionRequestInFlight = true
+            val captureIntent = projectionManager.createScreenCaptureIntent()
+            log.i("MainActivity", "triggerMediaProjectionRequest: launching system capture consent (startActivityForResult)")
+            startActivityForResult(captureIntent, mediaProjectionRequestCode)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to launch MediaProjection consent", e)
+            log.e("MainActivity", "Failed to launch MediaProjection consent", e)
+            isMediaProjectionRequestInFlight = false
         }
     }
     private val channelName = "prog_set_touch/platform"
     private val flutterPrefsName = "FlutterSharedPreferences"
     private val autostartPrefsKey = "flutter.autostart_enabled"
     private var methodChannel: MethodChannel? = null
-    private val mediaProjectionRequestCode = 4242
     private var mediaProjectionGranted = false
     private var pendingMediaProjectionResult: MethodChannel.Result? = null
     @Volatile
     private var isMediaProjectionRequestInFlight = false
+    @Volatile
+    private var shouldAutoRequestMediaProjection = false
+    @Volatile
+    private var mediaProjectionAutoPostScheduled = false
     private lateinit var schedulerManager: SchedulerManager
     private lateinit var webSocketServerManager: WebSocketServerManager
 
@@ -67,7 +142,8 @@ class MainActivity : FlutterActivity() {
         fun peekCachedMediaProjection(): MediaProjection? = cachedMediaProjection
 
         @Synchronized
-        fun clearCachedMediaProjection() {
+        fun clearCachedMediaProjection(context: Context) {
+            MediaProjectionForegroundService.stop(context)
             cachedMediaProjection?.stop()
             cachedMediaProjection = null
         }
@@ -581,7 +657,7 @@ class MainActivity : FlutterActivity() {
                     return
                 }
 
-                if (!accessibilityService.hasMediaProjection()) {
+                if (!accessibilityService.isScreenCaptureProjectionReady()) {
                     result.error(
                         "media_projection_not_available",
                         "MediaProjection permission not granted.",
@@ -646,7 +722,10 @@ class MainActivity : FlutterActivity() {
     private fun requestMediaProjectionPermission(result: MethodChannel.Result) {
         peekCachedMediaProjection()?.let { cachedProjection ->
             mediaProjectionGranted = true
+            // Reset auto-request flag as we have permission now
+            shouldAutoRequestMediaProjection = false
             ProgSetAccessibilityService.instance?.setMediaProjection(cachedProjection)
+            MediaProjectionForegroundService.start(this)
             result.success(permissionStatusMap())
             return
         }
@@ -679,65 +758,116 @@ class MainActivity : FlutterActivity() {
 
         isMediaProjectionRequestInFlight = true
         pendingMediaProjectionResult = result
-        startActivityForResult(
-            projectionManager.createScreenCaptureIntent(),
-            mediaProjectionRequestCode,
-        )
+        val captureIntent = projectionManager.createScreenCaptureIntent()
+        try {
+            startActivityForResult(captureIntent, mediaProjectionRequestCode)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to launch MediaProjection request", e)
+            isMediaProjectionRequestInFlight = false
+            result.error(
+                "media_projection_start_failed",
+                e.message,
+                null,
+            )
+            pendingMediaProjectionResult = null
+        }
     }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == mediaProjectionRequestCode) {
-            isMediaProjectionRequestInFlight = false
-            mediaProjectionGranted = resultCode == Activity.RESULT_OK
-            android.util.Log.d("MainActivity", "MediaProjection result: granted=$mediaProjectionGranted, data=${data != null}")
-
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                try {
-                    val projectionManager =
-                        getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
-                    val projection = projectionManager?.getMediaProjection(resultCode, data)
-                    if (projection != null) {
-                        android.util.Log.d("MainActivity", "MediaProjection obtained successfully")
-                        cacheMediaProjection(projection)
-                        // Try to set it on service if available
-                        val service = ProgSetAccessibilityService.instance
-                        if (service != null) {
-                            service.setMediaProjection(projection)
-                            android.util.Log.d("MainActivity", "MediaProjection passed to service")
-                        } else {
-                            android.util.Log.w("MainActivity", "Service not available, projection cached for later")
-                        }
-                    } else {
-                        android.util.Log.e("MainActivity", "getMediaProjection returned null")
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("MainActivity", "Failed to get MediaProjection", e)
-                }
-            } else {
-                android.util.Log.w("MainActivity", "MediaProjection permission denied or no data")
-            }
-
-            val pendingResult = pendingMediaProjectionResult
-            pendingMediaProjectionResult = null
-            pendingResult?.success(permissionStatusMap())
+            LogManager.getInstance(this).i(
+                "MainActivity",
+                "onActivityResult: media projection flow resultCode=$resultCode hasData=${data != null}",
+            )
+            onMediaProjectionCaptureFinished(resultCode, data)
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
+    private fun onMediaProjectionCaptureFinished(resultCode: Int, data: Intent?) {
+        val log = LogManager.getInstance(this)
+        if (!isMediaProjectionRequestInFlight) {
+            log.w(
+                "MainActivity",
+                "onMediaProjectionCaptureFinished: inFlight was already false (duplicate or unexpected delivery)",
+            )
+        }
+        log.i(
+            "MainActivity",
+            "onMediaProjectionCaptureFinished: resultCode=$resultCode, hasData=${data != null}",
+        )
+        isMediaProjectionRequestInFlight = false
+        mediaProjectionGranted = resultCode == Activity.RESULT_OK
+        android.util.Log.d("MainActivity", "MediaProjection result: granted=$mediaProjectionGranted, data=${data != null}")
+
+        if (resultCode == Activity.RESULT_OK && data != null) {
+            try {
+                try {
+                    MediaProjectionForegroundService.start(this)
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "MediaProjectionForegroundService.start failed", e)
+                    log.e("MainActivity", "MediaProjectionForegroundService.start failed", e)
+                }
+
+                val projectionManager =
+                    getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
+                val projection = projectionManager?.getMediaProjection(resultCode, data)
+                if (projection != null) {
+                    android.util.Log.d("MainActivity", "MediaProjection obtained successfully")
+                    log.i("MainActivity", "getMediaProjection succeeded, caching and wiring to service")
+                    cacheMediaProjection(projection)
+                    val service = ProgSetAccessibilityService.instance
+                    if (service != null) {
+                        service.setMediaProjection(projection)
+                        android.util.Log.d("MainActivity", "MediaProjection passed to service")
+                        log.i("MainActivity", "MediaProjection passed to ProgSetAccessibilityService")
+                        log.i(
+                            "MainActivity",
+                            "verifierReady=${service.isScreenCaptureProjectionReady()}",
+                        )
+                    } else {
+                        android.util.Log.w("MainActivity", "Service not available, projection cached for later")
+                        log.w("MainActivity", "Accessibility service null; projection only in MainActivity cache")
+                    }
+                    android.util.Log.d("MainActivity", "Cached projection for future use")
+                } else {
+                    android.util.Log.e("MainActivity", "getMediaProjection returned null")
+                    log.e("MainActivity", "getMediaProjection returned null", null)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to get MediaProjection", e)
+                log.e("MainActivity", "Failed to get MediaProjection", e)
+            }
+        } else {
+            android.util.Log.w("MainActivity", "MediaProjection permission denied or no data, resultCode=$resultCode")
+            log.w("MainActivity", "MediaProjection denied or missing data (resultCode=$resultCode)")
+        }
+
+        shouldAutoRequestMediaProjection = false
+        val pendingResult = pendingMediaProjectionResult
+        pendingMediaProjectionResult = null
+        pendingResult?.success(permissionStatusMap())
+    }
+
     override fun onResume() {
         super.onResume()
+        android.util.Log.d("MainActivity", "onResume called, shouldAutoRequest=$shouldAutoRequestMediaProjection")
+
+        scheduleMediaProjectionAutoRequestIfPending("onResume")
+
         // Try to pass cached projection to service when it becomes available
         peekCachedMediaProjection()?.let { projection ->
             val service = ProgSetAccessibilityService.instance
-            if (service != null && !service.hasMediaProjection()) {
+            if (service != null && !service.isScreenCaptureProjectionReady()) {
                 service.setMediaProjection(projection)
                 mediaProjectionGranted = true
+                MediaProjectionForegroundService.start(this)
                 android.util.Log.d("MainActivity", "Passed cached projection to service in onResume")
             }
         }
     }
-
+    
     override fun onDestroy() {
         isMediaProjectionRequestInFlight = false
         val pendingResult = pendingMediaProjectionResult
@@ -752,7 +882,7 @@ class MainActivity : FlutterActivity() {
 
     private fun permissionStatusMap(): Map<String, Any> {
         val hasProjection =
-            (ProgSetAccessibilityService.instance?.hasMediaProjection() == true) ||
+            (ProgSetAccessibilityService.instance?.isScreenCaptureProjectionReady() == true) ||
                 peekCachedMediaProjection() != null
 
         return mapOf(

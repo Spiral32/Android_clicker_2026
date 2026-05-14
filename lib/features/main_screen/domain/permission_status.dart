@@ -17,8 +17,13 @@ class PermissionStatus extends Equatable {
         overlayGranted = false,
         mediaProjectionGranted = false;
 
+  /// All permissions including optional MediaProjection
   bool get areAllGranted =>
       accessibilityGranted && overlayGranted && mediaProjectionGranted;
+
+  /// Only required permissions for basic execution (without screen verification)
+  bool get areExecutionPermissionsGranted =>
+      accessibilityGranted && overlayGranted;
 
   PermissionType? get nextRequiredPermission {
     if (!accessibilityGranted) {
@@ -29,10 +34,14 @@ class PermissionStatus extends Equatable {
       return PermissionType.overlay;
     }
 
+    return null;
+  }
+
+  /// Get next optional permission that could be requested
+  PermissionType? get nextOptionalPermission {
     if (!mediaProjectionGranted) {
       return PermissionType.mediaProjection;
     }
-
     return null;
   }
 

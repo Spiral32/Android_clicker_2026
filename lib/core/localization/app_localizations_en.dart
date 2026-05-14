@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -40,7 +42,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mainOpenSettings => 'Settings';
 
   @override
-  String get mainRecorderTip => 'Recording works in a step-by-step non-blocking mode. After start, use the on-screen recorder panel to add taps, double taps, long presses, and swipes.';
+  String get mainRecorderTip =>
+      'Recording works in a step-by-step non-blocking mode. After start, use the on-screen recorder panel to add taps, double taps, long presses, and swipes.';
 
   @override
   String get mainRecorderOpenPanel => 'Open recorder panel';
@@ -88,64 +91,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAutostartTitle => 'Autostart';
 
   @override
-  String get settingsAutostartSubtitle => 'Control schedule restoration after device reboot.';
+  String get settingsAutostartSubtitle =>
+      'Control schedule restoration after device reboot.';
 
   @override
   String get settingsAutostartToggleTitle => 'Enable autostart after reboot';
 
   @override
-  String get settingsAutostartToggleSubtitle => 'When disabled, BOOT_COMPLETED does not restore schedules automatically.';
+  String get settingsAutostartToggleSubtitle =>
+      'When disabled, BOOT_COMPLETED does not restore schedules automatically.';
 
   @override
-  String get settingsAutostartEnabledMessage => 'Autostart after reboot is enabled.';
+  String get settingsAutostartEnabledMessage =>
+      'Autostart after reboot is enabled.';
 
   @override
-  String get settingsAutostartDisabledMessage => 'Autostart after reboot is disabled.';
+  String get settingsAutostartDisabledMessage =>
+      'Autostart after reboot is disabled.';
 
   @override
-  String get settingsAutostartChangeError => 'Failed to change autostart setting.';
+  String get settingsAutostartChangeError =>
+      'Failed to change autostart setting.';
 
   @override
   String get settingsMediaProjectionTitle => 'MediaProjection';
 
   @override
-  String get settingsMediaProjectionSubtitle => 'This permission is required only for screen capture and screenshot verification.';
+  String get settingsMediaProjectionSubtitle =>
+      'This permission is required only for screen capture and screenshot verification.';
 
   @override
-  String get settingsMediaProjectionStatusGranted => 'Status: permission granted';
+  String get settingsMediaProjectionStatusGranted =>
+      'Status: permission granted';
 
   @override
-  String get settingsMediaProjectionStatusMissing => 'Status: permission not granted';
+  String get settingsMediaProjectionStatusMissing =>
+      'Status: permission not granted';
 
   @override
-  String get settingsMediaProjectionRequestAction => 'Request MediaProjection manually';
+  String get settingsMediaProjectionRequestAction =>
+      'Request MediaProjection manually';
 
   @override
-  String get settingsMediaProjectionGrantedMessage => 'MediaProjection permission granted.';
+  String get settingsMediaProjectionGrantedMessage =>
+      'MediaProjection permission granted.';
 
   @override
-  String get settingsMediaProjectionDeniedMessage => 'MediaProjection permission not granted.';
+  String get settingsMediaProjectionDeniedMessage =>
+      'MediaProjection permission not granted.';
 
   @override
-  String get settingsMediaProjectionRequestError => 'Failed to request MediaProjection.';
+  String get settingsMediaProjectionRequestError =>
+      'Failed to request MediaProjection.';
 
   @override
   String get settingsExactAlarmTitle => 'Exact alarms';
 
   @override
-  String get settingsExactAlarmSubtitle => 'For maximum schedule accuracy, allow exact alarms in Android system settings.';
+  String get settingsExactAlarmSubtitle =>
+      'For maximum schedule accuracy, allow exact alarms in Android system settings.';
 
   @override
   String get settingsExactAlarmStatusAllowed => 'Status: exact alarms allowed';
 
   @override
-  String get settingsExactAlarmStatusLimited => 'Status: exact alarms limited, schedule may start with delay';
+  String get settingsExactAlarmStatusLimited =>
+      'Status: exact alarms limited, schedule may start with delay';
 
   @override
   String get settingsExactAlarmOpenAction => 'Open exact alarm settings';
 
   @override
-  String get settingsExactAlarmOpenError => 'Failed to open exact alarm settings.';
+  String get settingsExactAlarmOpenError =>
+      'Failed to open exact alarm settings.';
 
   @override
   String get settingsDiagnosticsLoadError => 'Failed to load diagnostics.';
@@ -157,7 +175,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogExportError => 'Failed to export log.';
 
   @override
-  String get settingsLogOpenLocationError => 'Failed to open log file location.';
+  String get settingsLogOpenLocationError =>
+      'Failed to open log file location.';
 
   @override
   String get settingsLogClearedMessage => 'Log buffer cleared.';
@@ -169,13 +188,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsWebSocketTitle => 'WebSocket';
 
   @override
-  String get settingsWebSocketSubtitle => 'Control the built-in server for remote commands and diagnostics.';
+  String get settingsWebSocketSubtitle =>
+      'Control the built-in server for remote commands and diagnostics.';
 
   @override
   String get settingsWebSocketEnableTitle => 'Enable server';
 
   @override
-  String get settingsWebSocketEnableSubtitle => 'Starts a single-client WebSocket server with token auth (Authorization: Bearer preferred).';
+  String get settingsWebSocketEnableSubtitle =>
+      'Starts a single-client WebSocket server with token auth (Authorization: Bearer preferred).';
 
   @override
   String get settingsWebSocketEnableAction => 'Enable server';
@@ -229,28 +250,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsWebSocketRefreshAction => 'Refresh';
 
   @override
-  String get settingsWebSocketUnavailableAddress => 'No local IPv4 address is available right now.';
+  String get settingsWebSocketUnavailableAddress =>
+      'No local IPv4 address is available right now.';
 
   @override
   String get settingsWebSocketLoadError => 'Failed to load WebSocket status';
 
   @override
-  String get settingsWebSocketTimeoutError => 'WebSocket status did not respond in time. Try refreshing again.';
+  String get settingsWebSocketTimeoutError =>
+      'WebSocket status did not respond in time. Try refreshing again.';
 
   @override
-  String get settingsWebSocketPortError => 'Port must be between 1024 and 65535.';
+  String get settingsWebSocketPortError =>
+      'Port must be between 1024 and 65535.';
 
   @override
   String get settingsDiagnosticsTitle => 'Diagnostics & logs';
 
   @override
-  String get settingsDiagnosticsSubtitle => 'Manage debug logging and quickly export log file.';
+  String get settingsDiagnosticsSubtitle =>
+      'Manage debug logging and quickly export log file.';
 
   @override
   String get settingsEnableLoggingTitle => 'Enable logging';
 
   @override
-  String get settingsEnableLoggingSubtitle => 'Capture technical logs for diagnostics';
+  String get settingsEnableLoggingSubtitle =>
+      'Capture technical logs for diagnostics';
 
   @override
   String get settingsLogToFileTitle => 'Log to file';
@@ -292,16 +318,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsErrorExportingLogsPrefix => 'Error exporting logs';
 
   @override
-  String get settingsNoExportedLogsToShare => 'No exported logs to share. Export first.';
+  String get settingsNoExportedLogsToShare =>
+      'No exported logs to share. Export first.';
 
   @override
   String get settingsGenericErrorPrefix => 'Error';
 
   @override
-  String get settingsPermissionsAllGranted => 'All key permissions are granted.';
+  String get settingsPermissionsAllGranted =>
+      'All key permissions are granted.';
 
   @override
-  String get settingsPermissionsMissingSummary => 'Some required permissions are missing. Open each missing permission directly from buttons below.';
+  String get settingsPermissionsMissingSummary =>
+      'Some required permissions are missing. Open each missing permission directly from buttons below.';
 
   @override
   String get settingsPermissionAccessibilityLabel => 'Accessibility service';
@@ -319,7 +348,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPermissionMissing => 'not granted';
 
   @override
-  String get settingsExecutionPermissionsRequired => 'To run scenarios, first grant required permissions: Accessibility service and Display over apps.';
+  String get settingsExecutionPermissionsRequired =>
+      'To run scenarios, first grant required permissions: Accessibility service and Display over apps.';
 
   @override
   String get settingsLogSourceLabel => 'Source';
@@ -337,22 +367,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionsTitle => 'Permissions';
 
   @override
-  String get permissionsAllGranted => 'All required permissions are granted. Primary actions are unlocked.';
+  String get permissionsAllGranted =>
+      'All required permissions are granted. Primary actions are unlocked.';
 
   @override
-  String get permissionsAccessibilityDescription => 'First, enable the accessibility service for Prog Set Touch. Touch automation cannot run without it.';
+  String get permissionsAccessibilityDescription =>
+      'First, enable the accessibility service for Prog Set Touch. Touch automation cannot run without it.';
 
   @override
   String get permissionsAccessibilityAction => 'Open accessibility settings';
 
   @override
-  String get permissionsOverlayDescription => 'Then allow drawing over other apps. This is required for the background UI and later floating overlay button.';
+  String get permissionsOverlayDescription =>
+      'Then allow drawing over other apps. This is required for the background UI and later floating overlay button.';
 
   @override
   String get permissionsOverlayAction => 'Open overlay settings';
 
   @override
-  String get permissionsMediaProjectionDescription => 'Screen capture permission is requested separately, only for screenshots and screen verification features.';
+  String get permissionsMediaProjectionDescription =>
+      'Screen capture permission is requested separately, only for screenshots and screen verification features.';
 
   @override
   String get permissionsMediaProjectionAction => 'Request MediaProjection';
@@ -400,7 +434,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recorderClearConfirmTitle => 'Confirmation';
 
   @override
-  String get recorderClearConfirmMessage => 'Are you sure you want to clear the current recording?';
+  String get recorderClearConfirmMessage =>
+      'Are you sure you want to clear the current recording?';
 
   @override
   String get commonConfirm => 'Yes';
@@ -446,16 +481,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsRestoreAppTitle => 'Restore app';
 
   @override
-  String get settingsRestoreAppSubtitle => 'Open the app after finishing scenario execution';
+  String get settingsRestoreAppSubtitle =>
+      'Open the app after finishing scenario execution';
 
   @override
   String get settingsVisualVerificationTitle => 'Visual Verification';
 
   @override
-  String get settingsVisualVerificationSubtitle => 'Global toggle for screenshot verification during execution';
+  String get settingsVisualVerificationSubtitle =>
+      'Global toggle for screenshot verification during execution';
 
   @override
-  String get settingsRestoreAppChangeError => 'Failed to change restore app setting';
+  String get settingsRestoreAppChangeError =>
+      'Failed to change restore app setting';
 
   @override
   String get statusUnavailable => 'Unavailable';
@@ -473,13 +511,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorRecorderAction => 'Failed to change recorder state';
 
   @override
-  String get errorRecorderNeedsOverlay => 'Enable the floating button before starting recording';
+  String get errorRecorderNeedsOverlay =>
+      'Enable the floating button before starting recording';
 
   @override
   String get errorExecutionAction => 'Failed to execute scenario';
 
   @override
-  String get errorExecutionNotAllowed => 'Execution not allowed in current state';
+  String get errorExecutionNotAllowed =>
+      'Execution not allowed in current state';
 
   @override
   String get errorExecutionPauseFailed => 'Failed to pause execution';
@@ -494,7 +534,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noSchedulesMessage => 'No schedules yet';
 
   @override
-  String get noSchedulesDescription => 'Create your first schedule to automate scenario execution';
+  String get noSchedulesDescription =>
+      'Create your first schedule to automate scenario execution';
 
   @override
   String get deleteScheduleTitle => 'Delete Schedule';
@@ -556,13 +597,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduleScenarioRequired => 'Select a scenario';
 
   @override
-  String get scheduleScenarioRequiredToCreate => 'Create at least one scenario first';
+  String get scheduleScenarioRequiredToCreate =>
+      'Create at least one scenario first';
 
   @override
   String get scheduleScenarioMissing => 'Missing scenario';
 
   @override
   String get save => 'Save';
+
+  @override
+  String get scenarioStartRecording => 'Start recording';
 
   @override
   String get settingsAboutTitle => 'About';
@@ -577,34 +622,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAboutSectionBasics => 'Basics';
 
   @override
-  String get settingsAboutBasicsContent => 'Prog Set Touch is a smart auto-clicker endowed with \"vision\". Unlike regular clickers, it can verify screen changes using visual verification (screenshots).';
+  String get settingsAboutBasicsContent =>
+      'Prog Set Touch is a smart auto-clicker endowed with \"vision\". Unlike regular clickers, it can verify screen changes using visual verification (screenshots).';
 
   @override
   String get settingsAboutSectionRecording => 'Recording and Editor';
 
   @override
-  String get settingsAboutRecordingContent => 'Record gestures (taps, swipes) using the floating widget over other apps. The built-in step editor allows you to change coordinates, delays, and configure verification thresholds.';
+  String get settingsAboutRecordingContent =>
+      'Record gestures (taps, swipes) using the floating widget over other apps. The built-in step editor allows you to change coordinates, delays, and configure verification thresholds.';
 
   @override
   String get settingsAboutSectionExecution => 'Visual Control';
 
   @override
-  String get settingsAboutExecutionContent => 'If screen verification is enabled for a step, the clicker takes a screenshot before and after the gesture. By tuning Timeout, Sensitivity Threshold (%), and \'Continue on Failure\', you can create reliable macros resistant to lag.';
+  String get settingsAboutExecutionContent =>
+      'If screen verification is enabled for a step, the clicker takes a screenshot before and after the gesture. By tuning Timeout, Sensitivity Threshold (%), and \'Continue on Failure\', you can create reliable macros resistant to lag.';
 
   @override
   String get settingsAboutSectionOverlay => 'Execution & Management';
 
   @override
-  String get settingsAboutOverlayContent => 'Run scenarios in batches via Quick Launch. For stable operation, we recommend setting a global delay between steps in Settings.';
+  String get settingsAboutOverlayContent =>
+      'Run scenarios in batches via Quick Launch. For stable operation, we recommend setting a global delay between steps in Settings.';
 
   @override
   String get settingsAboutSectionPermissions => 'Permissions & Security';
 
   @override
-  String get settingsAboutPermissionsContent => 'Requires Accessibility service (simulating touches), Display over apps (floating recorder), and MediaProjection (only for visual verification) permissions.';
+  String get settingsAboutPermissionsContent =>
+      'Requires Accessibility service (simulating touches), Display over apps (floating recorder), and MediaProjection (only for visual verification) permissions.';
 
   @override
-  String get scenarioEditWhileExecutingRejected => 'Cannot edit steps while execution is active';
+  String get scenarioEditWhileExecutingRejected =>
+      'Cannot edit steps while execution is active';
 
   @override
   String get scenarioStepEditorAddStep => 'Add Step';
@@ -613,7 +664,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scenarioStepEditorVerificationLabel => 'Verify screen changes';
 
   @override
-  String get scenarioStepEditorVerificationSubtitle => 'Verify if the screen content changed after executing this step';
+  String get scenarioStepEditorVerificationSubtitle =>
+      'Verify if the screen content changed after executing this step';
 
   @override
   String get scenarioStepEditorThresholdLabel => 'Sensitivity threshold (%)';
@@ -630,7 +682,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scenarioStepEditorTimeoutHelper => 'From 1 to 300 seconds (5 min)';
 
   @override
-  String get scenarioStepEditorContinueOnFailure => 'Stop current and continue next scenario on failure';
+  String get scenarioStepEditorContinueOnFailure =>
+      'Stop current and continue next scenario on failure';
 
   @override
   String get scenarioScreenTitle => 'Scenarios';
@@ -660,7 +713,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scenarioColumnSteps => 'Steps';
 
   @override
-  String get scenarioEmptyNotAllowed => 'You cannot save an empty scenario. Record at least one action first.';
+  String get scenarioEmptyNotAllowed =>
+      'You cannot save an empty scenario. Record at least one action first.';
 
   @override
   String get scenarioLimitReached => 'Maximum 50 scenarios allowed.';
@@ -669,7 +723,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scenarioNameMustBeUnique => 'Scenario name must be unique.';
 
   @override
-  String get scenarioQuickLaunchEmpty => 'No scenarios selected for Quick Launch.';
+  String get scenarioQuickLaunchEmpty =>
+      'No scenarios selected for Quick Launch.';
 
   @override
   String get scenarioRunAllEmpty => 'No enabled scenarios for Run All.';
@@ -719,7 +774,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scenarioImportInvalidJson => 'Import file contains invalid JSON.';
 
   @override
-  String get scenarioImportNoItems => 'No valid scenarios found in import file.';
+  String get scenarioImportNoItems =>
+      'No valid scenarios found in import file.';
 
   @override
   String get mainScenarioSectionTitle => 'Scenarios';
@@ -752,13 +808,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notesLatestChangesTitle => 'Latest changes';
 
   @override
-  String get notesExportCrashFix => 'Fixed app crash during settings/log export.';
+  String get notesExportCrashFix =>
+      'Fixed app crash during settings/log export.';
 
   @override
-  String get notesMainScreenRedesign => 'Main screen redesigned for clearer status and action blocks.';
+  String get notesMainScreenRedesign =>
+      'Main screen redesigned for clearer status and action blocks.';
 
   @override
-  String get notesSchedulerScenarioVisible => 'Scheduler cards now show the selected scenario.';
+  String get notesSchedulerScenarioVisible =>
+      'Scheduler cards now show the selected scenario.';
 
   @override
   String get scenarioStepEditorOpen => 'Edit Steps';
@@ -778,7 +837,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get scenarioStepEditorSubtitle => 'Adjust step order, gesture parameters, and per-step delay.';
+  String get scenarioStepEditorSubtitle =>
+      'Adjust step order, gesture parameters, and per-step delay.';
 
   @override
   String scenarioStepEditorCount(Object count) {
@@ -818,7 +878,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scenarioStepEditorEndYLabel => 'End Y';
 
   @override
-  String get scenarioStepEditorInvalidValues => 'Please enter valid numeric values for the step.';
+  String get scenarioStepEditorInvalidValues =>
+      'Please enter valid numeric values for the step.';
 
   @override
   String scenarioStepEditorPointerCount(Object count) {
@@ -858,14 +919,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scenarioStepTypeSwipe => 'Swipe';
 
   @override
-  String get scenarioEditBlockedWhileExecuting => 'Cannot edit scenario steps while execution is in progress.';
+  String get scenarioEditBlockedWhileExecuting =>
+      'Cannot edit scenario steps while execution is in progress.';
 
   @override
-  String get scenarioDeleteBlockedWhileExecuting => 'Cannot delete a scenario while execution is in progress.';
+  String get scenarioDeleteBlockedWhileExecuting =>
+      'Cannot delete a scenario while execution is in progress.';
 
   @override
-  String get scenarioImportBlockedWhileExecuting => 'Cannot import scenarios while execution is in progress.';
+  String get scenarioImportBlockedWhileExecuting =>
+      'Cannot import scenarios while execution is in progress.';
 
   @override
-  String get scenarioReorderBlockedWhileExecuting => 'Cannot reorder scenarios while execution is in progress.';
+  String get scenarioReorderBlockedWhileExecuting =>
+      'Cannot reorder scenarios while execution is in progress.';
 }
